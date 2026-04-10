@@ -39,7 +39,3 @@ out/
 
 ### env ###
 .env
-
-# ignore user & utils packages
-src/main/java/likelion14th/lte/user/
-src/main/java/likelion14th/lte/utils/
