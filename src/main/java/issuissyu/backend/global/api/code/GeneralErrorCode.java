@@ -1,4 +1,4 @@
-package issuissyu.backend.global.api;
+package issuissyu.backend.global.api.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum ErrorCode implements BaseCode { // 실패
+public enum GeneralErrorCode implements BaseErrorCode { // 실패
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_400", "잘못된 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "서버 에러"),
 

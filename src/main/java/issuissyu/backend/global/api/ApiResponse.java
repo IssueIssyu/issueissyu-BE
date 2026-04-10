@@ -3,6 +3,8 @@ package issuissyu.backend.global.api;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import issuissyu.backend.global.api.code.BaseErrorCode;
+import issuissyu.backend.global.api.code.BaseSuccessCode;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +26,7 @@ public class ApiResponse<T> { // API 응답
     private final HttpStatus httpStatus;
 
     //성공 - 바디 + HTTP Status 정보까지 포함
-    public static <T> ApiResponse<T> onSuccess(BaseCode code, T result) {
+    public static <T> ApiResponse<T> onSuccess(BaseSuccessCode code, T result) {
         return new ApiResponse<>(
                 true,
                 code.getReason().getCode(),
@@ -35,7 +37,7 @@ public class ApiResponse<T> { // API 응답
     }
 
     //실패
-    public static ApiResponse<Void> onFailure(BaseCode code) {
+    public static ApiResponse<Void> onFailure(BaseErrorCode code) {
         return new ApiResponse<>(
                 false,
                 code.getReason().getCode(),
@@ -45,7 +47,7 @@ public class ApiResponse<T> { // API 응답
         );
     }
 
-    public static <T> ApiResponse<T> onFailure(BaseCode code, T data) {
+    public static <T> ApiResponse<T> onFailure(BaseErrorCode code, T data) {
         return new ApiResponse<>(
                 false,
                 code.getReason().getCode(),
