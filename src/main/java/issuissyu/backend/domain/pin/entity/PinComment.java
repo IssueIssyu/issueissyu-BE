@@ -1,6 +1,5 @@
-package issuissyu.backend.domain.collection.entity.mapping;
+package issuissyu.backend.domain.pin.entity;
 
-import issuissyu.backend.domain.collection.entity.CustomCollection;
 import issuissyu.backend.domain.user.entity.UserEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,26 +17,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Entity
-@Table(name = "user_custom_collection")
+@Entity(name = "PinComment")
+@Table(name = "\"comment\"")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UserCustomCollection {
+public class PinComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_custom_collection_id")
-    private Long userCustomCollectionId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "custom_collection_id", nullable = false)
-    @ToString.Exclude
-    private CustomCollection customCollection;
+    @Column(name = "comment_id")
+    private Long commentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
     private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id", nullable = false)
+    @ToString.Exclude
+    private Pin pin;
 }
