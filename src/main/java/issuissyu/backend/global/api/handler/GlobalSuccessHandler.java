@@ -1,5 +1,6 @@
-package issuissyu.backend.global.api;
+package issuissyu.backend.global.api.handler;
 
+import issuissyu.backend.global.api.ApiResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;

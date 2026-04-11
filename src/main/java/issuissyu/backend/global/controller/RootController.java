@@ -1,4 +1,4 @@
-package issuissyu.backend.global;
+package issuissyu.backend.global.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

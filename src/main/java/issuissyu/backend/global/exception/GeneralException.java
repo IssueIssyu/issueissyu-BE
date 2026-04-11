@@ -1,7 +1,7 @@
 package issuissyu.backend.global.exception;
 
-import issuissyu.backend.global.api.BaseCode;
-import issuissyu.backend.global.api.ReasonDTO;
+import issuissyu.backend.global.api.code.BaseErrorCode;
+import issuissyu.backend.global.api.code.ReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,10 +10,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public class GeneralException extends RuntimeException {
 
-  private final BaseCode code;
+  private final BaseErrorCode code;
 
   //예외 생성
-  public static GeneralException of(BaseCode code) {
+  public static GeneralException of(BaseErrorCode code) {
     return new GeneralException(code);
   }
 

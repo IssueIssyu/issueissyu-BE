@@ -4,8 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import issuissyu.backend.global.api.ApiResponse;
-import issuissyu.backend.global.api.ErrorCode;
-import issuissyu.backend.global.api.ReasonDTO;
+import issuissyu.backend.global.api.code.BaseErrorCode;
+import issuissyu.backend.global.api.code.GeneralErrorCode;
+import issuissyu.backend.global.api.code.ReasonDTO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -33,15 +34,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(ConstraintViolation::getMessage)
                 .findFirst()
                 .orElse("ConstraintViolationException 처리 중 에러 발생");
-        return handleExceptionInternalConstraint(e, ErrorCode.BAD_REQUEST, HttpHeaders.EMPTY, request);
+        return handleExceptionInternalConstraint(e, GeneralErrorCode.BAD_REQUEST, HttpHeaders.EMPTY, request);
     }
 
     //GeneralException
     @ExceptionHandler(value = GeneralException.class)
     public ResponseEntity<Object> onThrowException(GeneralException generalException,
                                                    HttpServletRequest request) {
-        ReasonDTO reason = generalException.getReason();
-        return handleExceptionInternal(generalException, reason, null, request);
+        return handleExceptionInternal(generalException, generalException.getCode(), null, request);
     }
 
     // MethodArgumentNotValidException
@@ -55,26 +55,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String errorMessage = Optional.ofNullable(fieldError.getDefaultMessage()).orElse("");
             errors.put(fieldName, errorMessage);
         });
-        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, ErrorCode.BAD_REQUEST, request, errors);
+        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, GeneralErrorCode.BAD_REQUEST, request, errors);
     }
 
     // Exception
     @ExceptionHandler
     public ResponseEntity<Object> exception(Exception e, WebRequest request) {
         e.printStackTrace();
-        return handleExceptionInternalFalse(e, ErrorCode.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY,
-                ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus(), request, e.getMessage());
+        return handleExceptionInternalFalse(e, GeneralErrorCode.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY,
+                GeneralErrorCode.INTERNAL_SERVER_ERROR.getReason().getHttpStatus(), request, e.getMessage());
     }
 
     // 공통 에러 응답
-    private ResponseEntity<Object> handleExceptionInternal(Exception e, ReasonDTO reason,
+    private ResponseEntity<Object> handleExceptionInternal(Exception e, BaseErrorCode code,
                                                            HttpHeaders headers, HttpServletRequest request) {
-        ApiResponse<Void> body = ApiResponse.onFailure(reason);
+        ReasonDTO reason = code.getReason();
+        ApiResponse<Void> body = ApiResponse.onFailure(code);
         WebRequest webRequest = new ServletWebRequest(request);
         return super.handleExceptionInternal(e, body, headers, reason.getHttpStatus(), webRequest);
     }
 
-    private ResponseEntity<Object> handleExceptionInternalFalse(Exception e, ErrorCode errorCode,
+    private ResponseEntity<Object> handleExceptionInternalFalse(Exception e, BaseErrorCode errorCode,
                                                                 HttpHeaders headers, HttpStatus status, WebRequest request,
                                                                 String errorPoint) {
         ApiResponse<Object> body = ApiResponse.onFailure(errorCode, errorPoint);
@@ -82,15 +83,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private ResponseEntity<Object> handleExceptionInternalArgs(Exception e, HttpHeaders headers,
-                                                               ErrorCode errorCode, WebRequest request,
+                                                               BaseErrorCode errorCode, WebRequest request,
                                                                Map<String, String> errorArgs) {
         ApiResponse<Object> body = ApiResponse.onFailure(errorCode, errorArgs);
-        return super.handleExceptionInternal(e, body, headers, errorCode.getHttpStatus(), request);
+        return super.handleExceptionInternal(e, body, headers, errorCode.getReason().getHttpStatus(), request);
     }
 
-    private ResponseEntity<Object> handleExceptionInternalConstraint(Exception e, ErrorCode errorCode,
+    private ResponseEntity<Object> handleExceptionInternalConstraint(Exception e, BaseErrorCode errorCode,
                                                                      HttpHeaders headers, WebRequest request) {
         ApiResponse<Void> body = ApiResponse.onFailure(errorCode);
-        return super.handleExceptionInternal(e, body, headers, errorCode.getHttpStatus(), request);
+        return super.handleExceptionInternal(e, body, headers, errorCode.getReason().getHttpStatus(), request);
     }
 }
