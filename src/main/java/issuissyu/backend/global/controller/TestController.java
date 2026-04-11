@@ -1,10 +1,10 @@
-package issuissyu.backend.controller;
+package issuissyu.backend.global.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issuissyu.backend.global.api.ApiResponse;
-import issuissyu.backend.global.api.SuccessCode;
+import issuissyu.backend.global.api.code.GeneralSuccessCode;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +18,7 @@ public class TestController {
     })
     @GetMapping
     public ApiResponse<?> test() {
-        return ApiResponse.onSuccess(SuccessCode.OK,null);//null자리에 dto객체를 넣어서 사용할 것
+        return ApiResponse.onSuccess(GeneralSuccessCode.OK,null);//null자리에 dto객체를 넣어서 사용할 것
     }
 }
 

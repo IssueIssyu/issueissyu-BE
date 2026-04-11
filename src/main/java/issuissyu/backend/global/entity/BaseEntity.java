@@ -1,4 +1,4 @@
-package issuissyu.backend.entity;
+package issuissyu.backend.global.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
