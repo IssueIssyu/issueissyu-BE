@@ -1,6 +1,6 @@
 package issueissyu.backend.domain.issue.entity;
 
-import issueissyu.backend.domain.user.entity.UserEntity;
+import issueissyu.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -30,7 +30,7 @@ public class IssuePetition {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "issue_pin_id", nullable = false)

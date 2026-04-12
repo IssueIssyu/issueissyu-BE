@@ -1,7 +1,7 @@
 package issueissyu.backend.domain.collection.entity.mapping;
 
 import issueissyu.backend.domain.collection.entity.CustomCollection;
-import issueissyu.backend.domain.user.entity.UserEntity;
+import issueissyu.backend.domain.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,5 +39,5 @@ public class UserCustomCollection {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 }

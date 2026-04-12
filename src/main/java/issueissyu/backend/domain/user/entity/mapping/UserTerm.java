@@ -1,7 +1,7 @@
 package issueissyu.backend.domain.user.entity.mapping;
 
 import issueissyu.backend.domain.user.entity.Term;
-import issueissyu.backend.domain.user.entity.UserEntity;
+import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,7 +35,7 @@ public class UserTerm extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "term_id", nullable = false)

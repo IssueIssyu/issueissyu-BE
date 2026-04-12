@@ -37,7 +37,7 @@ public class TokenRedis {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 
     @Column(name = "refresh_token", nullable = false, length = 255)
     private String refreshToken;

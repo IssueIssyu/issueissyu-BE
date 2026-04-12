@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @ToString
-public class UserEntity extends BaseEntity {
+public class User extends BaseEntity {
 
     @Id
     @Column(name = "uid", nullable = false, length = 36)
@@ -34,7 +34,7 @@ public class UserEntity extends BaseEntity {
     @Column(name = "user_point", columnDefinition = "text")
     private String userPoint;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 255)
     private String email;
 
     @Column(name = "is_agreed", nullable = false)

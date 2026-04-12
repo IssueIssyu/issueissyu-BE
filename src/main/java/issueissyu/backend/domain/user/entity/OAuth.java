@@ -35,7 +35,7 @@ public class OAuth {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 
     @Column(name = "provider_id", nullable = false)
     private Long providerId;

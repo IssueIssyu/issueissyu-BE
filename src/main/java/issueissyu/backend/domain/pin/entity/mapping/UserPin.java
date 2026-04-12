@@ -1,7 +1,7 @@
 package issueissyu.backend.domain.pin.entity.mapping;
 
 import issueissyu.backend.domain.pin.entity.Pin;
-import issueissyu.backend.domain.user.entity.UserEntity;
+import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,7 +35,7 @@ public class UserPin extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
-    private UserEntity user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pin_id", nullable = false)
