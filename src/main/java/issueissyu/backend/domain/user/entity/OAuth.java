@@ -2,8 +2,6 @@ package issueissyu.backend.domain.user.entity;
 
 import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.global.entity.BaseEntity;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

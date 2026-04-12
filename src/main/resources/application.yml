@@ -10,8 +10,8 @@ spring:
       max-request-size: 50MB
   jwt:
     secret: ${JWT_SECRET}
-    access-exp-ms: ${JWT_EXPIRATION:3600000}
-    refresh-exp-ms: ${JWT_REFRESH_EXPIRATION:1209600000}
+    access-exp-ms: ${JWT_EXPIRATION:3600000} # 1시간
+    refresh-exp-ms: ${JWT_REFRESH_EXPIRATION:1209600000} #14일
 
 cloud:
   aws:
@@ -93,3 +93,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         use_sql_comments: true
         default_batch_fetch_size: 1000
+
+# LOCAL LOGIN
+  security:
+    oauth2:
+      client:
+        registration:
+          naver:
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
+        provider:
+          naver:
+            authorization-uri:
+            token-uri:
+            user-info-uri:
+            user-name-attribute: id

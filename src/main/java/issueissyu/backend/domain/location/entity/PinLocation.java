@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.postgresql.geometric.PGpoint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,8 +42,8 @@ public class PinLocation extends BaseEntity {
     @ToString.Exclude
     private Location location;
 
-    @Column(name = "pin_point", nullable = false, columnDefinition = "text")
-    private String pinPoint;
+    @Column(name = "pin_point", nullable = false, columnDefinition = "point")
+    private PGpoint pinPoint;
 
     @Column(name = "detail_address", nullable = false, length = 150)
     private String detailAddress;

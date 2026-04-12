@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.postgresql.geometric.PGpoint;
 
 @Entity(name = "AppUser")
 @Table(name = "\"user\"")
@@ -26,20 +27,17 @@ public class User extends BaseEntity {
     @Column(name = "uid", nullable = false, length = 36)
     private String uid;
 
-    @Column(nullable = false, length = 13)
+    @Column(unique = true, nullable = false, length = 13)
     private String phone;
 
     @Column(nullable = false, length = 15)
     private String nickname;
 
-    @Column(name = "user_point", columnDefinition = "text")
-    private String userPoint;
+    @Column(name = "user_point", columnDefinition = "point")
+    private PGpoint userPoint;
 
     @Column(nullable = false, length = 255)
     private String email;
-
-    @Column(name = "is_agreed", nullable = false)
-    private boolean isAgreed;
 
     @Builder.Default
     @Column(name = "event_alarm_active", nullable = false)

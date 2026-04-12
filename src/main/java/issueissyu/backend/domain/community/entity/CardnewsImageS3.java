@@ -34,9 +34,9 @@ public class CardnewsImageS3 {
     @ToString.Exclude
     private Community community;
 
-    @Column(name = "cardnews_image_s3_key", nullable = false, length = 500)
+    @Column(name = "cardnews_image_s3_key", nullable = false)
     private String cardnewsImageS3Key;
 
-    @Column(name = "cardnews_image_s3_url", nullable = false, length = 500)
+    @Column(name = "cardnews_image_s3_url", nullable = false)
     private String cardnewsImageS3Url;
 }

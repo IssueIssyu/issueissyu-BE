@@ -36,8 +36,8 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 
 
-	//db
-	runtimeOnly 'org.postgresql:postgresql'
+	//db (compile: PGpoint 등 JDBC 타입을 엔터티에서 참조)
+	implementation 'org.postgresql:postgresql'
 
 	//redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
