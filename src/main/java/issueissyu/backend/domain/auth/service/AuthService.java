@@ -97,6 +97,14 @@ public class AuthService {
         refreshTokenRedisStore.deleteAll(uid);
     }
 
+    // 회원탈퇴: Redis 토큰 → OAuth 레코드 → User 순으로 삭제
+    @Transactional
+    public void signout(String uid) {
+        refreshTokenRedisStore.deleteAll(uid);
+        oAuthRepository.deleteByUserUid(uid);
+        userRepository.deleteById(uid);
+    }
+
     private User createNewNaverUser(NaverUserProfile profile) {
         String uid  = AppUuid.newUid();
         String name = profile.name();

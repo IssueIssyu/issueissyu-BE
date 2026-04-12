@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -110,6 +111,24 @@ public class AuthController {
     @PostMapping("/auth/refresh")
     public ApiResponse<TokenPairDTO> refresh(@Valid @RequestBody TokenReissueReqDTO request) {
         return ApiResponse.onSuccess(AuthSuccessCode.REFRESH_200, authService.reissue(request));
+    }
+
+    @Operation(summary = "회원탈퇴", description = "access token을 검증한 후 Redis 토큰·OAuth·User 레코드를 모두 삭제합니다.")
+    @DeleteMapping("/auth/signout")
+    public ApiResponse<Void> signout(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
+            throw GeneralException.of(AuthErrorCode.SIGNOUT_INVALID);
+        }
+        String token = header.substring(7).trim();
+        if (!jwtTokenProvider.validateToken(token)
+                || !JwtTokenProvider.TOKEN_TYPE_ACCESS.equals(jwtTokenProvider.parseTokenType(token))) {
+            throw GeneralException.of(AuthErrorCode.SIGNOUT_INVALID);
+        }
+
+        String uid = jwtTokenProvider.parseUid(token);
+        authService.signout(uid);
+        return ApiResponse.onSuccess(AuthSuccessCode.SIGNOUT_200, null);
     }
 
     @Operation(summary = "로그아웃", description = "access token을 검증한 후 Redis의 refresh token을 삭제합니다.")

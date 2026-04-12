@@ -3,6 +3,7 @@ package issueissyu.backend.domain.user.repository;
 import issueissyu.backend.domain.user.entity.OAuth;
 import issueissyu.backend.domain.user.enums.SocialType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,4 +16,8 @@ public interface OAuthRepository extends JpaRepository<OAuth, Long> {
             @Param("socialType") SocialType socialType,
             @Param("providerId") String providerId
     );
+
+    @Modifying
+    @Query("delete from OAuth o where o.user.uid = :uid")
+    void deleteByUserUid(@Param("uid") String uid);
 }

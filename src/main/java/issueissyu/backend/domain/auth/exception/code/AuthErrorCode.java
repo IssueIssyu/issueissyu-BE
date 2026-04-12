@@ -14,7 +14,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     NAVER_API_FAILED(HttpStatus.BAD_GATEWAY, "NAVER_5021", "네이버 서버 응답에 실패했습니다."),
 
     REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "REFRESH_401", "토큰 재발급에 실패했습니다."),
-    LOGOUT_INVALID(HttpStatus.UNAUTHORIZED, "LOGOUT_401", "유효하지 않은 토큰입니다.");
+    LOGOUT_INVALID(HttpStatus.UNAUTHORIZED, "LOGOUT_401", "유효하지 않은 토큰입니다."),
+    SIGNOUT_INVALID(HttpStatus.UNAUTHORIZED, "SIGNOUT_401", "유효하지 않은 토큰입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
