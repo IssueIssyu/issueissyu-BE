@@ -92,16 +92,8 @@ public class AuthService {
                 .build();
     }
 
-    // 특정 소셜 로그인 로그아웃: refreshToken 에서 provider 를 파싱해 해당 키만 삭제.
-    // refreshToken 이 없거나 파싱 불가 시 해당 uid 의 모든 토큰 삭제(전체 로그아웃).
-    public void logout(String uid, String refreshToken) {
-        if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
-            String provider = jwtTokenProvider.parseProvider(refreshToken);
-            if (provider != null) {
-                refreshTokenRedisStore.delete(uid, provider);
-                return;
-            }
-        }
+    // Redis에 저장된 해당 유저의 모든 refresh token 삭제
+    public void logout(String uid) {
         refreshTokenRedisStore.deleteAll(uid);
     }
 

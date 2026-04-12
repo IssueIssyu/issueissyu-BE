@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AuthSuccessCode implements BaseSuccessCode {
 
-    REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다.");
+    REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다."),
+    LOGOUT_200(HttpStatus.OK, "LOGOUT_200", "로그아웃 되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

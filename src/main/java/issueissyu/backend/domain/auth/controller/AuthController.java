@@ -4,17 +4,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
+import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.auth.exception.code.AuthSuccessCode;
 import issueissyu.backend.domain.auth.service.AuthService;
 import issueissyu.backend.global.api.ApiResponse;
-import issueissyu.backend.global.api.code.GeneralSuccessCode;
+import issueissyu.backend.global.exception.GeneralException;
+import issueissyu.backend.global.security.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +32,7 @@ import java.util.Arrays;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // 개발용 콜백 확인 페이지
     // http://localhost:8080/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
@@ -108,20 +112,21 @@ public class AuthController {
         return ApiResponse.onSuccess(AuthSuccessCode.REFRESH_200, authService.reissue(request));
     }
 
-    @Operation(summary = "로그아웃", description = "HttpOnly 쿠키의 refreshToken으로 provider를 판별해 Redis 토큰을 삭제합니다.")
-    @PostMapping("/api/auth/logout")
-    public ApiResponse<String> logout(
-            @AuthenticationPrincipal String uid,
-            HttpServletRequest request) {
+    @Operation(summary = "로그아웃", description = "access token을 검증한 후 Redis의 refresh token을 삭제합니다.")
+    @PostMapping("/auth/logout")
+    public ApiResponse<Void> logout(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
+            throw GeneralException.of(AuthErrorCode.LOGOUT_INVALID);
+        }
+        String token = header.substring(7).trim();
+        if (!jwtTokenProvider.validateToken(token)
+                || !JwtTokenProvider.TOKEN_TYPE_ACCESS.equals(jwtTokenProvider.parseTokenType(token))) {
+            throw GeneralException.of(AuthErrorCode.LOGOUT_INVALID);
+        }
 
-        String refreshToken = Arrays.stream(
-                        request.getCookies() != null ? request.getCookies() : new Cookie[0])
-                .filter(c -> "refreshToken".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-
-        authService.logout(uid, refreshToken);
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK, "로그아웃되었습니다.");
+        String uid = jwtTokenProvider.parseUid(token);
+        authService.logout(uid);
+        return ApiResponse.onSuccess(AuthSuccessCode.LOGOUT_200, null);
     }
 }
