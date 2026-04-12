@@ -44,10 +44,10 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
             NaverUserResult navResult = principal.getNavResult();
             String uid = navResult.user().getUid();
 
-            // JWT 발급 + Redis 저장
+            // JWT 발급 + Redis 저장 (key: token_redis:{uid}:naver)
             String accessToken  = jwtTokenProvider.createAccessToken(uid);
-            String refreshToken = jwtTokenProvider.createRefreshToken(uid);
-            refreshTokenRedisStore.save(uid, refreshToken,
+            String refreshToken = jwtTokenProvider.createRefreshToken(uid, "naver");
+            refreshTokenRedisStore.save(uid, "naver", refreshToken,
                     Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
             // refreshToken → HttpOnly 쿠키

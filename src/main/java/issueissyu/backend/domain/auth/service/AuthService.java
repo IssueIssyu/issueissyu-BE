@@ -62,8 +62,13 @@ public class AuthService {
             throw GeneralException.of(GeneralErrorCode.TOKEN_INVALID);
         }
 
-        String uid = jwtTokenProvider.parseUid(incoming);
-        String stored = refreshTokenRedisStore.find(uid)
+        String uid      = jwtTokenProvider.parseUid(incoming);
+        String provider = jwtTokenProvider.parseProvider(incoming);
+        if (provider == null) {
+            throw GeneralException.of(GeneralErrorCode.TOKEN_INVALID);
+        }
+
+        String stored = refreshTokenRedisStore.find(uid, provider)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.WRONG_REFRESH_TOKEN));
         if (!stored.equals(incoming)) {
             throw GeneralException.of(GeneralErrorCode.WRONG_REFRESH_TOKEN);
@@ -72,9 +77,10 @@ public class AuthService {
         userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
-        String newAccess   = jwtTokenProvider.createAccessToken(uid);
-        String newRefresh  = jwtTokenProvider.createRefreshToken(uid);
-        refreshTokenRedisStore.save(uid, newRefresh, Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
+        String newAccess  = jwtTokenProvider.createAccessToken(uid);
+        String newRefresh = jwtTokenProvider.createRefreshToken(uid, provider);
+        refreshTokenRedisStore.save(uid, provider, newRefresh,
+                Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
         return TokenPairDTO.builder()
                 .accessToken(newAccess)
@@ -83,8 +89,17 @@ public class AuthService {
                 .build();
     }
 
-    public void logout(String uid) {
-        refreshTokenRedisStore.delete(uid);
+    // 특정 소셜 로그인 로그아웃: refreshToken 에서 provider 를 파싱해 해당 키만 삭제.
+    // refreshToken 이 없거나 파싱 불가 시 해당 uid 의 모든 토큰 삭제(전체 로그아웃).
+    public void logout(String uid, String refreshToken) {
+        if (refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
+            String provider = jwtTokenProvider.parseProvider(refreshToken);
+            if (provider != null) {
+                refreshTokenRedisStore.delete(uid, provider);
+                return;
+            }
+        }
+        refreshTokenRedisStore.deleteAll(uid);
     }
 
     private User createNewNaverUser(NaverUserProfile profile) {

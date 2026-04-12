@@ -107,10 +107,20 @@ public class AuthController {
         return ApiResponse.onSuccess(GeneralSuccessCode.OK, authService.reissue(request));
     }
 
-    @Operation(summary = "로그아웃", description = "Redis에 저장된 refresh 토큰을 삭제합니다.")
+    @Operation(summary = "로그아웃", description = "HttpOnly 쿠키의 refreshToken으로 provider를 판별해 Redis 토큰을 삭제합니다.")
     @PostMapping("/api/auth/logout")
-    public ApiResponse<String> logout(@AuthenticationPrincipal String uid) {
-        authService.logout(uid);
+    public ApiResponse<String> logout(
+            @AuthenticationPrincipal String uid,
+            HttpServletRequest request) {
+
+        String refreshToken = Arrays.stream(
+                        request.getCookies() != null ? request.getCookies() : new Cookie[0])
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        authService.logout(uid, refreshToken);
         return ApiResponse.onSuccess(GeneralSuccessCode.OK, "로그아웃되었습니다.");
     }
 }

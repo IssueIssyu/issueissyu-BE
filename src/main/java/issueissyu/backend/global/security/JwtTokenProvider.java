@@ -17,6 +17,7 @@ import java.util.Date;
 public class JwtTokenProvider {
 
     public static final String CLAIM_TOKEN_TYPE = "typ";
+    public static final String CLAIM_PROVIDER   = "provider";
     public static final String TOKEN_TYPE_ACCESS = "ACCESS";
     public static final String TOKEN_TYPE_REFRESH = "REFRESH";
 
@@ -32,23 +33,26 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(String uid) {
-        return buildToken(uid, TOKEN_TYPE_ACCESS, accessExpMs);
+        return buildToken(uid, null, TOKEN_TYPE_ACCESS, accessExpMs);
     }
 
-    public String createRefreshToken(String uid) {
-        return buildToken(uid, TOKEN_TYPE_REFRESH, refreshExpMs);
+    // provider: "naver", "kakao" 등 소셜 로그인 제공자 식별자
+    public String createRefreshToken(String uid, String provider) {
+        return buildToken(uid, provider, TOKEN_TYPE_REFRESH, refreshExpMs);
     }
 
-    private String buildToken(String uid, String typ, long ttlMs) {
+    private String buildToken(String uid, String provider, String typ, long ttlMs) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + ttlMs);
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(uid)
                 .issuedAt(now)
                 .expiration(exp)
-                .claim(CLAIM_TOKEN_TYPE, typ)
-                .signWith(key)
-                .compact();
+                .claim(CLAIM_TOKEN_TYPE, typ);
+        if (provider != null) {
+            builder.claim(CLAIM_PROVIDER, provider);
+        }
+        return builder.signWith(key).compact();
     }
 
     public boolean validateToken(String token) {
@@ -77,6 +81,12 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(token);
         Object typ = claims.get(CLAIM_TOKEN_TYPE);
         return typ != null ? typ.toString() : null;
+    }
+
+    public String parseProvider(String token) {
+        Claims claims = parseClaims(token);
+        Object provider = claims.get(CLAIM_PROVIDER);
+        return provider != null ? provider.toString() : null;
     }
 
     public long getAccessExpMs() {
