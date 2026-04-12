@@ -29,6 +29,6 @@ public class Term {
     private Long termId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "term_name")
+    @Column(name = "term_name", nullable = true)
     private TermName termName;
 }

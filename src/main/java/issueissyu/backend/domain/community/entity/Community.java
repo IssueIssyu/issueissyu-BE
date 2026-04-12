@@ -1,6 +1,5 @@
 package issueissyu.backend.domain.community.entity;
 
-import issueissyu.backend.domain.community.enums.CommunityPostStatus;
 import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.global.entity.BaseEntity;
@@ -21,8 +20,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "community")
@@ -51,13 +48,6 @@ public class Community extends BaseEntity {
 
     @Column(length = 255)
     private String content;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private CommunityPostStatus status;
-
-    @Column(name = "published_end_at")
-    private LocalDateTime publishedEndAt;
 
     @Column(name = "view_count", nullable = false)
     private int viewCount;

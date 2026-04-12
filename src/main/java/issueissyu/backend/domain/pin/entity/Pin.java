@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -44,6 +45,7 @@ public class Pin extends BaseEntity {
     @Column(name = "tone_type")
     private ToneType toneType;
 
+    @Builder.Default
     @Column(name = "visibility_status")
-    private Boolean visibilityStatus;
+    private Boolean visibilityStatus = Boolean.TRUE;
 }

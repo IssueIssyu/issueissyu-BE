@@ -49,6 +49,6 @@ public class TokenRedis {
     @Column(name = "social_type", nullable = false)
     private SocialType socialType;
 
-    @Column
+    @Column(name = "ttl")
     private LocalDateTime ttl;
 }

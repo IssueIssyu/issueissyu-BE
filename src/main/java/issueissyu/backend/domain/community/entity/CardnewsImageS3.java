@@ -17,26 +17,26 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name = "community_s3")
+@Table(name = "cardnews_image_s3")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class CommunityS3 {
+public class CardnewsImageS3 {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "community_s3_id")
-    private Long communityS3Id;
+    @Column(name = "cardnews_image_s3_id")
+    private Long cardnewsImageS3Id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id", nullable = false)
     @ToString.Exclude
     private Community community;
 
-    @Column(name = "s3_key", nullable = false, length = 500)
-    private String s3Key;
+    @Column(name = "cardnews_image_s3_key", nullable = false, length = 500)
+    private String cardnewsImageS3Key;
 
-    @Column(name = "s3_url", nullable = false, length = 500)
-    private String s3Url;
+    @Column(name = "cardnews_image_s3_url", nullable = false, length = 500)
+    private String cardnewsImageS3Url;
 }

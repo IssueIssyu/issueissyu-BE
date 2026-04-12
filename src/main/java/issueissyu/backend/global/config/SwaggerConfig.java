@@ -33,7 +33,7 @@ public class SwaggerConfig {
 
         Server localServer = new Server()
                 .url("http://localhost:8080")
-                .description("issuissyu Local Server");
+                .description("IssueIssyu Local Server");
 
 
         return new OpenAPI()

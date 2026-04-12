@@ -1,7 +1,7 @@
 package issueissyu.backend.global.config;
 
 //todo jwt검증필터 구현시 연결해야함
-//import issuissyu.login.jwt.JwtValidationFilter;
+//import issueissyu.login.jwt.JwtValidationFilter;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

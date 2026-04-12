@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -40,15 +41,19 @@ public class User extends BaseEntity {
     @Column(name = "is_agreed", nullable = false)
     private boolean isAgreed;
 
+    @Builder.Default
     @Column(name = "event_alarm_active", nullable = false)
-    private boolean eventAlarmActive;
+    private boolean eventAlarmActive = false;
 
+    @Builder.Default
     @Column(name = "like_alarm_active", nullable = false)
-    private boolean likeAlarmActive;
+    private boolean likeAlarmActive = false;
 
+    @Builder.Default
     @Column(name = "hot_alarm_active", nullable = false)
-    private boolean hotAlarmActive;
+    private boolean hotAlarmActive = false;
 
+    @Builder.Default
     @Column(name = "store_alarm_active", nullable = false)
-    private boolean storeAlarmActive;
+    private boolean storeAlarmActive = false;
 }

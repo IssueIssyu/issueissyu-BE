@@ -7,8 +7,12 @@ ext {
 	springAiVersion = "2.0.0-M4"
 }
 
-group = 'issuissyu'
+group = 'issueissyu'
 version = '0.0.1-SNAPSHOT'
+
+springBoot {
+	mainClass = 'issueissyu.backend.BackendApplication'
+}
 
 java {
 	toolchain {
