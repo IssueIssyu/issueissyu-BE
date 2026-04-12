@@ -41,12 +41,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             if (!jwtTokenProvider.validateToken(token)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                filterChain.doFilter(request, response);
                 return;
             }
 
+            // ACCESS 타입이 아닌 토큰(예: REFRESH)은 인증 없이 통과
+            // → permitAll 엔드포인트는 정상 처리, 보호 엔드포인트는 Spring Security가 차단
             if (!JwtTokenProvider.TOKEN_TYPE_ACCESS.equals(jwtTokenProvider.parseTokenType(token))) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                filterChain.doFilter(request, response);
                 return;
             }
 

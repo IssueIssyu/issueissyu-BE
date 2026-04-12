@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
+import issueissyu.backend.domain.auth.exception.code.AuthSuccessCode;
 import issueissyu.backend.domain.auth.service.AuthService;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.GeneralSuccessCode;
@@ -101,10 +102,10 @@ public class AuthController {
                 .body(html);
     }
 
-    @Operation(summary = "토큰 재발급", description = "refresh JWT 검증 후 새 access·refresh 토큰을 발급합니다.")
-    @PostMapping("/api/auth/reissue")
-    public ApiResponse<TokenPairDTO> reissue(@Valid @RequestBody TokenReissueReqDTO request) {
-        return ApiResponse.onSuccess(GeneralSuccessCode.OK, authService.reissue(request));
+    @Operation(summary = "토큰 재발급", description = "refresh token으로 access·refresh 토큰을 재발급합니다.")
+    @PostMapping("/auth/refresh")
+    public ApiResponse<TokenPairDTO> refresh(@Valid @RequestBody TokenReissueReqDTO request) {
+        return ApiResponse.onSuccess(AuthSuccessCode.REFRESH_200, authService.reissue(request));
     }
 
     @Operation(summary = "로그아웃", description = "HttpOnly 쿠키의 refreshToken으로 provider를 판별해 Redis 토큰을 삭제합니다.")

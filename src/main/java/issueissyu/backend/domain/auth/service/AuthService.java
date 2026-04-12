@@ -9,7 +9,6 @@ import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.domain.user.repository.OAuthRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.domain.user.util.AppUuid;
-import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
@@ -55,28 +54,33 @@ public class AuthService {
     @Transactional
     public TokenPairDTO reissue(TokenReissueReqDTO req) {
         String incoming = req.getRefreshToken();
+
+        // 서명·만료 검증
         if (!jwtTokenProvider.validateToken(incoming)) {
-            throw GeneralException.of(GeneralErrorCode.TOKEN_INVALID);
+            throw GeneralException.of(AuthErrorCode.REFRESH_INVALID);
         }
+        // refresh 타입인지 확인
         if (!JwtTokenProvider.TOKEN_TYPE_REFRESH.equals(jwtTokenProvider.parseTokenType(incoming))) {
-            throw GeneralException.of(GeneralErrorCode.TOKEN_INVALID);
+            throw GeneralException.of(AuthErrorCode.REFRESH_INVALID);
         }
 
         String uid      = jwtTokenProvider.parseUid(incoming);
         String provider = jwtTokenProvider.parseProvider(incoming);
         if (provider == null) {
-            throw GeneralException.of(GeneralErrorCode.TOKEN_INVALID);
+            throw GeneralException.of(AuthErrorCode.REFRESH_INVALID);
         }
 
+        // Redis 저장 토큰과 일치 여부 확인
         String stored = refreshTokenRedisStore.find(uid, provider)
-                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.WRONG_REFRESH_TOKEN));
+                .orElseThrow(() -> GeneralException.of(AuthErrorCode.REFRESH_INVALID));
         if (!stored.equals(incoming)) {
-            throw GeneralException.of(GeneralErrorCode.WRONG_REFRESH_TOKEN);
+            throw GeneralException.of(AuthErrorCode.REFRESH_INVALID);
         }
 
         userRepository.findById(uid)
-                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> GeneralException.of(AuthErrorCode.REFRESH_INVALID));
 
+        // 새 토큰 발급 + Redis 갱신
         String newAccess  = jwtTokenProvider.createAccessToken(uid);
         String newRefresh = jwtTokenProvider.createRefreshToken(uid, provider);
         refreshTokenRedisStore.save(uid, provider, newRefresh,
@@ -85,7 +89,6 @@ public class AuthService {
         return TokenPairDTO.builder()
                 .accessToken(newAccess)
                 .refreshToken(newRefresh)
-                .expiresIn(jwtTokenProvider.getAccessExpMs())
                 .build();
     }
 

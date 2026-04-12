@@ -13,7 +13,4 @@ public class TokenPairDTO {
 
     @JsonProperty("refreshToken")
     private final String refreshToken;
-
-    @JsonProperty("expiresIn")
-    private final long expiresIn;
 }
