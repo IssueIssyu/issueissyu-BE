@@ -1,6 +1,5 @@
 package issueissyu.backend.global.security;
 
-import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +25,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final RefreshTokenRedisStore refreshTokenRedisStore;
 
     @Override
     protected void doFilterInternal(
@@ -53,10 +51,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             String uid = jwtTokenProvider.parseUid(token);
-            if (!refreshTokenRedisStore.find(uid).filter(StringUtils::hasText).isPresent()) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     uid,

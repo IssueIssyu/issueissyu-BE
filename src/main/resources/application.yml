@@ -61,6 +61,7 @@ spring:
     redis:
       host: ${LOCAL_REDIS_HOST}
       port: ${LOCAL_REDIS_PORT}
+      password: ${LOCAL_REDIS_PASSWORD:}  # 비밀번호 없으면 빈 값
   sql:
     init:
       mode: never

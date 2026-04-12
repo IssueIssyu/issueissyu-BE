@@ -107,7 +107,7 @@ public class AuthService {
         String name = profile.name();
         return userRepository.save(User.builder()
                 .uid(uid)
-                .nickname(name != null && !name.isBlank() ? name : null)
+                .userName(name != null && !name.isBlank() ? name : null)
                 .build());
     }
 }
