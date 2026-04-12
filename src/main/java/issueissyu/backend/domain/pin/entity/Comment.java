@@ -1,6 +1,5 @@
-package issueissyu.backend.domain.pin.entity.mapping;
+package issueissyu.backend.domain.pin.entity;
 
-import issueissyu.backend.domain.pin.entity.Emogji;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -20,25 +19,25 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "user_emogji")
+@Table(name = "\"comment\"")
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UserEmogji extends BaseEntity {
+public class Comment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_emoji_id")
-    private Long userEmojiId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "emoji_id", nullable = false)
-    @ToString.Exclude
-    private Emogji emogji;
+    @Column(name = "comment_id")
+    private Long commentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id", nullable = false)
+    @ToString.Exclude
+    private Pin pin;
 }

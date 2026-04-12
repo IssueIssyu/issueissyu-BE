@@ -17,8 +17,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "communication_pin")
 @Getter
@@ -36,7 +34,4 @@ public class CommunicationPin extends BaseEntity {
     @JoinColumn(name = "pin_id", nullable = false, unique = true)
     @ToString.Exclude
     private Pin pin;
-
-    @Column(name = "write_time", nullable = false)
-    private LocalDateTime writeTime;
 }
