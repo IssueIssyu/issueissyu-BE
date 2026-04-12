@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.user.entity;
 
 import issueissyu.backend.global.entity.BaseEntity;
+import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -12,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Type;
 import org.postgresql.geometric.PGpoint;
 
 @Entity(name = "AppUser")
@@ -27,16 +29,17 @@ public class User extends BaseEntity {
     @Column(name = "uid", nullable = false, length = 36)
     private String uid;
 
-    @Column(unique = true, nullable = false, length = 13)
+    @Column(unique = true, length = 13)
     private String phone;
 
-    @Column(nullable = false, length = 15)
+    @Column(length = 15)
     private String nickname;
 
+    @Type(PGpointUserType.class)
     @Column(name = "user_point", columnDefinition = "point")
     private PGpoint userPoint;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String email;
 
     @Builder.Default

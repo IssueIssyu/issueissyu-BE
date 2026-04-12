@@ -1,15 +1,17 @@
 package issueissyu.backend.global.config;
 
-//todo jwt검증필터 구현시 연결해야함
-//import issueissyu.login.jwt.JwtValidationFilter;
-
+import issueissyu.backend.domain.auth.service.NaverOAuth2LoginSuccessHandler;
+import issueissyu.backend.domain.auth.service.NaverOAuth2UserService;
+import issueissyu.backend.global.security.HttpCookieOAuth2AuthorizationRequestRepository;
+import issueissyu.backend.global.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,52 +30,72 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    //private final JwtValidationFilter jwtValidationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final NaverOAuth2UserService naverOAuth2UserService;
+    private final NaverOAuth2LoginSuccessHandler naverOAuth2LoginSuccessHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository authRequestRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, e) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write(
+                                    "{\"isSuccess\":false,\"code\":\"JWT_401\",\"message\":\"인증이 필요합니다.\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/oauth2/**",             // 카카오 OAuth 리디렉션
-                                "/login/oauth2/**",
-                                "/**", //TODO login미구현상태라 전부 허용해야됨(로컬상에서만 할거라 가능한 일) 로그인 구현시 배포전에 무조건 지울것 (매우중요)
-
-                                "/api/auth/kakao",
-                                "/api/auth/reissue",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
-
-                                "/health"
-                        ).permitAll()
+                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/reissue").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/swagger-resources/**").permitAll()
+                        .requestMatchers("/health", "/error").permitAll()
                         .anyRequest().authenticated()
-                );
-                //.addFilterBefore(jwtValidationFilter, UsernamePasswordAuthenticationFilter.class);
-                //todo 로그인 구현시 확인할 것
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(ep -> ep
+                                .baseUri("/oauth2/authorization")
+                                .authorizationRequestRepository(authRequestRepository)
+                        )
+                        .redirectionEndpoint(ep -> ep
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                        .userInfoEndpoint(ep -> ep
+                                .userService(naverOAuth2UserService)
+                        )
+                        .successHandler(naverOAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, ex) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            String msg = ex.getMessage() != null
+                                    ? ex.getMessage().replace("\"", "'")
+                                    : "인증 처리 중 오류가 발생했습니다";
+                            response.getWriter().write(
+                                    "{\"isSuccess\":false,\"code\":\"NAVER_LOGIN_401\",\"message\":\"네이버 로그인 실패: "
+                                            + msg + "\"}");
+                        })
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-
-
 }

@@ -46,6 +46,6 @@ public class Pin extends BaseEntity {
     private ToneType toneType;
 
     @Builder.Default
-    @Column(name = "visibility_status", nullable = true)
+    @Column(name = "visibility_status")
     private Boolean visibilityStatus = Boolean.TRUE;
 }

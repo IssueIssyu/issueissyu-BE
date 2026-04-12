@@ -39,7 +39,7 @@ public class OAuth extends BaseEntity {
     private User user;
 
     @Column(name = "provider_id", nullable = false)
-    private Long providerId;
+    private String providerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "social_type", nullable = false)

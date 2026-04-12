@@ -36,7 +36,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 
 
-	//db (compile: PGpoint 등 JDBC 타입을 엔터티에서 참조)
+	//db
 	implementation 'org.postgresql:postgresql'
 
 	//redis
