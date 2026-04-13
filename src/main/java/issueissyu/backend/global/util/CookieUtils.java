@@ -1,19 +1,25 @@
 package issueissyu.backend.global.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 
 public final class CookieUtils {
+
+    private static final ObjectMapper OBJECT_MAPPER;
+
+    static {
+        OBJECT_MAPPER = new ObjectMapper();
+        OBJECT_MAPPER.registerModules(
+                SecurityJackson2Modules.getModules(CookieUtils.class.getClassLoader())
+        );
+    }
 
     private CookieUtils() {
     }
@@ -46,22 +52,19 @@ public final class CookieUtils {
     }
 
     public static String serialize(Object object) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(object);
-            return Base64.getUrlEncoder().encodeToString(baos.toByteArray());
-        } catch (IOException e) {
+        try {
+            byte[] jsonBytes = OBJECT_MAPPER.writeValueAsBytes(object);
+            return Base64.getUrlEncoder().encodeToString(jsonBytes);
+        } catch (Exception e) {
             throw new IllegalStateException("쿠키 직렬화 실패", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static <T> T deserialize(Cookie cookie, Class<T> cls) {
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(
-                Base64.getUrlDecoder().decode(cookie.getValue()));
-             ObjectInputStream ois = new ObjectInputStream(bais)) {
-            return cls.cast(ois.readObject());
-        } catch (IOException | ClassNotFoundException e) {
+        try {
+            byte[] jsonBytes = Base64.getUrlDecoder().decode(cookie.getValue());
+            return OBJECT_MAPPER.readValue(jsonBytes, cls);
+        } catch (Exception e) {
             throw new IllegalStateException("쿠키 역직렬화 실패", e);
         }
     }
