@@ -2,6 +2,7 @@ package issueissyu.backend.global.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         try {
-            String token = resolveBearerToken(request);
+            String token = resolveToken(request);
             if (!StringUtils.hasText(token)) {
                 filterChain.doFilter(request, response);
                 return;
@@ -70,11 +71,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private static String resolveBearerToken(HttpServletRequest request) {
+    private static String resolveToken(HttpServletRequest request) {
+        // Authorization 헤더 우선 (API 클라이언트 호환)
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
-            return null;
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7).trim();
         }
-        return header.substring(7).trim();
+        // HttpOnly 쿠키 폴백 (브라우저 OAuth2 로그인 이후 흐름)
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

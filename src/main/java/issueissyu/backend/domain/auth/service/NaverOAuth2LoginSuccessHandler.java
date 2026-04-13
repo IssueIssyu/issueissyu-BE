@@ -50,21 +50,19 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
             refreshTokenRedisStore.save(uid, "naver", refreshToken,
                     Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
-            // refreshToken → HttpOnly 쿠키
-            Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
-            response.addCookie(refreshCookie);
+            // accessToken + refreshToken → HttpOnly 쿠키
+            CookieUtils.addCookie(response, "accessToken", accessToken,
+                    (int) (jwtTokenProvider.getAccessExpMs() / 1000));
+            CookieUtils.addCookie(response, "refreshToken", refreshToken,
+                    (int) (jwtTokenProvider.getRefreshExpMs() / 1000)); // 14일
 
             // OAuth2 시작 시 전달된 redirect_uri 쿠키 우선 사용, 없으면 기본값
             String targetBaseUrl = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
                     .map(Cookie::getValue)
                     .orElse(defaultRedirectUri);
 
-            // accessToken + isNew → URL 쿼리 파라미터
+            // 민감하지 않은 isNew 플래그만 URL 파라미터로 전달
             String targetUrl = UriComponentsBuilder.fromUriString(targetBaseUrl)
-                    .queryParam("accessToken", accessToken)
                     .queryParam("isNew", navResult.isNew())
                     .build().toUriString();
 
