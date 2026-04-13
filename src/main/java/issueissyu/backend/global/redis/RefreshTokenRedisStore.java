@@ -8,8 +8,6 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -54,8 +52,6 @@ public class RefreshTokenRedisStore {
             try (Cursor<byte[]> cursor = connection.scan(options)) {
                 cursor.forEachRemaining(
                         key -> keys.add(new String(key, StandardCharsets.UTF_8)));
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
             }
             return keys;
         }, true);
