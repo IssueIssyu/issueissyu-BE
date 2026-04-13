@@ -3,12 +3,18 @@ package issueissyu.backend.global.redis;
 import issueissyu.backend.domain.user.entity.RefreshToken;
 import issueissyu.backend.domain.user.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 // Redis 리프레시 토큰 저장소.
 // 키 형식: token_redis:{uid}:{provider}
@@ -36,10 +42,26 @@ public class RefreshTokenRedisStore {
     }
 
     // 특정 유저의 모든 소셜 토큰 삭제 (전체 로그아웃·회원탈퇴)
+    // KEYS 대신 SCAN을 사용해 Redis 블로킹 방지
     public void deleteAll(String uid) {
-        Set<String> keys = stringRedisTemplate.keys(KEY_PREFIX + uid + ":*");
-        if (keys != null && !keys.isEmpty()) {
-            stringRedisTemplate.delete(keys);
+        ScanOptions options = ScanOptions.scanOptions()
+                .match(KEY_PREFIX + uid + ":*")
+                .count(100)
+                .build();
+
+        List<String> keysToDelete = stringRedisTemplate.execute(connection -> {
+            List<String> keys = new ArrayList<>();
+            try (Cursor<byte[]> cursor = connection.scan(options)) {
+                cursor.forEachRemaining(
+                        key -> keys.add(new String(key, StandardCharsets.UTF_8)));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return keys;
+        }, true);
+
+        if (keysToDelete != null && !keysToDelete.isEmpty()) {
+            stringRedisTemplate.delete(keysToDelete);
         }
     }
 }
