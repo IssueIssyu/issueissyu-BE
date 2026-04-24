@@ -29,7 +29,7 @@ public class AuthService {
     private final RefreshTokenRedisStore refreshTokenRedisStore;
 
     @Transactional
-    public NaverUserResult findOrCreateNaverUser(NaverUserProfile profile) {
+    public NaverUserResult findOrCreateDevNaverUser(NaverUserProfile profile) {
         String providerId = profile.id();
         if (providerId == null || providerId.isBlank()) {
             throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
@@ -42,7 +42,7 @@ public class AuthService {
             return new NaverUserResult(existing.get().getUser(), false);
         }
 
-        User user = createNewNaverUser(profile);
+        User user = createNewDevNaverUser(profile);
         oAuthRepository.save(OAuth.builder()
                 .user(user)
                 .providerId(providerId)
@@ -105,7 +105,7 @@ public class AuthService {
         userRepository.deleteById(uid);
     }
 
-    private User createNewNaverUser(NaverUserProfile profile) {
+    private User createNewDevNaverUser(NaverUserProfile profile) {
         String uid  = AppUuid.newUid();
         String name = profile.name();
         return userRepository.save(User.builder()

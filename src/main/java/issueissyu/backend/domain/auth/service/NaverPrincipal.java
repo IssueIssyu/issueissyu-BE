@@ -10,16 +10,16 @@ import java.util.Map;
 
 public class NaverPrincipal implements OAuth2User {
 
-    private final NaverUserResult navResult;
+    private final NaverUserResult devNaverUserResult;
     private final Map<String, Object> attributes;
 
-    public NaverPrincipal(NaverUserResult navResult, Map<String, Object> attributes) {
-        this.navResult = navResult;
+    public NaverPrincipal(NaverUserResult devNaverUserResult, Map<String, Object> attributes) {
+        this.devNaverUserResult = devNaverUserResult;
         this.attributes = attributes;
     }
 
-    public NaverUserResult getNavResult() {
-        return navResult;
+    public NaverUserResult getDevNaverUserResult() {
+        return devNaverUserResult;
     }
 
     @Override
@@ -34,6 +34,6 @@ public class NaverPrincipal implements OAuth2User {
 
     @Override
     public String getName() {
-        return navResult.user().getUid();
+        return devNaverUserResult.user().getUid();
     }
 }

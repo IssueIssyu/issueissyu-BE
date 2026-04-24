@@ -31,8 +31,8 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final NaverOAuth2UserService naverOAuth2UserService;
-    private final NaverOAuth2LoginSuccessHandler naverOAuth2LoginSuccessHandler;
+    private final NaverOAuth2UserService devNaverOAuth2UserService;
+    private final NaverOAuth2LoginSuccessHandler devNaverOAuth2LoginSuccessHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository authRequestRepository;
 
     @Bean
@@ -51,7 +51,7 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+                        .requestMatchers("/dev/oauth2/**", "/dev/login/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
                                 "/v3/api-docs/**", "/swagger-resources/**").permitAll()
@@ -60,16 +60,16 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(ep -> ep
-                                .baseUri("/oauth2/authorization")
+                                .baseUri("/dev/oauth2/authorization")
                                 .authorizationRequestRepository(authRequestRepository)
                         )
                         .redirectionEndpoint(ep -> ep
-                                .baseUri("/login/oauth2/code/*")
+                                .baseUri("/dev/login/oauth2/code/*")
                         )
                         .userInfoEndpoint(ep -> ep
-                                .userService(naverOAuth2UserService)
+                                .userService(devNaverOAuth2UserService)
                         )
-                        .successHandler(naverOAuth2LoginSuccessHandler)
+                        .successHandler(devNaverOAuth2LoginSuccessHandler)
                         .failureHandler((request, response, ex) -> {
                             response.setContentType("application/json;charset=UTF-8");
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

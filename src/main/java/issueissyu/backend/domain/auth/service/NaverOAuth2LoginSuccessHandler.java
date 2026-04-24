@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.auth.service;
 
+import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import issueissyu.backend.global.security.JwtTokenProvider;
@@ -18,36 +19,38 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.time.Duration;
 
-import static issueissyu.backend.global.security.HttpCookieOAuth2AuthorizationRequestRepository.REDIRECT_URI_PARAM_COOKIE_NAME;
+import static issueissyu.backend.global.security.HttpCookieOAuth2AuthorizationRequestRepository.DEV_REDIRECT_URI_PARAM_COOKIE_NAME;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
+    private static final String DEV_NAVER_PROVIDER = SocialType.NAVER.name().toLowerCase();
+
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
-    private final HttpCookieOAuth2AuthorizationRequestRepository authRequestRepository;
+    private final HttpCookieOAuth2AuthorizationRequestRepository devAuthRequestRepository;
 
-    @Value("${app.oauth2.redirect-uri:http://localhost:8080/login/callback}")
-    private String defaultRedirectUri;
+    @Value("${app.dev-oauth2.redirect-uri:http://localhost:8080/dev/login/callback}")
+    private String devDefaultRedirectUri;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        authRequestRepository.removeAuthorizationRequestCookies(request, response);
+        devAuthRequestRepository.removeDevAuthorizationRequestCookies(request, response);
 
         try {
-            NaverPrincipal principal = (NaverPrincipal) authentication.getPrincipal();
-            NaverUserResult navResult = principal.getNavResult();
-            String uid = navResult.user().getUid();
+            NaverPrincipal devNaverPrincipal = (NaverPrincipal) authentication.getPrincipal();
+            NaverUserResult devNaverUserResult = devNaverPrincipal.getDevNaverUserResult();
+            String uid = devNaverUserResult.user().getUid();
 
             // JWT 발급 + Redis 저장 (key: token_redis:{uid}:naver)
             String accessToken  = jwtTokenProvider.createAccessToken(uid);
-            String refreshToken = jwtTokenProvider.createRefreshToken(uid, "naver");
-            refreshTokenRedisStore.save(uid, "naver", refreshToken,
+            String refreshToken = jwtTokenProvider.createRefreshToken(uid, DEV_NAVER_PROVIDER);
+            refreshTokenRedisStore.save(uid, DEV_NAVER_PROVIDER, refreshToken,
                     Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
             // accessToken + refreshToken → HttpOnly 쿠키
@@ -56,14 +59,14 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
             CookieUtils.addCookie(response, "refreshToken", refreshToken,
                     (int) (jwtTokenProvider.getRefreshExpMs() / 1000)); // 14일
 
-            // OAuth2 시작 시 전달된 redirect_uri 쿠키 우선 사용, 없으면 기본값
-            String targetBaseUrl = CookieUtils.getCookie(request, REDIRECT_URI_PARAM_COOKIE_NAME)
+            // Dev OAuth2 시작 시 전달된 dev_redirect_uri 쿠키 우선 사용, 없으면 기본값
+            String targetBaseUrl = CookieUtils.getCookie(request, DEV_REDIRECT_URI_PARAM_COOKIE_NAME)
                     .map(Cookie::getValue)
-                    .orElse(defaultRedirectUri);
+                    .orElse(devDefaultRedirectUri);
 
-            // 민감하지 않은 isNew 플래그만 URL 파라미터로 전달
+            // 민감하지 않은 devIsNew 플래그만 URL 파라미터로 전달
             String targetUrl = UriComponentsBuilder.fromUriString(targetBaseUrl)
-                    .queryParam("isNew", navResult.isNew())
+                    .queryParam("devIsNew", devNaverUserResult.isNew())
                     .build().toUriString();
 
             log.info("OAuth2 로그인 성공 → redirect: {}", targetUrl);

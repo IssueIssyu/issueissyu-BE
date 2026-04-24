@@ -30,11 +30,11 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // 개발용 콜백 확인 페이지
-    // http://localhost:8080/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
-    @GetMapping(value = "/login/callback", produces = MediaType.TEXT_HTML_VALUE)
-    public ResponseEntity<String> loginCallback(
-            @RequestParam(required = false) Boolean isNew,
+    // 개발용 Dev Naver 콜백 확인 페이지
+    // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
+    @GetMapping(value = "/dev/login/callback", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> devLoginCallback(
+            @RequestParam(required = false) Boolean devIsNew,
             HttpServletRequest request) {
 
         Cookie[] cookies = request.getCookies() != null ? request.getCookies() : new Cookie[0];
@@ -79,7 +79,7 @@ public class AuthController {
                 </head>
                 <body>
                   <div class="card">
-                    <h1>✅ 네이버 로그인 성공</h1>
+                    <h1>✅ DEV 네이버 로그인 성공</h1>
                     <span class="badge %s">%s</span>
 
                     <label>Access Token</label>
@@ -95,8 +95,8 @@ public class AuthController {
                 </body>
                 </html>
                 """.formatted(
-                Boolean.TRUE.equals(isNew) ? "new" : "old",
-                Boolean.TRUE.equals(isNew) ? "🆕 신규 가입" : "🔄 기존 회원",
+                Boolean.TRUE.equals(devIsNew) ? "new" : "old",
+                Boolean.TRUE.equals(devIsNew) ? "🆕 신규 가입" : "🔄 기존 회원",
                 accessToken != null ? accessToken : "(토큰 없음)",
                 refreshToken
         );

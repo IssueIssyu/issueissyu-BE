@@ -23,16 +23,16 @@ public class NaverOAuth2UserService extends DefaultOAuth2UserService {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = (Map<String, Object>) attributes.get("response");
+        Map<String, Object> devNaverResponse = (Map<String, Object>) attributes.get("response");
 
-        String id   = (String) response.get("id");
-        String name = (String) response.getOrDefault("name", "");
+        String devNaverId = (String) devNaverResponse.get("id");
+        String devNaverName = (String) devNaverResponse.getOrDefault("name", "");
 
-        log.debug("NaverOAuth2 profile: id={}, name={}", id, name);
+        log.debug("DevNaverOAuth2 profile: id={}, name={}", devNaverId, devNaverName);
 
-        NaverUserProfile profile = new NaverUserProfile(id, name);
-        NaverUserResult navResult = authService.findOrCreateNaverUser(profile);
+        NaverUserProfile profile = new NaverUserProfile(devNaverId, devNaverName);
+        NaverUserResult devNaverUserResult = authService.findOrCreateDevNaverUser(profile);
 
-        return new NaverPrincipal(navResult, attributes);
+        return new NaverPrincipal(devNaverUserResult, attributes);
     }
 }

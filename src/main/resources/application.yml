@@ -13,12 +13,12 @@ spring:
     access-exp-ms: ${JWT_EXPIRATION:3600000} # 1시간
     refresh-exp-ms: ${JWT_REFRESH_EXPIRATION:1209600000} # 14일
 
-# OAuth2 성공 후 프론트로 리다이렉트 URI (.env의 OAUTH2_REDIRECT_URI 로 덮어씌울 수 있음. 나중에 배포하면 리다이랙트 URL 수정할것.)
+# Dev OAuth2 성공 후 프론트로 리다이렉트 URI (.env의 DEV_OAUTH2_REDIRECT_URI 로 덮어씌울 수 있음)
 app:
-  oauth2:
-    # 프론트 연결 전: http://localhost:8080/login/callback (토큰 확인 페이지)
-    # 프론트 연결 후: .env의 OAUTH2_REDIRECT_URI 에 프론트 콜백 URL 설정
-    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8080/login/callback}
+  dev-oauth2:
+    # 프론트 연결 전: http://localhost:8080/dev/login/callback (토큰 확인 페이지)
+    # 프론트 연결 후: .env의 DEV_OAUTH2_REDIRECT_URI 에 프론트 콜백 URL 설정
+    redirect-uri: ${DEV_OAUTH2_REDIRECT_URI:http://localhost:8080/dev/login/callback}
 
 cloud:
   aws:
@@ -81,7 +81,7 @@ spring:
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
             client-authentication-method: client_secret_post
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            redirect-uri: "{baseUrl}/dev/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             client-name: Naver
             scope:
