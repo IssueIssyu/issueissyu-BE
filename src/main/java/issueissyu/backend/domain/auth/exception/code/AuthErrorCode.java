@@ -1,7 +1,6 @@
 package issueissyu.backend.domain.auth.exception.code;
 
 import issueissyu.backend.global.api.code.BaseErrorCode;
-import issueissyu.backend.global.api.code.ReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -21,13 +20,4 @@ public enum AuthErrorCode implements BaseErrorCode {
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
-
-    @Override
-    public ReasonDTO getReason() {
-        return ReasonDTO.builder()
-                .httpStatus(this.httpStatus)
-                .code(this.code)
-                .message(this.message)
-                .build();
-    }
 }

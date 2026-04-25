@@ -29,14 +29,4 @@ public enum GeneralErrorCode implements BaseErrorCode { // 실패
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
-
-    // 응답 코드 상세 정보 return
-    @Override
-    public ReasonDTO getReason() {
-        return ReasonDTO.builder()
-                .httpStatus(this.httpStatus)
-                .code(this.code)
-                .message(this.message)
-                .build();
-    }
 }
