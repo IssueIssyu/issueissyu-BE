@@ -78,8 +78,7 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
                 response.setContentType("application/json;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.getWriter().write(
-                        "{\"isSuccess\":false,\"code\":\"LOGIN_PROCESS_ERROR\",\"message\":\""
-                                + e.getClass().getSimpleName() + ": " + e.getMessage() + "\"}");
+                        "{\"isSuccess\":false,\"code\":\"LOGIN_PROCESS_ERROR\",\"message\":\"로그인 처리 중 오류가 발생했습니다.\"}");
             }
         }
     }
