@@ -9,6 +9,7 @@ import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -24,13 +25,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NaverAppLoginService {
 
-    private static final String NAVER_USER_INFO_URL = "https://openapi.naver.com/v1/nid/me";
+    private static final String NAVER_USER_INFO_PATH = "/v1/nid/me";
     private static final String NAVER_PROVIDER = SocialType.NAVER.name().toLowerCase();
-    private static final RestClient REST_CLIENT = RestClient.create();
 
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
+    @Qualifier("naverRestClient")
+    private final RestClient restClient;
 
     public NaverAppLoginResDTO login(NaverAppLoginReqDTO req) {
         // 네이버 사용자 정보 API 호출 (앱이 발급받은 access_token 사용)
@@ -72,8 +74,8 @@ public class NaverAppLoginService {
     @SuppressWarnings("unchecked")
     private NaverUserProfile fetchNaverUserProfile(String naverAccessToken) {
         try {
-            Map<String, Object> body = REST_CLIENT.get()
-                    .uri(NAVER_USER_INFO_URL)
+            Map<String, Object> body = restClient.get()
+                    .uri(NAVER_USER_INFO_PATH)
                     .header("Authorization", "Bearer " + naverAccessToken)
                     .retrieve()
                     .body(Map.class);
