@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -41,4 +42,8 @@ public class UserTerm extends BaseEntity {
     @JoinColumn(name = "term_id", nullable = false)
     @ToString.Exclude
     private Term term;
+
+    @Builder.Default
+    @Column(name = "is_agreed", nullable = false)
+    private boolean isAgreed = false;
 }

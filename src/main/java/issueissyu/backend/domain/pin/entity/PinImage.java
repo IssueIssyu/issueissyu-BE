@@ -34,9 +34,9 @@ public class PinImage {
     @ToString.Exclude
     private Pin pin;
 
-    @Column(name = "pin_s3_key", nullable = false, length = 255)
+    @Column(name = "pin_s3_key", nullable = false, length = 500)
     private String pinS3Key;
 
-    @Column(name = "pin_s3_url", nullable = false, length = 255)
+    @Column(name = "pin_s3_url", nullable = false, length = 500)
     private String pinS3Url;
 }
