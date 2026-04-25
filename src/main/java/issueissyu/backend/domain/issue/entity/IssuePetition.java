@@ -25,7 +25,8 @@ import lombok.experimental.SuperBuilder;
 public class IssuePetition extends BaseEntity {
 
     @Id
-    @Column(name = "petition_id", length = 255)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "petition_id")
     private String petitionId;
 
     @ManyToOne(fetch = FetchType.LAZY)

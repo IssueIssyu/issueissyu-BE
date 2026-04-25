@@ -37,7 +37,7 @@ dependencies {
 
 
 	//db
-	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.postgresql:postgresql'
 
 	//redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'

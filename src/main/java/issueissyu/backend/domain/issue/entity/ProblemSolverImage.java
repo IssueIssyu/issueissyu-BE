@@ -34,6 +34,6 @@ public class ProblemSolverImage {
     @ToString.Exclude
     private ProblemSolver problemSolver;
 
-    @Column(name = "problem_solver_image_url", nullable = false, length = 255)
+    @Column(name = "problem_solver_image_url", nullable = false, length = 500)
     private String problemSolverImageUrl;
 }

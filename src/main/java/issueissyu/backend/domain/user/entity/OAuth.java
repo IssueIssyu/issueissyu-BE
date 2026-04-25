@@ -2,8 +2,6 @@ package issueissyu.backend.domain.user.entity;
 
 import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.global.entity.BaseEntity;
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,7 +39,7 @@ public class OAuth extends BaseEntity {
     private User user;
 
     @Column(name = "provider_id", nullable = false)
-    private Long providerId;
+    private String providerId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "social_type", nullable = false)

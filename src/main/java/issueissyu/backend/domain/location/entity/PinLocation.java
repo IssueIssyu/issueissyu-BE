@@ -2,6 +2,7 @@ package issueissyu.backend.domain.location.entity;
 
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.global.entity.BaseEntity;
+import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +18,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.Type;
+import org.postgresql.geometric.PGpoint;
 
 @Entity
 @Table(name = "pin_location")
@@ -41,8 +44,9 @@ public class PinLocation extends BaseEntity {
     @ToString.Exclude
     private Location location;
 
-    @Column(name = "pin_point", nullable = false, columnDefinition = "text")
-    private String pinPoint;
+    @Type(PGpointUserType.class)
+    @Column(name = "pin_point", nullable = false, columnDefinition = "point")
+    private PGpoint pinPoint;
 
     @Column(name = "detail_address", nullable = false, length = 150)
     private String detailAddress;
