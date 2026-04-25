@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
-import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
@@ -154,9 +153,6 @@ public class AuthController {
     public ApiResponse<TermResDTO> agreeTerm(@AuthenticationPrincipal String uid,
                                              @Valid @RequestBody TermReqDTO request) {
         TermResDTO result = userCommandService.agreeTerms(uid, request);
-        if (!result.isTerm()) {
-            return ApiResponse.onFailure(AuthErrorCode.TERM_405, result);
-        }
         return ApiResponse.onSuccess(AuthSuccessCode.TERM_200, result);
     }
 }

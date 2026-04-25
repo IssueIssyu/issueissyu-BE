@@ -8,9 +8,6 @@ import lombok.Getter;
 @Builder
 public class TermResDTO {
 
-    @JsonProperty("is_term")
-    private final boolean isTerm;
-
     @JsonProperty("event_alarm_active")
     private final boolean eventAlarmActive;
 

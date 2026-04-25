@@ -1,5 +1,7 @@
 package issueissyu.backend.domain.user.service.command;
 
+import issueissyu.backend.domain.auth.exception.AuthException;
+import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.user.dto.req.TermReqDTO;
 import issueissyu.backend.domain.user.dto.res.TermResDTO;
 import issueissyu.backend.domain.user.entity.Term;
@@ -32,11 +34,10 @@ public class UserCommandServiceImpl implements UserCommandService {
         boolean marketingTerm = Boolean.TRUE.equals(request.getMarketingTerm());
 
         boolean isTerm = serviceTerm && privacyTerm;
-        TermResDTO result = buildResult(isTerm, marketingTerm);
 
-        // 필수 약관 미동의 시 실패 응답(result)만 반환하고 DB 반영은 하지 않는다.
+        // 필수 약관 미동의 시 에러 응답(result=null) 반환
         if (!isTerm) {
-            return result;
+            throw AuthException.of(AuthErrorCode.TERM_405);
         }
 
         User user = userRepository.findById(uid)
@@ -50,7 +51,7 @@ public class UserCommandServiceImpl implements UserCommandService {
         // MARKETING 동의 여부에 따라 4개 알람 상태를 동일하게 반영
         user.updateAlarmAgreement(marketingTerm);
 
-        return result;
+        return buildResult(marketingTerm);
     }
 
     private void upsertUserTerm(User user, TermName termName, boolean agreed) {
@@ -68,9 +69,8 @@ public class UserCommandServiceImpl implements UserCommandService {
         userTermRepository.save(userTerm);
     }
 
-    private static TermResDTO buildResult(boolean isTerm, boolean marketingTerm) {
+    private static TermResDTO buildResult(boolean marketingTerm) {
         return TermResDTO.builder()
-                .isTerm(isTerm)
                 .eventAlarmActive(marketingTerm)
                 .likeAlarmActive(marketingTerm)
                 .hotAlarmActive(marketingTerm)
