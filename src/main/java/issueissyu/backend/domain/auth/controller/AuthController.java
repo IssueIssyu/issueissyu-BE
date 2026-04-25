@@ -4,11 +4,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
+import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
 import issueissyu.backend.domain.auth.exception.code.AuthSuccessCode;
 import issueissyu.backend.domain.auth.service.AuthService;
+import issueissyu.backend.domain.user.dto.req.TermReqDTO;
+import issueissyu.backend.domain.user.dto.res.TermResDTO;
+import issueissyu.backend.domain.user.service.command.UserCommandService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +37,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final NaverAppLoginService naverAppLoginService;
+    private final UserCommandService userCommandService;
 
     // 개발용 Dev Naver 콜백 확인 페이지
     // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
@@ -141,5 +146,17 @@ public class AuthController {
     public ApiResponse<Void> logout(@AuthenticationPrincipal String uid) {
         authService.logout(uid);
         return ApiResponse.onSuccess(AuthSuccessCode.LOGOUT_200, null);
+    }
+
+    @Operation(summary = "약관 동의",
+            description = "SERVICE, PRIVACY(필수), LOCATION, MARKETING(선택) 약관 동의 정보를 저장합니다.")
+    @PostMapping("/auth/term")
+    public ApiResponse<TermResDTO> agreeTerm(@AuthenticationPrincipal String uid,
+                                             @Valid @RequestBody TermReqDTO request) {
+        TermResDTO result = userCommandService.agreeTerms(uid, request);
+        if (!result.isTerm()) {
+            return ApiResponse.onFailure(AuthErrorCode.TERM_405, result);
+        }
+        return ApiResponse.onSuccess(AuthSuccessCode.TERM_200, result);
     }
 }

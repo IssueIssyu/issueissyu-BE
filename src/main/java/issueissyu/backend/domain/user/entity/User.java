@@ -60,4 +60,11 @@ public class User extends BaseEntity {
     @Builder.Default
     @Column(name = "store_alarm_active", nullable = false)
     private boolean storeAlarmActive = false;
+
+    public void updateAlarmAgreement(boolean active) {
+        this.eventAlarmActive = active;
+        this.likeAlarmActive = active;
+        this.hotAlarmActive = active;
+        this.storeAlarmActive = active;
+    }
 }
