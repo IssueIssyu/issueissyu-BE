@@ -37,7 +37,7 @@ public class UserCommandServiceImpl implements UserCommandService {
 
         // 필수 약관 미동의 시 에러 응답(result=null) 반환
         if (!isTerm) {
-            throw AuthException.of(AuthErrorCode.TERM_405);
+            throw AuthException.of(AuthErrorCode.TERM_400);
         }
 
         User user = userRepository.findById(uid)
