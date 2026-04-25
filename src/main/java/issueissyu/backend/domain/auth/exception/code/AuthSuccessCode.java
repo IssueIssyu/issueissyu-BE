@@ -10,6 +10,10 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AuthSuccessCode implements BaseSuccessCode {
 
+    // 네이버 앱 로그인 성공 코드
+    NAVER_LOGIN_200_1(HttpStatus.OK, "NAVER_LOGIN_200_1", "첫 로그인에 성공했습니다."),
+    NAVER_LOGIN_200_2(HttpStatus.OK, "NAVER_LOGIN_200_2", "로그인에 성공했습니다."),
+
     REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다."),
     LOGOUT_200(HttpStatus.OK, "LOGOUT_200", "로그아웃 되었습니다."),
     SIGNOUT_200(HttpStatus.OK, "SIGNOUT_200", "회원탈퇴 되었습니다.");

@@ -2,6 +2,9 @@ package issueissyu.backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
+import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
 import issueissyu.backend.domain.auth.exception.code.AuthSuccessCode;
@@ -29,9 +32,11 @@ import java.util.Arrays;
 public class AuthController {
 
     private final AuthService authService;
+    private final NaverAppLoginService naverAppLoginService;
 
     // 개발용 Dev Naver 콜백 확인 페이지
     // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
+    @Operation(hidden = true)
     @GetMapping(value = "/dev/login/callback", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> devLoginCallback(
             @RequestParam(required = false) Boolean devIsNew,
@@ -104,6 +109,18 @@ public class AuthController {
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(html);
+    }
+
+    @Operation(summary = "네이버 앱 로그인")
+    @PostMapping("/auth/login/naver")
+    public ApiResponse<NaverAppLoginResDTO> naverAppLogin(
+            @Valid @RequestBody NaverAppLoginReqDTO request) {
+
+        NaverAppLoginResDTO result = naverAppLoginService.login(request);
+        AuthSuccessCode successCode = result.isNew()
+                ? AuthSuccessCode.NAVER_LOGIN_200_1
+                : AuthSuccessCode.NAVER_LOGIN_200_2;
+        return ApiResponse.onSuccess(successCode, result);
     }
 
     @Operation(summary = "토큰 재발급", description = "refresh token으로 access·refresh 토큰을 재발급합니다.")

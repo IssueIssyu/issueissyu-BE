@@ -13,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+// 기존에 쓰던 JwtUtil과 동일한 기능 수행한다고 생각하면 편함.
 @Component
 public class JwtTokenProvider {
 

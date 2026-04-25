@@ -105,6 +105,40 @@ public class AuthService {
         userRepository.deleteById(uid);
     }
 
+    // 네이버 앱 로그인
+    @Transactional
+    public NaverUserResult findOrCreateNaverAppUser(NaverUserProfile profile) {
+        String providerId = profile.id();
+        if (providerId == null || providerId.isBlank()) {
+            throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
+        }
+
+        Optional<OAuth> existing = oAuthRepository.findBySocialTypeAndProviderIdWithUser(
+                SocialType.NAVER, providerId);
+
+        if (existing.isPresent()) {
+            return new NaverUserResult(existing.get().getUser(), false);
+        }
+
+        User user = createNewNaverAppUser(profile);
+        oAuthRepository.save(OAuth.builder()
+                .user(user)
+                .providerId(providerId)
+                .socialType(SocialType.NAVER)
+                .build());
+        return new NaverUserResult(user, true);
+    }
+
+    private User createNewNaverAppUser(NaverUserProfile profile) {
+        String uid  = AppUuid.newUid();
+        String name = profile.name();
+        return userRepository.save(User.builder()
+                .uid(uid)
+                .userName(name != null && !name.isBlank() ? name : null)
+                .build());
+    }
+
+    // 네이버 웹(DEV) 로그인
     private User createNewDevNaverUser(NaverUserProfile profile) {
         String uid  = AppUuid.newUid();
         String name = profile.name();
