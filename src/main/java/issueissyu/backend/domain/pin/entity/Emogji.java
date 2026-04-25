@@ -31,4 +31,10 @@ public class Emogji {
     @Enumerated(EnumType.STRING)
     @Column(name = "emoji_type", nullable = false)
     private EmojiType emojiType;
+
+    @Column(name = "product_id", length = 100)
+    private String productId;
+
+    @Column(name = "emoji_image_url", length = 1000)
+    private String emojiImageUrl;
 }
