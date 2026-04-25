@@ -31,6 +31,7 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
     private final HttpCookieOAuth2AuthorizationRequestRepository devAuthRequestRepository;
+    private final CookieUtils cookieUtils;
 
     @Value("${app.dev-oauth2.redirect-uri:http://localhost:8080/dev/login/callback}")
     private String devDefaultRedirectUri;
@@ -54,13 +55,13 @@ public class NaverOAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSucce
                     Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
             // accessToken + refreshToken → HttpOnly 쿠키
-            CookieUtils.addCookie(response, "accessToken", accessToken,
+            cookieUtils.addCookie(response, "accessToken", accessToken,
                     (int) (jwtTokenProvider.getAccessExpMs() / 1000));
-            CookieUtils.addCookie(response, "refreshToken", refreshToken,
+            cookieUtils.addCookie(response, "refreshToken", refreshToken,
                     (int) (jwtTokenProvider.getRefreshExpMs() / 1000)); // 14일
 
             // Dev OAuth2 시작 시 전달된 dev_redirect_uri 쿠키 우선 사용, 없으면 기본값
-            String targetBaseUrl = CookieUtils.getCookie(request, DEV_REDIRECT_URI_PARAM_COOKIE_NAME)
+            String targetBaseUrl = cookieUtils.getCookie(request, DEV_REDIRECT_URI_PARAM_COOKIE_NAME)
                     .map(Cookie::getValue)
                     .orElse(devDefaultRedirectUri);
 
