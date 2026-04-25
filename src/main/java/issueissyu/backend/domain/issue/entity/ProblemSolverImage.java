@@ -36,4 +36,10 @@ public class ProblemSolverImage {
 
     @Column(name = "problem_solver_image_url", nullable = false, length = 500)
     private String problemSolverImageUrl;
+
+    @Column(name = "problem_solver_image_s3_key", nullable = false, length = 500)
+    private String problemSolverImageS3Key;
+
+    @Column(name = "problem_solver_image_s3_url", nullable = false, length = 500)
+    private String problemSolverImageS3Url;
 }
