@@ -17,10 +17,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class UserCommandServiceImpl implements UserCommandService {
+
+    private static final List<TermName> TARGET_TERMS = List.of(
+            TermName.SERVICE,
+            TermName.PRIVACY,
+            TermName.LOCATION,
+            TermName.MARKETING
+    );
 
     private final UserRepository userRepository;
     private final TermRepository termRepository;
@@ -43,30 +55,57 @@ public class UserCommandServiceImpl implements UserCommandService {
         User user = userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
-        upsertUserTerm(user, TermName.SERVICE, serviceTerm);
-        upsertUserTerm(user, TermName.PRIVACY, privacyTerm);
-        upsertUserTerm(user, TermName.LOCATION, locationTerm);
-        upsertUserTerm(user, TermName.MARKETING, marketingTerm);
+        Map<TermName, Boolean> agreements = new EnumMap<>(TermName.class);
+        agreements.put(TermName.SERVICE, serviceTerm);
+        agreements.put(TermName.PRIVACY, privacyTerm);
+        agreements.put(TermName.LOCATION, locationTerm);
+        agreements.put(TermName.MARKETING, marketingTerm);
+
+        // term 4종류를 IN 조회로 한 번에 로드
+        List<Term> terms = termRepository.findAllByTermNameIn(TARGET_TERMS);
+        Map<TermName, Term> termByName = new EnumMap<>(TermName.class);
+        for (Term term : terms) {
+            termByName.put(term.getTermName(), term);
+        }
+
+        // term 마스터 데이터가 비어있는 경우를 대비해 누락된 항목만 생성
+        List<Term> missingTerms = TARGET_TERMS.stream()
+                .filter(termName -> !termByName.containsKey(termName))
+                .map(termName -> Term.builder().termName(termName).build())
+                .toList();
+        if (!missingTerms.isEmpty()) {
+            List<Term> savedTerms = termRepository.saveAll(missingTerms);
+            for (Term term : savedTerms) {
+                termByName.put(term.getTermName(), term);
+            }
+        }
+
+        // user_term도 IN 조회로 한 번에 로드
+        List<UserTerm> existingUserTerms = userTermRepository.findAllByUserAndTermIn(user, termByName.values());
+        Map<TermName, UserTerm> userTermByName = new EnumMap<>(TermName.class);
+        for (UserTerm userTerm : existingUserTerms) {
+            userTermByName.put(userTerm.getTerm().getTermName(), userTerm);
+        }
+
+        // 메모리 상에서 upsert 대상 구성 후 batch save
+        List<UserTerm> toSave = new ArrayList<>();
+        for (TermName termName : TARGET_TERMS) {
+            UserTerm userTerm = userTermByName.get(termName);
+            if (userTerm == null) {
+                userTerm = UserTerm.builder()
+                        .user(user)
+                        .term(termByName.get(termName))
+                        .build();
+            }
+            userTerm.changeAgreement(Boolean.TRUE.equals(agreements.get(termName)));
+            toSave.add(userTerm);
+        }
+        userTermRepository.saveAll(toSave);
 
         // MARKETING 동의 여부에 따라 4개 알람 상태를 동일하게 반영
         user.updateAlarmAgreement(marketingTerm);
 
         return buildResult(marketingTerm);
-    }
-
-    private void upsertUserTerm(User user, TermName termName, boolean agreed) {
-        Term term = termRepository.findByTermName(termName)
-                .orElseGet(() -> termRepository.save(
-                        Term.builder().termName(termName).build()
-                ));
-
-        UserTerm userTerm = userTermRepository.findByUserAndTerm(user, term)
-                .orElseGet(() -> UserTerm.builder()
-                        .user(user)
-                        .term(term)
-                        .build());
-        userTerm.changeAgreement(agreed);
-        userTermRepository.save(userTerm);
     }
 
     private static TermResDTO buildResult(boolean marketingTerm) {
