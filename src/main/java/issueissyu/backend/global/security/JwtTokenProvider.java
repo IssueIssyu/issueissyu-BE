@@ -1,10 +1,8 @@
 package issueissyu.backend.global.security;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import issueissyu.backend.global.config.properties.JwtProperties;
 import org.springframework.stereotype.Component;
@@ -60,8 +58,7 @@ public class JwtTokenProvider {
         try {
             parseClaims(token);
             return true;
-        } catch (ExpiredJwtException | MalformedJwtException | UnsupportedJwtException
-                 | IllegalArgumentException e) {
+        } catch (JwtException | SecurityException | IllegalArgumentException e) {
             return false;
         }
     }
