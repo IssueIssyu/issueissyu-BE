@@ -4,19 +4,33 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class CookieUtils {
 
     private final ObjectMapper objectMapper;
+    private final boolean cookieSecure;
+    private final String cookieSameSite;
+
+    public CookieUtils(
+            ObjectMapper objectMapper,
+            @Value("${app.cookie.secure:true}") boolean cookieSecure,
+            @Value("${app.cookie.same-site:Lax}") String cookieSameSite
+    ) {
+        this.objectMapper = objectMapper;
+        this.cookieSecure = cookieSecure;
+        this.cookieSameSite = cookieSameSite;
+    }
 
     public Optional<Cookie> getCookie(HttpServletRequest request, String name) {
         if (request.getCookies() == null) return Optional.empty();
@@ -26,21 +40,28 @@ public class CookieUtils {
     }
 
     public void addCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(maxAgeSeconds);
-        response.addCookie(cookie);
+        ResponseCookie responseCookie = ResponseCookie.from(name, value)
+                .path("/")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSameSite)
+                .maxAge(Duration.ofSeconds(maxAgeSeconds))
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 
     public void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
         if (request.getCookies() == null) return;
         for (Cookie cookie : request.getCookies()) {
             if (name.equals(cookie.getName())) {
-                cookie.setValue("");
-                cookie.setPath("/");
-                cookie.setMaxAge(0);
-                response.addCookie(cookie);
+                ResponseCookie responseCookie = ResponseCookie.from(name, "")
+                        .path("/")
+                        .httpOnly(true)
+                        .secure(cookieSecure)
+                        .sameSite(cookieSameSite)
+                        .maxAge(Duration.ZERO)
+                        .build();
+                response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
             }
         }
     }
