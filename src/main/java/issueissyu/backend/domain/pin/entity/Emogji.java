@@ -32,7 +32,7 @@ public class Emogji {
     @Column(name = "emoji_type", nullable = false)
     private EmojiType emojiType;
 
-    @Column(name = "product_id", length = 100)
+    @Column(name = "product_id", length = 100, unique = true)
     private String productId;
 
     @Column(name = "emoji_image_url", length = 1000)
