@@ -10,7 +10,7 @@ import issueissyu.backend.domain.billing.service.BillingFacade;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,10 +39,9 @@ public class BillingController {
     @Operation(summary = "결제 검증 및 이모티콘 지급")
     @PostMapping("/purchases/verify")
     public ApiResponse<Long> verifyPurchase(
-            Authentication authentication,
+            @AuthenticationPrincipal String uid,
             @Valid @RequestBody VerifyPurchaseReq request
     ) {
-        String uid = authentication.getName();
         return ApiResponse.onSuccess(
                 BillingSuccessCode.VERIFY_PURCHASE_SUCCESS,
                 billingFacade.verifyPurchase(uid, request)
@@ -51,8 +50,7 @@ public class BillingController {
 
     @Operation(summary = "내 구매 이모티콘 목록 조회")
     @GetMapping("/purchases/me")
-    public ApiResponse<MyPurchasesRes> getMyPurchases(Authentication authentication) {
-        String uid = authentication.getName();
+    public ApiResponse<MyPurchasesRes> getMyPurchases(@AuthenticationPrincipal String uid) {
         return ApiResponse.onSuccess(
                 BillingSuccessCode.GET_MY_PURCHASES_SUCCESS,
                 billingFacade.getMyPurchases(uid)

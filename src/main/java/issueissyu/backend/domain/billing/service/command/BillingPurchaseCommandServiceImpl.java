@@ -9,6 +9,7 @@ import issueissyu.backend.domain.pin.entity.mapping.UserEmogji;
 import issueissyu.backend.domain.pin.repository.EmogjiRepository;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
         }
 
         User user = userRepository.findById(uid)
-                .orElseThrow(() -> GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID));
+                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
         if (googleVerificationEnabled) {
             verifyWithGooglePlay(request.getProductId(), request.getPurchaseToken());
@@ -49,9 +50,9 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
     }
 
     private void verifyWithGooglePlay(String productId, String purchaseToken) {
-        //프론트 연결 후 삭제
-        // Google Play 실검증은 프론트 결제 흐름/콘솔 연동 완료 후 활성화한다.
-        // 아래 블록 주석 해제 시 동작하도록 코드만 미리 작성해 둠.
+        
+        // Google Play 실검증은 프론트 결제 흐름/콘솔 연동 완료 후 활성화
+        // 아래 블록 주석 해제 시 동작하도록 코드만 미리 작성해 둠
         throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
 
         /*
