@@ -1,5 +1,8 @@
 package issueissyu.backend.domain.billing.service.command;
 
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.services.androidpublisher.AndroidPublisher;
+import com.google.api.services.androidpublisher.model.ProductPurchase;
 import issueissyu.backend.domain.billing.converter.BillingConverter;
 import issueissyu.backend.domain.billing.dto.req.VerifyPurchaseReq;
 import issueissyu.backend.domain.billing.exception.code.BillingErrorCode;
@@ -18,6 +21,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,9 +32,7 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
     private final UserEmogjiRepository userEmogjiRepository;
     private final EmogjiRepository emogjiRepository;
     private final UserRepository userRepository;
-    // Google Play 검증 코드 활성화 시 AndroidPublisher 타입으로 교체
-    //프론트 연결 후 삭제
-    private final ObjectProvider<?> androidPublisherProvider;
+    private final ObjectProvider<AndroidPublisher> androidPublisherProvider;
 
     @Value("${billing.google-verification-enabled:false}")
     private boolean googleVerificationEnabled;
@@ -63,12 +66,6 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
     }
 
     private void verifyWithGooglePlay(String productId, String purchaseToken) {
-        
-        // Google Play 실검증은 프론트 결제 흐름/콘솔 연동 완료 후 활성화
-        // 아래 블록 주석 해제 시 동작하도록 코드만 미리 작성해 둠
-        throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
-
-        /*
         AndroidPublisher androidPublisher = androidPublisherProvider.getIfAvailable();
         if (androidPublisher == null) {
             log.error("[Billing] AndroidPublisher Bean이 없습니다. 설정/의존성을 확인하세요.");
@@ -93,6 +90,10 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
                 throw GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
             }
 
+            if (purchase.getProductId() != null && !productId.equals(purchase.getProductId())) {
+                throw GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
+            }
+
             // consume/acknowledge는 앱 정책 확정 후 추가
         } catch (GoogleJsonResponseException e) {
             int statusCode = e.getStatusCode();
@@ -105,6 +106,5 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
             log.error("[Billing] Google Play API 통신 실패 - {}", e.getMessage());
             throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         }
-        */
     }
 }

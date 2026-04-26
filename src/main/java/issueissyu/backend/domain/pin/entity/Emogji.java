@@ -36,7 +36,7 @@ public class Emogji {
     @Column(name = "product_id", length = 100, unique = true)
     private String productId;
 
-    @Column(name = "emoji_image_url", length = 1000)
+    @Column(name = "emoji_image_url", length = 1000, nullable = false)
     private String emojiImageUrl;
 
     @Default
