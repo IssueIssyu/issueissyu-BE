@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +21,10 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "user_emogji")
+@Table(
+        name = "user_emogji",
+        uniqueConstraints = @UniqueConstraint(columnNames = "purchase_token")
+)
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -41,4 +45,7 @@ public class UserEmogji extends BaseEntity {
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
     private User user;
+
+    @Column(name = "purchase_token", nullable = false, length = 500)
+    private String purchaseToken;
 }
