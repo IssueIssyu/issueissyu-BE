@@ -10,6 +10,10 @@ import java.util.List;
 
 public class BillingConverter {
 
+    private BillingConverter() {
+        throw new IllegalStateException("Utility class");
+    }
+
     // Emoji -> ProductRes 변환용
     public static ProductRes toProductRes(Emogji emogji) {
         return ProductRes.builder()
