@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -21,11 +21,11 @@ import java.security.GeneralSecurityException;
 public class GooglePlayConfig {
 
     @Value("${google.play.credentials-path}")
-    private String credentialsPath;
+    private Resource credentialsResource;
 
     @Bean
     public AndroidPublisher androidPublisher() throws IOException, GeneralSecurityException {
-        try (InputStream inputStream = new FileInputStream(credentialsPath)) {
+        try (InputStream inputStream = credentialsResource.getInputStream()) {
             GoogleCredentials credentials = GoogleCredentials
                     .fromStream(inputStream)
                     .createScoped("https://www.googleapis.com/auth/androidpublisher");
