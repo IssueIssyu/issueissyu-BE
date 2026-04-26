@@ -14,6 +14,7 @@ import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +27,21 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
     private final UserEmogjiRepository userEmogjiRepository;
     private final EmogjiRepository emogjiRepository;
     private final UserRepository userRepository;
+    // Google Play 검증 코드 활성화 시 AndroidPublisher 타입으로 교체
+    //프론트 연결 후 삭제
+    private final ObjectProvider<?> androidPublisherProvider;
 
     @Value("${billing.google-verification-enabled:false}")
     private boolean googleVerificationEnabled;
+    @Value("${google.play.package-name:}")
+    private String packageName;
+
     @Override
     public Long verifyPurchase(String uid, VerifyPurchaseReq request) {
+        if (userEmogjiRepository.existsByPurchaseToken(request.getPurchaseToken())) {
+            throw GeneralException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
+        }
+
         Emogji emogji = emogjiRepository.findByProductId(request.getProductId())
                 .orElseThrow(() -> GeneralException.of(BillingErrorCode.PRODUCT_NOT_FOUND));
 
@@ -45,7 +56,9 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
             verifyWithGooglePlay(request.getProductId(), request.getPurchaseToken());
         }
 
-        UserEmogji savedUserEmogji = userEmogjiRepository.save(BillingConverter.toUserEmogji(user, emogji));
+        UserEmogji savedUserEmogji = userEmogjiRepository.save(
+                BillingConverter.toUserEmogji(user, emogji, request.getPurchaseToken())
+        );
         return savedUserEmogji.getEmogji().getEmojiId();
     }
 

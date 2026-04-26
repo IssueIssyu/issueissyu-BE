@@ -10,6 +10,7 @@ import java.util.List;
 public interface UserEmogjiRepository extends JpaRepository<UserEmogji, Long> {
 
     boolean existsByUserUidAndEmogjiEmojiId(String uid, Long emojiId);
+    boolean existsByPurchaseToken(String purchaseToken);
 
     @Query("SELECT ue.emogji.emojiId FROM UserEmogji ue WHERE ue.user.uid = :uid")
     List<Long> findOwnedEmojiIdsByUid(@Param("uid") String uid);

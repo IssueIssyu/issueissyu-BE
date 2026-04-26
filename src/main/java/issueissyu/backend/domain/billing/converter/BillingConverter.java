@@ -35,10 +35,11 @@ public class BillingConverter {
     }
 
     // 결제 검증 성공 DB insert 용
-    public static UserEmogji toUserEmogji(User user, Emogji emogji) {
+    public static UserEmogji toUserEmogji(User user, Emogji emogji, String purchaseToken) {
         return UserEmogji.builder()
                 .user(user)
                 .emogji(emogji)
+                .purchaseToken(purchaseToken)
                 .build();
     }
 }
