@@ -15,4 +15,5 @@ public class ProductRes {
     private EmojiType emojiType;
     private String productId;
     private String emojiImageUrl;
+    private boolean isDefault;
 }

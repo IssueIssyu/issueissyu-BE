@@ -22,6 +22,7 @@ public class BillingQueryServiceImpl implements BillingQueryService {
 
     @Override
     public List<ProductRes> getProducts() {
+        // 전체 이모티콘 목록을 반환한다. 잠금 판단은 isDefault/owned 조합으로 프론트에서 처리한다.
         List<Emogji> emogjiList = emogjiRepository.findAll();
         return BillingConverter.toProductResList(emogjiList);
     }

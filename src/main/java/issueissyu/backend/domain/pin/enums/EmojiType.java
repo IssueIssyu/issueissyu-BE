@@ -4,5 +4,9 @@ public enum EmojiType {
     SMALL,
     HAPPY,
     HEART,
-    LIKE
+    LIKE,
+    SMILE,
+    SURPRISED,
+    CRY,
+    ANGRY
 }

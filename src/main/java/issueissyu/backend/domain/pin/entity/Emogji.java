@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,4 +38,8 @@ public class Emogji {
 
     @Column(name = "emoji_image_url", length = 1000)
     private String emojiImageUrl;
+
+    @Default
+    @Column(name = "is_default", nullable = false)
+    private boolean isDefault = false;
 }

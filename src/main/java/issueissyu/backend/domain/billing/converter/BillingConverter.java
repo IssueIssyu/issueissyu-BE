@@ -21,6 +21,7 @@ public class BillingConverter {
                 .emojiType(emogji.getEmojiType())
                 .productId(emogji.getProductId())
                 .emojiImageUrl(emogji.getEmojiImageUrl())
+                .isDefault(emogji.isDefault())
                 .build();
     }
 
