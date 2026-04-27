@@ -153,7 +153,7 @@ public class AuthController {
     }
 
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 형식 및 중복 여부를 확인합니다.")
-    @GetMapping("/auth/{nickname}")
+    @GetMapping("/auth/{nickname}/check")
     public ApiResponse<NicknameCheckResDTO> checkNickname(
             @PathVariable String nickname
     ) {
