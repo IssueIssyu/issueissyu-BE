@@ -20,4 +20,10 @@ public class RestClientConfig {
                 .baseUrl("https://openapi.naver.com")
                 .build();
     }
+    @Bean
+    public RestClient naverMapRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder
+                .baseUrl("https://maps.apigw.ntruss.com")
+                .build();
+    }
 }
