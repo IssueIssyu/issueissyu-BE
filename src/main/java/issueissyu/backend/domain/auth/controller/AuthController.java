@@ -253,7 +253,7 @@ public class AuthController {
     @Operation(summary = "온보딩",
             description = """
                     첫 로그인한 신규 사용자의 기본 정보를 저장합니다.
-                    이 API는 전화번호가 신규인 경우(temp_uuid == uuid)만 호출해야 합니다.
+                    이 API는 전화번호가 신규인 경우만 호출해야 합니다.
                     """)
     @PostMapping("/auth/onboarding")
     public ApiResponse<OnboardingResDTO> onboarding(@AuthenticationPrincipal String uid,
