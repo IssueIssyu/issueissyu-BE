@@ -3,7 +3,6 @@ package issueissyu.backend.domain.auth.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
-import issueissyu.backend.domain.auth.dto.req.NicknameCheckReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
@@ -28,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -153,28 +153,25 @@ public class AuthController {
     }
 
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 형식 및 중복 여부를 확인합니다.")
-    @GetMapping("/auth/nickname")
+    @GetMapping("/auth/{nickname}")
     public ApiResponse<NicknameCheckResDTO> checkNickname(
-            @RequestParam(required = false) String nickname,
-            @RequestBody(required = false) NicknameCheckReqDTO request
+            @PathVariable String nickname
     ) {
-        String targetNickname = nickname != null ? nickname : (request != null ? request.getNickname() : null);
-
         NicknameCheckResDTO unavailable = NicknameCheckResDTO.builder()
                 .isAvailableNickname(false)
                 .build();
 
-        if (!authService.isValidNicknameFormat(targetNickname)) {
+        if (!authService.isValidNicknameFormat(nickname)) {
             return ApiResponse.onFailure(AuthErrorCode.NICKNAME_400, unavailable);
         }
 
-        if (authService.isNicknameDuplicated(targetNickname)) {
+        if (authService.isNicknameDuplicated(nickname)) {
             return ApiResponse.onFailure(AuthErrorCode.NICKNAME_409, unavailable);
         }
 
         NicknameCheckResDTO available = NicknameCheckResDTO.builder()
                 .isAvailableNickname(true)
-                .nickname(targetNickname)
+                .nickname(nickname)
                 .build();
 
         return ApiResponse.onSuccess(AuthSuccessCode.NICKNAME_200, available);
