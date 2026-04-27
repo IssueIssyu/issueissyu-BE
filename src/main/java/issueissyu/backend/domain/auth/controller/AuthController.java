@@ -2,10 +2,13 @@ package issueissyu.backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NicknameCheckReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
+import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
@@ -36,6 +39,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final NaverAppLoginService naverAppLoginService;
+    private final KakaoAppLoginService kakaoAppLoginService;
 
     // 개발용 Dev Naver 콜백 확인 페이지
     // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
@@ -123,6 +127,18 @@ public class AuthController {
         AuthSuccessCode successCode = result.isNew()
                 ? AuthSuccessCode.NAVER_LOGIN_200_1
                 : AuthSuccessCode.NAVER_LOGIN_200_2;
+        return ApiResponse.onSuccess(successCode, result);
+    }
+
+    @Operation(summary = "카카오 앱 로그인")
+    @PostMapping("/auth/login/kakao")
+    public ApiResponse<KakaoAppLoginResDTO> kakaoAppLogin(
+            @Valid @RequestBody KakaoAppLoginReqDTO request) {
+
+        KakaoAppLoginResDTO result = kakaoAppLoginService.login(request);
+        AuthSuccessCode successCode = result.isNew()
+                ? AuthSuccessCode.KAKAO_LOGIN_200_1
+                : AuthSuccessCode.KAKAO_LOGIN_200_2;
         return ApiResponse.onSuccess(successCode, result);
     }
 
