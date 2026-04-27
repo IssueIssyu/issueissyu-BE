@@ -84,6 +84,9 @@ dependencies {
 	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
 	implementation 'com.google.http-client:google-http-client-gson:1.44.1'
 
+	// solapi (SMS 문자 인증)
+	implementation 'net.nurigo:sdk:4.3.2'
+
 	//test
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

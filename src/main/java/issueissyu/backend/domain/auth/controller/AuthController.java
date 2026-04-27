@@ -3,12 +3,18 @@ package issueissyu.backend.domain.auth.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.LoginLinkReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.PhoneSendReqDTO;
+import issueissyu.backend.domain.auth.dto.req.PhoneVerifyReqDTO;
 import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
 import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
+import issueissyu.backend.domain.auth.service.LoginLinkService;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
+import issueissyu.backend.domain.auth.service.PhoneVerificationService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
@@ -44,6 +50,8 @@ public class AuthController {
     private final NaverAppLoginService naverAppLoginService;
     private final KakaoAppLoginService kakaoAppLoginService;
     private final UserCommandService userCommandService;
+    private final PhoneVerificationService phoneVerificationService;
+    private final LoginLinkService loginLinkService;
 
     // 개발용 Dev Naver 콜백 확인 페이지
     // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
@@ -198,5 +206,43 @@ public class AuthController {
                                              @Valid @RequestBody TermReqDTO request) {
         TermResDTO result = userCommandService.agreeTerms(uid, request);
         return ApiResponse.onSuccess(AuthSuccessCode.TERM_200, result);
+    }
+
+    @Operation(summary = "전화번호 인증번호 전송",
+            description = "입력한 전화번호로 6자리 SMS 인증번호를 전송합니다.")
+    @PostMapping("/auth/phone/send")
+    public ApiResponse<Void> sendPhoneCode(@AuthenticationPrincipal String uid,
+                                           @Valid @RequestBody PhoneSendReqDTO request) {
+        phoneVerificationService.sendCode(request.getPhone());
+        return ApiResponse.onSuccess(AuthSuccessCode.PHONE_SEND_200, null);
+    }
+
+    @Operation(summary = "전화번호 인증",
+            description = """
+                    SMS 인증번호를 검증하고 전화번호 중복 여부를 확인합니다.
+                    - 중복 없음 → PHONE_200 (전화번호 인증 성공)
+                    - 중복 있음 + 닉네임 인증 완료(is_available_nickname=true) → PHONE_201 (로그인 연동 단계)
+                    - 중복 있음 + 닉네임 미인증(is_available_nickname=false) → 400 에러
+                    """)
+    @PostMapping("/auth/phone")
+    public ApiResponse<Void> verifyPhone(@AuthenticationPrincipal String uid,
+                                         @Valid @RequestBody PhoneVerifyReqDTO request) {
+        boolean isAvailableNickname = Boolean.TRUE.equals(request.getIsAvailableNickname());
+        AuthSuccessCode result = phoneVerificationService.verifyAndCheckDuplicate(
+                request.getPhone(), request.getCode(), isAvailableNickname);
+        return ApiResponse.onSuccess(result, null);
+    }
+
+    @Operation(summary = "로그인 연동",
+            description = """
+                    이번 로그인 시도(소셜 타입)를 기존 계정과 연동합니다.
+                    임시 uid 사용자를 완전 제거하고, 기존 계정에 새 소셜 타입을 추가합니다.
+                    Redis의 refresh token도 기존 uid로 갱신됩니다.
+                    """)
+    @PostMapping("/auth/login/link")
+    public ApiResponse<LoginLinkResDTO> loginLink(@AuthenticationPrincipal String uid,
+                                                  @Valid @RequestBody LoginLinkReqDTO request) {
+        LoginLinkResDTO result = loginLinkService.link(uid, request.getSocialType(), request.getPhone());
+        return ApiResponse.onSuccess(AuthSuccessCode.LOGIN_LINK_200, result);
     }
 }

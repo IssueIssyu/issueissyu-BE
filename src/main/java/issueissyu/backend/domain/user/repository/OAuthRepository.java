@@ -20,4 +20,6 @@ public interface OAuthRepository extends JpaRepository<OAuth, Long> {
     @Modifying
     @Query("delete from OAuth o where o.user.uid = :uid")
     void deleteByUserUid(@Param("uid") String uid);
+
+    boolean existsByUser_UidAndSocialType(String uid, SocialType socialType);
 }
