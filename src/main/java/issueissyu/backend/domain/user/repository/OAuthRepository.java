@@ -22,4 +22,5 @@ public interface OAuthRepository extends JpaRepository<OAuth, Long> {
     void deleteByUserUid(@Param("uid") String uid);
 
     boolean existsByUser_UidAndSocialType(String uid, SocialType socialType);
+    Optional<OAuth> findFirstByUser_Uid(String uid);
 }

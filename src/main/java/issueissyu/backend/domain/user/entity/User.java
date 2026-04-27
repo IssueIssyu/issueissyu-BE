@@ -61,6 +61,12 @@ public class User extends BaseEntity {
     @Column(name = "store_alarm_active", nullable = false)
     private boolean storeAlarmActive = false;
 
+    public void onboard(String nickname, String email, String phone) {
+        this.nickname = nickname;
+        this.email = email;
+        this.phone = phone;
+    }
+
     public void updateAlarmAgreement(boolean active) {
         this.eventAlarmActive = active;
         this.likeAlarmActive = active;

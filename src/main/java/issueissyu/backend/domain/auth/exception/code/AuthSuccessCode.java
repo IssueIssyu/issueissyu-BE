@@ -25,6 +25,7 @@ public enum AuthSuccessCode implements BaseSuccessCode {
 
     // 로그인 연동
     LOGIN_LINK_200(HttpStatus.OK, "LOGIN_LINK_200", "로그인 연동 완료"),
+    ONBOAREDING_200(HttpStatus.OK, "ONBOAREDING_200", "온보딩 완료"),
 
     REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다."),
     LOGOUT_200(HttpStatus.OK, "LOGOUT_200", "로그아웃 되었습니다."),

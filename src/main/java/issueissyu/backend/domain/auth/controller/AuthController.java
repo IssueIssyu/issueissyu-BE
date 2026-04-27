@@ -5,15 +5,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LoginLinkReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.OnboardingReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneSendReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneVerifyReqDTO;
 import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
+import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
 import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
 import issueissyu.backend.domain.auth.service.LoginLinkService;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
+import issueissyu.backend.domain.auth.service.OnboardingService;
 import issueissyu.backend.domain.auth.service.PhoneVerificationService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
@@ -52,6 +55,7 @@ public class AuthController {
     private final UserCommandService userCommandService;
     private final PhoneVerificationService phoneVerificationService;
     private final LoginLinkService loginLinkService;
+    private final OnboardingService onboardingService;
 
     // 개발용 Dev Naver 콜백 확인 페이지
     // http://localhost:8080/dev/oauth2/authorization/naver 로그인 후 여기로 리다이렉트됨
@@ -244,5 +248,17 @@ public class AuthController {
                                                   @Valid @RequestBody LoginLinkReqDTO request) {
         LoginLinkResDTO result = loginLinkService.link(uid, request.getSocialType(), request.getPhone());
         return ApiResponse.onSuccess(AuthSuccessCode.LOGIN_LINK_200, result);
+    }
+
+    @Operation(summary = "온보딩",
+            description = """
+                    첫 로그인한 신규 사용자의 기본 정보를 저장합니다.
+                    이 API는 전화번호가 신규인 경우(temp_uuid == uuid)만 호출해야 합니다.
+                    """)
+    @PostMapping("/auth/onboarding")
+    public ApiResponse<OnboardingResDTO> onboarding(@AuthenticationPrincipal String uid,
+                                                    @Valid @RequestBody OnboardingReqDTO request) {
+        OnboardingResDTO result = onboardingService.onboard(uid, request);
+        return ApiResponse.onSuccess(AuthSuccessCode.ONBOAREDING_200, result);
     }
 }
