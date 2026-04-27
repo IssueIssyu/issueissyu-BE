@@ -2,11 +2,14 @@ package issueissyu.backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.auth.dto.req.NicknameCheckReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.dto.req.TokenReissueReqDTO;
 import issueissyu.backend.domain.auth.dto.res.TokenPairDTO;
+import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.auth.exception.code.AuthSuccessCode;
 import issueissyu.backend.domain.auth.service.AuthService;
 import issueissyu.backend.global.api.ApiResponse;
@@ -127,6 +130,34 @@ public class AuthController {
     @PostMapping("/auth/refresh")
     public ApiResponse<TokenPairDTO> refresh(@Valid @RequestBody TokenReissueReqDTO request) {
         return ApiResponse.onSuccess(AuthSuccessCode.REFRESH_200, authService.reissue(request));
+    }
+
+    @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 형식 및 중복 여부를 확인합니다.")
+    @GetMapping("/auth/nickname")
+    public ApiResponse<NicknameCheckResDTO> checkNickname(
+            @RequestParam(required = false) String nickname,
+            @RequestBody(required = false) NicknameCheckReqDTO request
+    ) {
+        String targetNickname = nickname != null ? nickname : (request != null ? request.getNickname() : null);
+
+        NicknameCheckResDTO unavailable = NicknameCheckResDTO.builder()
+                .isAvailableNickname(false)
+                .build();
+
+        if (!authService.isValidNicknameFormat(targetNickname)) {
+            return ApiResponse.onFailure(AuthErrorCode.NICKNAME_400, unavailable);
+        }
+
+        if (authService.isNicknameDuplicated(targetNickname)) {
+            return ApiResponse.onFailure(AuthErrorCode.NICKNAME_409, unavailable);
+        }
+
+        NicknameCheckResDTO available = NicknameCheckResDTO.builder()
+                .isAvailableNickname(true)
+                .nickname(targetNickname)
+                .build();
+
+        return ApiResponse.onSuccess(AuthSuccessCode.NICKNAME_200, available);
     }
 
     @Operation(summary = "회원탈퇴", description = "인증된 사용자의 Redis 토큰·OAuth·User 레코드를 모두 삭제합니다.")

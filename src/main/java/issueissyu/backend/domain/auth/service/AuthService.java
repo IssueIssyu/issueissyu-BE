@@ -18,10 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final Pattern NICKNAME_PATTERN = Pattern.compile("^[A-Za-z0-9가-힣]{1,15}$");
 
     private final UserRepository userRepository;
     private final OAuthRepository oAuthRepository;
@@ -146,5 +149,14 @@ public class AuthService {
                 .uid(uid)
                 .userName(name != null && !name.isBlank() ? name : null)
                 .build());
+    }
+
+    // 닉네임 형식 검증
+    public boolean isValidNicknameFormat(String nickname) {
+        return nickname != null && NICKNAME_PATTERN.matcher(nickname).matches();
+    }
+
+    public boolean isNicknameDuplicated(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
 }
