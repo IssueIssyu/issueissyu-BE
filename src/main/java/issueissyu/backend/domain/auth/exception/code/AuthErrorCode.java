@@ -15,6 +15,7 @@ public enum AuthErrorCode implements BaseErrorCode {
     KAKAO_LOGIN_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "KAKAO_LOGIN_401", "유효하지 않은 값이 존재합니다."),
     NICKNAME_400(HttpStatus.BAD_REQUEST, "NICKNAME_400", "닉네임은 15자 이내의 영문, 숫자, 한글만 사용 가능합니다."),
     NICKNAME_409(HttpStatus.CONFLICT, "NICKNAME_409", "이미 사용 중인 닉네임입니다."),
+    TERM_400(HttpStatus.BAD_REQUEST, "TERM_400", "필수 약관(SERVICE, PRIVACY)에 모두 동의해야 합니다."),
 
     REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "REFRESH_401", "토큰 재발급에 실패했습니다."),
     LOGOUT_INVALID(HttpStatus.UNAUTHORIZED, "LOGOUT_401", "유효하지 않은 토큰입니다."),
@@ -23,13 +24,4 @@ public enum AuthErrorCode implements BaseErrorCode {
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
-
-    @Override
-    public ReasonDTO getReason() {
-        return ReasonDTO.builder()
-                .httpStatus(this.httpStatus)
-                .code(this.code)
-                .message(this.message)
-                .build();
-    }
 }

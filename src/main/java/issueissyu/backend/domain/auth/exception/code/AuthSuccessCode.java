@@ -16,6 +16,7 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     KAKAO_LOGIN_200_1(HttpStatus.OK, "KAKAO_LOGIN_200_1", "첫 로그인에 성공했습니다."),
     KAKAO_LOGIN_200_2(HttpStatus.OK, "KAKAO_LOGIN_200_2", "로그인에 성공했습니다."),
     NICKNAME_200(HttpStatus.OK, "NICKNAME_200", "사용 가능한 닉네임입니다."),
+    TERM_200(HttpStatus.OK, "TERM_200", "약관 동의에 성공했습니다."),
 
     REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다."),
     LOGOUT_200(HttpStatus.OK, "LOGOUT_200", "로그아웃 되었습니다."),
@@ -24,13 +25,4 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
-
-    @Override
-    public ReasonDTO getReason() {
-        return ReasonDTO.builder()
-                .httpStatus(this.httpStatus)
-                .code(this.code)
-                .message(this.message)
-                .build();
-    }
 }

@@ -7,7 +7,6 @@ import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KakaoAppLoginService {
 
     private static final String KAKAO_USER_INFO_PATH = "/v2/user/me";
@@ -28,8 +26,18 @@ public class KakaoAppLoginService {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
-    @Qualifier("kakaoRestClient")
     private final RestClient restClient;
+
+    public KakaoAppLoginService(
+            AuthService authService,
+            JwtTokenProvider jwtTokenProvider,
+            RefreshTokenRedisStore refreshTokenRedisStore,
+            @Qualifier("kakaoRestClient") RestClient restClient) {
+        this.authService = authService;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenRedisStore = refreshTokenRedisStore;
+        this.restClient = restClient;
+    }
 
     public KakaoAppLoginResDTO login(KakaoAppLoginReqDTO req) {
         KakaoUserProfile profile = fetchKakaoUserProfile(req.getAccessToken());

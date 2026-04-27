@@ -1,15 +1,15 @@
 package issueissyu.backend.domain.auth.exception;
 
-import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
+import issueissyu.backend.global.api.code.BaseErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 
 public class AuthException extends GeneralException {
 
-    public AuthException(AuthErrorCode code) {
+    public AuthException(BaseErrorCode code) {
         super(code);
     }
 
-    public static AuthException of(AuthErrorCode code) {
+    public static AuthException of(BaseErrorCode code) {
         return new AuthException(code);
     }
 }

@@ -1,6 +1,18 @@
 package issueissyu.backend.global.api.code;
 
+import org.springframework.http.HttpStatus;
+
 public interface BaseSuccessCode {
 
-    ReasonDTO getReason();
+    HttpStatus getHttpStatus();
+    String getCode();
+    String getMessage();
+    
+    default ReasonDTO getReason() {
+        return ReasonDTO.builder()
+                .httpStatus(getHttpStatus())
+                .code(getCode())
+                .message(getMessage())
+                .build();
+    }
 }
