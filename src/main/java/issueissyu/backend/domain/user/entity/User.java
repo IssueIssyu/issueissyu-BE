@@ -35,7 +35,7 @@ public class User extends BaseEntity {
     @Column(unique = true, length = 13)
     private String phone;
 
-    @Column(length = 15)
+    @Column(unique = true, length = 15)
     private String nickname;
 
     @Type(PGpointUserType.class)

@@ -3,6 +3,7 @@ package issueissyu.backend.global.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.BaseErrorCode;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +44,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> onThrowException(GeneralException generalException,
                                                    HttpServletRequest request) {
         return handleExceptionInternal(generalException, generalException.getCode(), null, request);
+    }
+
+    // DataIntegrityViolationException
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    public ResponseEntity<Object> onDataIntegrityViolationException(DataIntegrityViolationException e,
+                                                                    HttpServletRequest request) {
+        String message = e.getMostSpecificCause() != null
+                ? e.getMostSpecificCause().getMessage()
+                : e.getMessage();
+
+        if (message != null && message.toLowerCase().contains("nickname")) {
+            return handleExceptionInternal(e, AuthErrorCode.NICKNAME_409, null, request);
+        }
+
+        return handleExceptionInternal(e, GeneralErrorCode.BAD_REQUEST, null, request);
     }
 
     // MethodArgumentNotValidException
