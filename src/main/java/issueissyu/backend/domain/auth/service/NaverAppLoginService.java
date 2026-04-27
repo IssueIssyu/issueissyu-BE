@@ -2,9 +2,9 @@ package issueissyu.backend.domain.auth.service;
 
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
+import issueissyu.backend.domain.auth.exception.AuthException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.user.enums.SocialType;
-import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -81,14 +81,14 @@ public class NaverAppLoginService {
                     .body(Map.class);
 
             if (body == null) {
-                throw GeneralException.of(AuthErrorCode.NAVER_API_FAILED);
+                throw AuthException.of(AuthErrorCode.NAVER_API_FAILED);
             }
 
             String resultCode = (String) body.get("resultcode");
             if (!"00".equals(resultCode)) {
                 log.warn("네이버 사용자 정보 API 오류 응답: resultcode={}, message={}",
                         resultCode, body.get("message"));
-                throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
+                throw AuthException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
             }
 
             Map<String, Object> response = (Map<String, Object>) body.get("response");
@@ -96,7 +96,7 @@ public class NaverAppLoginService {
             String name = (String) response.getOrDefault("name", "");
 
             if (id == null || id.isBlank()) {
-                throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
+                throw AuthException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
             }
 
             log.debug("네이버 앱 로그인 사용자 정보 조회 성공: id={}, name={}", id, name);
@@ -104,7 +104,7 @@ public class NaverAppLoginService {
 
         } catch (RestClientException e) {
             log.error("네이버 사용자 정보 API 호출 실패", e);
-            throw GeneralException.of(AuthErrorCode.NAVER_API_FAILED);
+            throw AuthException.of(AuthErrorCode.NAVER_API_FAILED);
         }
     }
 }
