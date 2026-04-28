@@ -2,12 +2,11 @@ package issueissyu.backend.domain.auth.service;
 
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
+import issueissyu.backend.domain.auth.exception.AuthException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.domain.user.enums.SocialType;
-import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import java.util.Map;
 // 자체 JWT를 발급하여 반환한다. (인가 코드 발급은 앱이 수행, 토큰 교환 이후 처리는 백엔드가 수행)
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NaverAppLoginService {
 
     private static final String NAVER_USER_INFO_PATH = "/v1/nid/me";
@@ -31,8 +29,18 @@ public class NaverAppLoginService {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
-    @Qualifier("naverRestClient")
     private final RestClient restClient;
+
+    public NaverAppLoginService(
+            AuthService authService,
+            JwtTokenProvider jwtTokenProvider,
+            RefreshTokenRedisStore refreshTokenRedisStore,
+            @Qualifier("naverRestClient") RestClient restClient) {
+        this.authService = authService;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenRedisStore = refreshTokenRedisStore;
+        this.restClient = restClient;
+    }
 
     public NaverAppLoginResDTO login(NaverAppLoginReqDTO req) {
         // 네이버 사용자 정보 API 호출 (앱이 발급받은 access_token 사용)
@@ -81,14 +89,14 @@ public class NaverAppLoginService {
                     .body(Map.class);
 
             if (body == null) {
-                throw GeneralException.of(AuthErrorCode.NAVER_API_FAILED);
+                throw AuthException.of(AuthErrorCode.NAVER_API_FAILED);
             }
 
             String resultCode = (String) body.get("resultcode");
             if (!"00".equals(resultCode)) {
                 log.warn("네이버 사용자 정보 API 오류 응답: resultcode={}, message={}",
                         resultCode, body.get("message"));
-                throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
+                throw AuthException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
             }
 
             Map<String, Object> response = (Map<String, Object>) body.get("response");
@@ -96,7 +104,7 @@ public class NaverAppLoginService {
             String name = (String) response.getOrDefault("name", "");
 
             if (id == null || id.isBlank()) {
-                throw GeneralException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
+                throw AuthException.of(AuthErrorCode.NAVER_LOGIN_UNAUTHORIZED);
             }
 
             log.debug("네이버 앱 로그인 사용자 정보 조회 성공: id={}, name={}", id, name);
@@ -104,7 +112,7 @@ public class NaverAppLoginService {
 
         } catch (RestClientException e) {
             log.error("네이버 사용자 정보 API 호출 실패", e);
-            throw GeneralException.of(AuthErrorCode.NAVER_API_FAILED);
+            throw AuthException.of(AuthErrorCode.NAVER_API_FAILED);
         }
     }
 }

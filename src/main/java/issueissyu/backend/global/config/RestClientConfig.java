@@ -20,4 +20,11 @@ public class RestClientConfig {
                 .baseUrl("https://openapi.naver.com")
                 .build();
     }
+
+    @Bean
+    public RestClient kakaoRestClient(RestClient.Builder restClientBuilder) {
+        return restClientBuilder
+                .baseUrl("https://kapi.kakao.com")
+                .build();
+    }
 }

@@ -13,6 +13,19 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     // 네이버 앱 로그인 성공 코드
     NAVER_LOGIN_200_1(HttpStatus.OK, "NAVER_LOGIN_200_1", "첫 로그인에 성공했습니다."),
     NAVER_LOGIN_200_2(HttpStatus.OK, "NAVER_LOGIN_200_2", "로그인에 성공했습니다."),
+    KAKAO_LOGIN_200_1(HttpStatus.OK, "KAKAO_LOGIN_200_1", "첫 로그인에 성공했습니다."),
+    KAKAO_LOGIN_200_2(HttpStatus.OK, "KAKAO_LOGIN_200_2", "로그인에 성공했습니다."),
+    NICKNAME_200(HttpStatus.OK, "NICKNAME_200", "사용 가능한 닉네임입니다."),
+    TERM_200(HttpStatus.OK, "TERM_200", "약관 동의에 성공했습니다."),
+
+    // 전화번호 인증
+    PHONE_SEND_200(HttpStatus.OK, "PHONE_SEND_200", "인증번호가 전송되었습니다."),
+    PHONE_200(HttpStatus.OK, "PHONE_200", "전화번호 인증 성공"),
+    PHONE_201(HttpStatus.OK, "PHONE_201", "로그인 연동 단계로 넘어갑니다."),
+
+    // 로그인 연동
+    LOGIN_LINK_200(HttpStatus.OK, "LOGIN_LINK_200", "로그인 연동 완료"),
+    ONBOAREDING_200(HttpStatus.OK, "ONBOAREDING_200", "온보딩 완료"),
 
     REFRESH_200(HttpStatus.OK, "REFRESH_200", "토큰 재발급에 성공했습니다."),
     LOGOUT_200(HttpStatus.OK, "LOGOUT_200", "로그아웃 되었습니다."),

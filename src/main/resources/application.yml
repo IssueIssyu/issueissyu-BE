@@ -20,6 +20,11 @@ app:
     # 프론트 연결 후: .env의 DEV_OAUTH2_REDIRECT_URI 에 프론트 콜백 URL 설정
     redirect-uri: ${DEV_OAUTH2_REDIRECT_URI:http://localhost:8080/dev/login/callback}
 
+solapi:
+  api-key: ${SOLAPI_API_KEY}
+  api-secret-key: ${SOLAPI_API_SECRET_KEY}
+  from-phone: ${SOLAPI_FROM_PHONE}
+
 billing:
   google-verification-enabled: ${BILLING_GOOGLE_VERIFICATION_ENABLED:false}
 
