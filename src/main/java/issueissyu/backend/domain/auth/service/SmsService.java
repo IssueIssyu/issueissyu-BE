@@ -12,7 +12,7 @@ import net.nurigo.sdk.message.service.DefaultMessageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 @Slf4j
 @Service
@@ -20,6 +20,7 @@ public class SmsService {
 
     private static final String SMS_CODE_KEY_PREFIX = "SMS_CODE:";
     private static final long SMS_CODE_TTL_SECONDS = 300; // 5분
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final DefaultMessageService messageService;
     private final String fromPhone;
@@ -72,8 +73,7 @@ public class SmsService {
     }
 
     private String generateCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000);
+        int code = 100000 + SECURE_RANDOM.nextInt(900000);
         return String.valueOf(code);
     }
 }
