@@ -34,9 +34,10 @@ public class Pin extends BaseEntity {
     @Column(name = "pin_content", nullable = false, columnDefinition = "text")
     private String pinContent;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "tone_type")
-    private ToneType toneType;
+    @Column(name = "tone_type", nullable = false)
+    private ToneType toneType = ToneType.NONE;
 
     @Builder.Default
     @Column(name = "visibility_status")
