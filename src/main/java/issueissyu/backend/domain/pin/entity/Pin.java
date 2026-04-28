@@ -2,21 +2,14 @@ package issueissyu.backend.domain.pin.entity;
 
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.enums.ToneType;
+import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pin")
@@ -41,11 +34,31 @@ public class Pin extends BaseEntity {
     @Column(name = "pin_content", nullable = false, columnDefinition = "text")
     private String pinContent;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "tone_type")
-    private ToneType toneType;
+    @Column(name = "tone_type", nullable = false)
+    private ToneType toneType = ToneType.NONE;
 
     @Builder.Default
     @Column(name = "visibility_status")
     private Boolean visibilityStatus = Boolean.TRUE;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "pin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<PinImage> pinImages = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uid", nullable = false)
+    @ToString.Exclude
+    private User user;
+
+    public void addPinImage(PinImage pinImage) {
+        pinImage.assignPin(this);
+        pinImages.add(pinImage);
+    }
+
+    public void assignUser(User user) {
+        this.user = user;
+    }
 }
