@@ -3,20 +3,12 @@ package issueissyu.backend.domain.pin.entity;
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.enums.ToneType;
 import issueissyu.backend.global.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pin")
@@ -48,4 +40,14 @@ public class Pin extends BaseEntity {
     @Builder.Default
     @Column(name = "visibility_status")
     private Boolean visibilityStatus = Boolean.TRUE;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "pin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    private List<PinImage> pinImages = new ArrayList<>();
+
+    public void addPinImage(PinImage pinImage) {
+        pinImage.assignPin(this);
+        pinImages.add(pinImage);
+    }
 }
