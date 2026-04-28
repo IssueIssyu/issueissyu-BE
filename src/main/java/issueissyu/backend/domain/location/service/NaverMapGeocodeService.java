@@ -15,7 +15,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-public class NaverMapService {
+public class NaverMapGeocodeService {
 
     private static final String GEOCODE_PATH = "/map-geocode/v2/geocode";
 
