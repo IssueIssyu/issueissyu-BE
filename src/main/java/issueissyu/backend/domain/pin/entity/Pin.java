@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.entity;
 
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.enums.ToneType;
+import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -46,8 +47,17 @@ public class Pin extends BaseEntity {
     @ToString.Exclude
     private List<PinImage> pinImages = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uid", nullable = false)
+    @ToString.Exclude
+    private User user;
+
     public void addPinImage(PinImage pinImage) {
         pinImage.assignPin(this);
         pinImages.add(pinImage);
+    }
+
+    public void assignUser(User user) {
+        this.user = user;
     }
 }
