@@ -1,4 +1,4 @@
-package issueissyu.backend.domain.location.service;
+package issueissyu.backend.domain.location.service.command;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import issueissyu.backend.global.config.properties.NaverMapProperties;
