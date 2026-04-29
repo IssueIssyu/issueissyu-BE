@@ -8,10 +8,18 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum PinSuccessCode implements BaseSuccessCode {
-    GET_PIN_EMOJIS_SUCCESS(HttpStatus.OK, "PIN_200_1", "핀 반응 목록 조회에 성공했습니다."),
-    GET_EMOJI_CANDIDATES_SUCCESS(HttpStatus.OK, "PIN_200_2", "반응 후보 목록 조회에 성공했습니다."),
-    APPLY_EMOJI_SUCCESS(HttpStatus.OK, "PIN_200_3", "핀 반응 등록에 성공했습니다."),
-    DELETE_MY_EMOJI_SUCCESS(HttpStatus.OK, "PIN_200_4", "핀 반응 취소에 성공했습니다.");
+
+    // 핀 이모지 반응
+    PIN_EMOJIS_200(HttpStatus.OK, "PIN_EMOJIS_200", "핀 반응 목록 조회에 성공했습니다."),
+    EMOJI_CANDIDATES_200(HttpStatus.OK, "EMOJI_CANDIDATES_200", "반응 후보 목록 조회에 성공했습니다."),
+    APPLY_EMOJI_200(HttpStatus.OK, "APPLY_EMOJI_200", "핀 반응 등록에 성공했습니다."),
+    DELETE_EMOJI_200(HttpStatus.OK, "DELETE_EMOJI_200", "핀 반응 취소에 성공했습니다."),
+
+    // 핀 댓글
+    PIN_COMMENTS_200(HttpStatus.OK, "PIN_COMMENTS_200", "핀 댓글 목록 조회에 성공했습니다."),
+    CREATE_COMMENT_200(HttpStatus.OK, "CREATE_COMMENT_200", "핀 댓글 작성에 성공했습니다."),
+    UPDATE_COMMENT_200(HttpStatus.OK, "UPDATE_COMMENT_200", "핀 댓글 수정에 성공했습니다."),
+    DELETE_COMMENT_200(HttpStatus.OK, "DELETE_COMMENT_200", "핀 댓글 삭제에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

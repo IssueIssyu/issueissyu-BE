@@ -38,7 +38,7 @@ public class PinEmojiController {
             @AuthenticationPrincipal String uid
     ) {
         return ApiResponse.onSuccess(
-                PinSuccessCode.GET_PIN_EMOJIS_SUCCESS,
+                PinSuccessCode.PIN_EMOJIS_200,
                 pinEmojiQueryService.getPinEmojiSummaries(pinId, uid)
         );
     }
@@ -50,7 +50,7 @@ public class PinEmojiController {
             @AuthenticationPrincipal String uid
     ) {
         return ApiResponse.onSuccess(
-                PinSuccessCode.GET_EMOJI_CANDIDATES_SUCCESS,
+                PinSuccessCode.EMOJI_CANDIDATES_200,
                 pinEmojiQueryService.getEmojiCandidates(pinId, uid)
         );
     }
@@ -63,7 +63,7 @@ public class PinEmojiController {
             @Valid @RequestBody ApplyPinEmojiReqDTO request
     ) {
         return ApiResponse.onSuccess(
-                PinSuccessCode.APPLY_EMOJI_SUCCESS,
+                PinSuccessCode.APPLY_EMOJI_200,
                 pinEmojiCommandService.applyMyEmoji(pinId, uid, request)
         );
     }
@@ -75,6 +75,6 @@ public class PinEmojiController {
             @AuthenticationPrincipal String uid
     ) {
         pinEmojiCommandService.deleteMyEmoji(pinId, uid);
-        return ApiResponse.onSuccess(PinSuccessCode.DELETE_MY_EMOJI_SUCCESS, null);
+        return ApiResponse.onSuccess(PinSuccessCode.DELETE_EMOJI_200, null);
     }
 }

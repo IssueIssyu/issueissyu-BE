@@ -40,4 +40,11 @@ public class Comment extends BaseEntity {
     @JoinColumn(name = "pin_id", nullable = false)
     @ToString.Exclude
     private Pin pin;
+
+    @Column(name = "comment_content", nullable = false, length = 1000)
+    private String commentContent;
+
+    public void updateContent(String commentContent) {
+        this.commentContent = commentContent;
+    }
 }
