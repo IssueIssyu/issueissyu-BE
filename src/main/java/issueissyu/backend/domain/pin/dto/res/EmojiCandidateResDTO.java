@@ -9,7 +9,7 @@ import lombok.Getter;
 public class EmojiCandidateResDTO {
 
     @Schema(description = "이모지 ID", example = "1")
-    private Long emogjiId;
+    private Long emojiId;
 
     @Schema(description = "이모지 이미지 URL", example = "https://cdn.example.com/emoji/smile.png")
     private String emojiImageUrl;

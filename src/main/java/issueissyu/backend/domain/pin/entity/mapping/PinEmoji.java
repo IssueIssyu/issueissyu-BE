@@ -1,6 +1,6 @@
 package issueissyu.backend.domain.pin.entity.mapping;
 
-import issueissyu.backend.domain.pin.entity.Emogji;
+import issueissyu.backend.domain.pin.entity.Emoji;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
@@ -24,14 +24,14 @@ import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(
-        name = "pin_emogji",
+        name = "pin_emoji",
         uniqueConstraints = @UniqueConstraint(columnNames = {"pin_id", "uid"})
 )
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class PinEmogji extends BaseEntity {
+public class PinEmoji extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,9 +50,9 @@ public class PinEmogji extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emoji_id", nullable = false)
-    private Emogji emogji;
+    private Emoji emoji;
 
-    public void changeEmogji(Emogji emogji) {
-        this.emogji = emogji;
+    public void changeEmoji(Emoji emoji) {
+        this.emoji = emoji;
     }
 }

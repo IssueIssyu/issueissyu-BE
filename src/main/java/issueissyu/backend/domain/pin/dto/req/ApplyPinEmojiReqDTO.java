@@ -11,5 +11,5 @@ public class ApplyPinEmojiReqDTO {
 
     @Schema(description = "적용할 이모지 ID", example = "1")
     @NotNull
-    private Long emogjiId;
+    private Long emojiId;
 }

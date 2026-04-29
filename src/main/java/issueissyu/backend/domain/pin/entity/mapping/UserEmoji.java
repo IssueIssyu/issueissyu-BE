@@ -1,6 +1,6 @@
 package issueissyu.backend.domain.pin.entity.mapping;
 
-import issueissyu.backend.domain.pin.entity.Emogji;
+import issueissyu.backend.domain.pin.entity.Emoji;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -22,14 +22,14 @@ import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(
-        name = "user_emogji",
+        name = "user_emoji",
         uniqueConstraints = @UniqueConstraint(columnNames = "purchase_token")
 )
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UserEmogji extends BaseEntity {
+public class UserEmoji extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +39,7 @@ public class UserEmogji extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "emoji_id", nullable = false)
     @ToString.Exclude
-    private Emogji emogji;
+    private Emoji emoji;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)

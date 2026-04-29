@@ -6,10 +6,10 @@ import com.google.api.services.androidpublisher.model.ProductPurchase;
 import issueissyu.backend.domain.billing.converter.BillingConverter;
 import issueissyu.backend.domain.billing.dto.req.VerifyPurchaseReq;
 import issueissyu.backend.domain.billing.exception.code.BillingErrorCode;
-import issueissyu.backend.domain.billing.repository.UserEmogjiRepository;
-import issueissyu.backend.domain.pin.entity.Emogji;
-import issueissyu.backend.domain.pin.entity.mapping.UserEmogji;
-import issueissyu.backend.domain.pin.repository.EmogjiRepository;
+import issueissyu.backend.domain.billing.repository.UserEmojiRepository;
+import issueissyu.backend.domain.pin.entity.Emoji;
+import issueissyu.backend.domain.pin.entity.mapping.UserEmoji;
+import issueissyu.backend.domain.pin.repository.EmojiRepository;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -29,8 +29,8 @@ import java.io.IOException;
 @Transactional
 public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommandService {
 
-    private final UserEmogjiRepository userEmogjiRepository;
-    private final EmogjiRepository emogjiRepository;
+    private final UserEmojiRepository userEmojiRepository;
+    private final EmojiRepository emojiRepository;
     private final UserRepository userRepository;
     private final ObjectProvider<AndroidPublisher> androidPublisherProvider;
 
@@ -41,14 +41,14 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
 
     @Override
     public Long verifyPurchase(String uid, VerifyPurchaseReq request) {
-        if (userEmogjiRepository.existsByPurchaseToken(request.getPurchaseToken())) {
+        if (userEmojiRepository.existsByPurchaseToken(request.getPurchaseToken())) {
             throw GeneralException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
         }
 
-        Emogji emogji = emogjiRepository.findByProductId(request.getProductId())
+        Emoji emoji = emojiRepository.findByProductId(request.getProductId())
                 .orElseThrow(() -> GeneralException.of(BillingErrorCode.PRODUCT_NOT_FOUND));
 
-        if (userEmogjiRepository.existsByUserUidAndEmogjiEmojiId(uid, emogji.getEmojiId())) {
+        if (userEmojiRepository.existsByUserUidAndEmojiEmojiId(uid, emoji.getEmojiId())) {
             throw GeneralException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
         }
 
@@ -59,10 +59,10 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
             verifyWithGooglePlay(request.getProductId(), request.getPurchaseToken());
         }
 
-        UserEmogji savedUserEmogji = userEmogjiRepository.save(
-                BillingConverter.toUserEmogji(user, emogji, request.getPurchaseToken())
+        UserEmoji savedUserEmoji = userEmojiRepository.save(
+                BillingConverter.toUserEmoji(user, emoji, request.getPurchaseToken())
         );
-        return savedUserEmogji.getEmogji().getEmojiId();
+        return savedUserEmoji.getEmoji().getEmojiId();
     }
 
     private void verifyWithGooglePlay(String productId, String purchaseToken) {
