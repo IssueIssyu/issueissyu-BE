@@ -17,6 +17,16 @@ public class LocationException extends RuntimeException {
         this.code = code;
     }
 
+    public LocationException(BaseErrorCode code, Throwable cause) {
+        super(code.getReason().getMessage(), cause);
+        this.code = code;
+    }
+
+    public LocationException(BaseErrorCode code, String message, Throwable cause) {
+        super(message, cause);
+        this.code = code;
+    }
+
     public static LocationException of(BaseErrorCode code) {
         return new LocationException(code);
     }

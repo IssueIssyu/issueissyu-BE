@@ -97,7 +97,3 @@ dependencies {
 tasks.named('jar') {
 	enabled = false
 }
-
-tasks.withType(JavaCompile).configureEach {
-	options.compilerArgs += ['-parameters']
-}

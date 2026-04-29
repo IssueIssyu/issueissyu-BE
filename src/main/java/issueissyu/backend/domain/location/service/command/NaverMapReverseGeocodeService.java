@@ -67,7 +67,7 @@ public class NaverMapReverseGeocodeService {
             return new NaverReverseGeocodeResDTO(response.status(), results);
         } catch (RestClientException e) {
             throw new LocationException(LocationErrorCode.LOCATION_REVERSE_GEOCODE_API_FAILED,
-                    "네이버 지도 리버스 지오코딩 API 호출에 실패했습니다.");
+                    "네이버 지도 리버스 지오코딩 API 호출에 실패했습니다.", e);
         }
     }
 

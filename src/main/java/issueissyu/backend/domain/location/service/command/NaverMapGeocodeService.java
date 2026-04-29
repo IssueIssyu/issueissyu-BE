@@ -69,7 +69,7 @@ public class NaverMapGeocodeService {
             return response;
         } catch (RestClientException e) {
             throw new LocationException(LocationErrorCode.LOCATION_GEOCODE_API_FAILED,
-                    "네이버 지도 지오코딩 API 호출에 실패했습니다.");
+                    "네이버 지도 지오코딩 API 호출에 실패했습니다.", e);
         }
     }
 
