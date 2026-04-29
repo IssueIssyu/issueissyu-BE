@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.pin.dto.req.ApplyPinEmojiReqDTO;
 import issueissyu.backend.domain.pin.dto.res.ApplyPinEmojiResDTO;
-import issueissyu.backend.domain.pin.dto.res.EmojiCandidateResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
 import issueissyu.backend.domain.pin.service.command.PinEmojiCommandService;
@@ -40,18 +39,6 @@ public class PinEmojiController {
         return ApiResponse.onSuccess(
                 PinSuccessCode.PIN_EMOJIS_200,
                 pinEmojiQueryService.getPinEmojiSummaries(pinId, uid)
-        );
-    }
-
-    @Operation(summary = "핀 반응 후보 목록 조회")
-    @GetMapping("/candidates")
-    public ApiResponse<List<EmojiCandidateResDTO>> getEmojiCandidates(
-            @PathVariable Long pinId,
-            @AuthenticationPrincipal String uid
-    ) {
-        return ApiResponse.onSuccess(
-                PinSuccessCode.EMOJI_CANDIDATES_200,
-                pinEmojiQueryService.getEmojiCandidates(pinId, uid)
         );
     }
 

@@ -8,5 +8,5 @@ import java.util.List;
 public interface PinEmojiQueryService {
     List<PinEmojiSummaryResDTO> getPinEmojiSummaries(Long pinId, String uid);
 
-    List<EmojiCandidateResDTO> getEmojiCandidates(Long pinId, String uid);
+    List<EmojiCandidateResDTO> getEmojiCandidates(String uid);
 }

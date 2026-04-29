@@ -10,6 +10,7 @@ import issueissyu.backend.domain.pin.repository.EmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.global.exception.GeneralException;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -61,31 +64,25 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
     }
 
     @Override
-    public List<EmojiCandidateResDTO> getEmojiCandidates(Long pinId, String uid) {
-        // 핀 존재 확인
-        ensurePinExists(pinId);
-
+    public List<EmojiCandidateResDTO> getEmojiCandidates(String uid) {
         // 전체 이모지(기본/유료 포함) 목록 조회
         List<Emoji> allEmojis = emojiRepository.findAllByOrderByEmojiIdAsc();
 
         // 사용자 보유 이모지 id 목록 Set으로 만들어 포함 검사 사용
         Set<Long> ownedEmojiIds = new HashSet<>(userEmojiRepository.findOwnedEmojiIdsByUid(uid));
 
-        // 현재 핀에서 내 반응 1건 찾아 isMine 계산 사용
-        Optional<PinEmoji> myEmoji = pinEmojiRepository.findByPinPinIdAndUserUid(pinId, uid);
-        Long myEmojiId = myEmoji.map(pinEmoji -> pinEmoji.getEmoji().getEmojiId()).orElse(null);
-
         // 화면에서 바로 사용할 형태로 변환하여 리스트 반환
         List<EmojiCandidateResDTO> result = new ArrayList<>();
         for (Emoji emoji : allEmojis) {
             boolean isOwned = ownedEmojiIds.contains(emoji.getEmojiId());
-            boolean isMine = emoji.getEmojiId().equals(myEmojiId);
+            // 이미 사용 가능한 이모지(기본 제공 또는 보유)는 productId 불필요
+            String productId = (emoji.isDefault() || isOwned) ? null : emoji.getProductId();
             result.add(EmojiCandidateResDTO.builder()
                     .emojiId(emoji.getEmojiId())
                     .emojiImageUrl(emoji.getEmojiImageUrl())
                     .isDefault(emoji.isDefault())
                     .isOwned(isOwned)
-                    .isMine(isMine)
+                    .productId(productId)
                     .build());
         }
         return result;

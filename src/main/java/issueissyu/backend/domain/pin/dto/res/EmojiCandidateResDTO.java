@@ -20,6 +20,6 @@ public class EmojiCandidateResDTO {
     @Schema(description = "사용자 보유 이모지 여부", example = "true")
     private boolean isOwned;
 
-    @Schema(description = "현재 내 반응인지 여부", example = "false")
-    private boolean isMine;
+    @Schema(description = "구글 플레이 상품 ID (미보유 유료 이모지 구매 시 사용, 기본/보유 이모지는 null)", example = "emoji_sparkle")
+    private String productId;
 }
