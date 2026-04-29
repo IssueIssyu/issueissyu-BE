@@ -42,7 +42,7 @@ public class PinEmojiController {
         );
     }
 
-    @Operation(summary = "내 핀 반응 등록/변경")
+    @Operation(summary = "내 핀 반응 등록")
     @PutMapping("/me")
     public ApiResponse<ApplyPinEmojiResDTO> applyMyEmoji(
             @PathVariable Long pinId,
