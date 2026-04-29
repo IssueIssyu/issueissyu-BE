@@ -47,20 +47,16 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
         Optional<PinEmoji> myEmoji = pinEmojiRepository.findByPinPinIdAndUserUid(pinId, uid);
         Long myEmojiId = myEmoji.map(pinEmoji -> pinEmoji.getEmoji().getEmojiId()).orElse(null);
 
-        // 집계 결과 API 응답 DTO로 변환
-        List<PinEmojiSummaryResDTO> result = counts.stream()
+        return counts.stream()
                 .map(count -> PinEmojiSummaryResDTO.builder()
                         .emojiId(count.getEmojiId())
                         .emojiImageUrl(count.getEmojiImageUrl())
                         .count((int) count.getCount())
                         .isMine(count.getEmojiId().equals(myEmojiId))
                         .build())
+                .sorted(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
+                        .thenComparing(PinEmojiSummaryResDTO::getEmojiId))
                 .toList();
-
-        // count 내림차순, 동률이면 emojiId 오름차순 정렬
-        result.sort(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
-                .thenComparing(PinEmojiSummaryResDTO::getEmojiId));
-        return result;
     }
 
     @Override
