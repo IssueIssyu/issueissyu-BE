@@ -46,4 +46,8 @@ public class UserTerm extends BaseEntity {
     @Builder.Default
     @Column(name = "is_agreed", nullable = false)
     private boolean isAgreed = false;
+
+    public void changeAgreement(boolean agreed) {
+        this.isAgreed = agreed;
+    }
 }

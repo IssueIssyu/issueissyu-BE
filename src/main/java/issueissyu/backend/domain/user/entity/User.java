@@ -4,8 +4,8 @@ import issueissyu.backend.global.entity.BaseEntity;
 import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,7 +35,7 @@ public class User extends BaseEntity {
     @Column(unique = true, length = 13)
     private String phone;
 
-    @Column(length = 15)
+    @Column(unique = true, length = 15)
     private String nickname;
 
     @Type(PGpointUserType.class)
@@ -60,4 +60,17 @@ public class User extends BaseEntity {
     @Builder.Default
     @Column(name = "store_alarm_active", nullable = false)
     private boolean storeAlarmActive = false;
+
+    public void onboard(String nickname, String email, String phone) {
+        this.nickname = nickname;
+        this.email = email;
+        this.phone = phone;
+    }
+
+    public void updateAlarmAgreement(boolean active) {
+        this.eventAlarmActive = active;
+        this.likeAlarmActive = active;
+        this.hotAlarmActive = active;
+        this.storeAlarmActive = active;
+    }
 }

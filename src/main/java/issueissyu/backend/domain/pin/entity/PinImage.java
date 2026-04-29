@@ -39,4 +39,8 @@ public class PinImage {
 
     @Column(name = "pin_s3_url", nullable = false, length = 500)
     private String pinS3Url;
+
+    public void assignPin(Pin pin) {
+        this.pin = pin;
+    }
 }
