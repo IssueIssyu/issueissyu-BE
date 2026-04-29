@@ -46,6 +46,6 @@ public class UserEmogji extends BaseEntity {
     @ToString.Exclude
     private User user;
 
-    @Column(name = "purchase_token", nullable = false, length = 500)
+    @Column(name = "purchase_token", length = 500)
     private String purchaseToken;
 }

@@ -1,6 +1,8 @@
 package issueissyu.backend.domain.pin.entity.mapping;
 
+import issueissyu.backend.domain.pin.entity.Emogji;
 import issueissyu.backend.domain.pin.entity.Pin;
+import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,15 +13,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "pin_emogji")
+@Table(
+        name = "pin_emogji",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"pin_id", "uid"})
+)
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,11 +40,19 @@ public class PinEmogji extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pin_id", nullable = false)
-    @ToString.Exclude
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Pin pin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_emoji_id", nullable = false)
-    @ToString.Exclude
-    private UserEmogji userEmogji;
+    @JoinColumn(name = "uid", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emoji_id", nullable = false)
+    private Emogji emogji;
+
+    public void changeEmogji(Emogji emogji) {
+        this.emogji = emogji;
+    }
 }
