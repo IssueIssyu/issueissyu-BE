@@ -20,6 +20,7 @@ import java.util.Objects;
 public class NaverMapReverseGeocodeService {
 
     private static final String REVERSE_GEOCODE_PATH = "/map-reversegeocode/v2/gc";
+    private static final String REQUEST_TYPE = "coordsToaddr";
     private static final String OUTPUT_JSON = "json";
     private static final String DEFAULT_ORDERS = "legalcode,admcode,addr,roadaddr";
 
@@ -73,6 +74,7 @@ public class NaverMapReverseGeocodeService {
     private URI buildReverseGeocodeUri(UriBuilder uriBuilder, NaverReverseGeocodeReqDTO request) {
         UriBuilder builder = uriBuilder
                 .path(REVERSE_GEOCODE_PATH)
+                .queryParam("request", REQUEST_TYPE)
                 .queryParam("coords", request.toCoords())
                 .queryParam("output", request.getOutput() == null || request.getOutput().isBlank() ? OUTPUT_JSON : request.getOutput())
                 .queryParam("orders", request.getOrders() == null || request.getOrders().isBlank() ? DEFAULT_ORDERS : request.getOrders());

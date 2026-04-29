@@ -47,7 +47,7 @@ public class NaverMapService {
         if (land == null || land.name() == null || land.name().isBlank()) {
             return null;
         }
-        String regionPrefix = buildRegionPrefix(item.region());
+        String regionPrefix = buildRegionPrefix(item.region(), true);
         String number1 = land.number1() == null ? "" : land.number1();
         String number2 = (land.number2() == null || land.number2().isBlank()) ? "" : "-" + land.number2();
         String road = (land.name() + " " + number1 + number2).trim();
@@ -65,7 +65,7 @@ public class NaverMapService {
                     if (land == null) {
                         return null;
                     }
-                    String regionPrefix = buildRegionPrefix(item.region());
+                    String regionPrefix = buildRegionPrefix(item.region(), true);
                     String number1 = land.number1() == null ? "" : land.number1();
                     String number2 = (land.number2() == null || land.number2().isBlank()) ? "" : "-" + land.number2();
                     String jibun = (number1 + number2).trim();
@@ -80,6 +80,11 @@ public class NaverMapService {
 
     private Optional<String> resolveRegionAddress(NaverReverseGeocodeResDTO result) {
         return result.results().stream()
+                .sorted(Comparator.comparingInt(item -> {
+                    if ("admcode".equalsIgnoreCase(item.name())) return 0;
+                    if ("legalcode".equalsIgnoreCase(item.name())) return 1;
+                    return 2;
+                }))
                 .map(NaverReverseGeocodeResDTO.ResultItem::region)
                 .filter(region -> region != null)
                 .map(region -> {
@@ -94,13 +99,17 @@ public class NaverMapService {
                 .findFirst();
     }
 
-    private String buildRegionPrefix(NaverReverseGeocodeResDTO.Region region) {
+    private String buildRegionPrefix(NaverReverseGeocodeResDTO.Region region, boolean includeArea4) {
         if (region == null) {
             return "";
         }
         String area1 = region.area1() == null || region.area1().name() == null ? "" : region.area1().name();
         String area2 = region.area2() == null || region.area2().name() == null ? "" : region.area2().name();
         String area3 = region.area3() == null || region.area3().name() == null ? "" : region.area3().name();
+        String area4 = region.area4() == null || region.area4().name() == null ? "" : region.area4().name();
+        if (includeArea4) {
+            return (area1 + " " + area2 + " " + area3 + " " + area4).trim().replaceAll("\\s+", " ");
+        }
         return (area1 + " " + area2 + " " + area3).trim().replaceAll("\\s+", " ");
     }
 
@@ -121,22 +130,40 @@ public class NaverMapService {
         return response.results().stream()
                 // 행정동(admcode) 결과를 우선 사용하고, 없으면 다른 타입 결과 사용
                 .sorted(Comparator.comparingInt(item -> "admcode".equalsIgnoreCase(item.name()) ? 0 : 1))
-                .map(NaverReverseGeocodeResDTO.ResultItem::region)
-                .filter(region -> region != null && region.area2() != null)
-                .map(region -> {
-                    String area2 = region.area2().name();
-                    if (area2 == null || area2.isBlank()) {
-                        return null;
-                    }
-                    // 일반구가 area3에 내려오는 경우(예: 수원시 영통구)까지 포함해 비교
-                    String area3 = region.area3() == null ? null : region.area3().name();
-                    if (area3 != null && !area3.isBlank() && area3.endsWith("구")) {
-                        return (area2 + " " + area3).trim();
-                    }
-                    return area2.trim();
-                })
+                .map(this::resolveAdministrativeComparisonKey)
                 .filter(name -> name != null && !name.isBlank())
                 .findFirst()
                 .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_SIGUNGU_NOT_FOUND));
+    }
+
+    private String resolveAdministrativeComparisonKey(NaverReverseGeocodeResDTO.ResultItem item) {
+        NaverReverseGeocodeResDTO.Region region = item.region();
+        if (region == null) {
+            return null;
+        }
+
+        String area1 = region.area1() == null ? null : region.area1().name();
+        String area2 = region.area2() == null ? null : region.area2().name();
+        String area3 = region.area3() == null ? null : region.area3().name();
+
+        // 기본 비교 단위는 area2(시/군/구)
+        if (area2 != null && !area2.isBlank()) {
+            // 구가 별도로 area3에 내려오는 경우(예: 수원시 + 영통구)만 구까지 포함
+            if (area3 != null && !area3.isBlank() && area3.endsWith("구")) {
+                return (area2 + " " + area3).trim();
+            }
+            return area2.trim();
+        }
+
+        // 군/구가 없을 때는 "시" 단위로만 비교 (세종특별자치시 등)
+        if (area1 != null && !area1.isBlank()
+                && (area1.endsWith("시")
+                || area1.contains("특별시")
+                || area1.contains("광역시")
+                || area1.contains("특별자치시"))) {
+            return area1.trim();
+        }
+
+        return null;
     }
 }
