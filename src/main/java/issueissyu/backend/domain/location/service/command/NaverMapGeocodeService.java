@@ -1,8 +1,11 @@
 package issueissyu.backend.domain.location.service.command;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import issueissyu.backend.domain.location.dto.req.NaverGeocodeReqDTO;
+import issueissyu.backend.domain.location.dto.res.NaverGeocodeResDTO;
+import issueissyu.backend.domain.location.exception.LocationException;
+import issueissyu.backend.domain.location.exception.code.LocationErrorCode;
 import issueissyu.backend.global.config.properties.NaverMapProperties;
-import lombok.RequiredArgsConstructor;
+import org.postgresql.geometric.PGpoint;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -10,139 +13,99 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriBuilder;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class NaverMapGeocodeService {
 
     private static final String GEOCODE_PATH = "/map-geocode/v2/geocode";
 
-    @Qualifier("naverMapRestClient")
     private final RestClient naverMapRestClient;
     private final NaverMapProperties naverMapProperties;
 
-    public GeocodeResult geocode(String query) {
-        return geocode(new GeocodeRequest(query, null, null, null, null, null));
+    public NaverMapGeocodeService(
+            @Qualifier("naverMapRestClient") RestClient naverMapRestClient,
+            NaverMapProperties naverMapProperties
+    ) {
+        this.naverMapRestClient = naverMapRestClient;
+        this.naverMapProperties = naverMapProperties;
     }
 
-    public GeocodeResult geocode(GeocodeRequest request) {
+    public NaverGeocodeResDTO geocode(String query) {
+        return geocode(NaverGeocodeReqDTO.of(query));
+    }
+
+    public PGpoint geocodeToPoint(String query) {
+        NaverGeocodeReqDTO req = NaverGeocodeReqDTO.builder()
+                .query(query)
+                .language("kor")
+                .page(1)
+                .count(1)
+                .build();
+        NaverGeocodeResDTO result = geocode(req);
+        return result.firstPoint()
+                .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_ADDRESS_NOT_FOUND));
+    }
+
+    public NaverGeocodeResDTO geocode(NaverGeocodeReqDTO request) {
         validateRequest(request);
         validateApiKeys();
 
         try {
-            GeocodeApiResponse response = naverMapRestClient.get()
+            NaverGeocodeResDTO response = naverMapRestClient.get()
                     .uri(uriBuilder -> buildGeocodeUri(uriBuilder, request))
                     .header("x-ncp-apigw-api-key-id", naverMapProperties.getClientId())
                     .header("x-ncp-apigw-api-key", naverMapProperties.getClientSecret())
                     .header("Accept", "application/json")
                     .retrieve()
-                    .body(GeocodeApiResponse.class);
+                    .body(NaverGeocodeResDTO.class);
 
             if (response == null) {
-                throw new IllegalStateException("네이버 지도 지오코딩 응답이 비어 있습니다.");
+                throw LocationException.of(LocationErrorCode.LOCATION_RESPONSE_EMPTY);
             }
             if (response.status() == null || !"OK".equalsIgnoreCase(response.status())) {
-                throw new IllegalStateException("네이버 지도 지오코딩 요청 실패: " + response.errorMessage());
+                throw new LocationException(LocationErrorCode.LOCATION_GEOCODE_API_FAILED,
+                        "네이버 지도 지오코딩 요청 실패: " + response.errorMessage());
             }
-
-            List<GeocodeAddress> addresses = Objects.requireNonNullElse(response.addresses(), List.of());
-            GeocodeMeta meta = response.meta() == null ? new GeocodeMeta(0, 1, addresses.size()) : response.meta();
-            return new GeocodeResult(request.query(), meta, addresses);
+            return response;
         } catch (RestClientException e) {
-            throw new IllegalStateException("네이버 지도 지오코딩 API 호출에 실패했습니다.", e);
+            throw new LocationException(LocationErrorCode.LOCATION_GEOCODE_API_FAILED,
+                    "네이버 지도 지오코딩 API 호출에 실패했습니다.");
         }
     }
 
-    private URI buildGeocodeUri(UriBuilder uriBuilder, GeocodeRequest request) {
+    private URI buildGeocodeUri(UriBuilder uriBuilder, NaverGeocodeReqDTO request) {
         UriBuilder builder = uriBuilder
                 .path(GEOCODE_PATH)
-                .queryParam("query", request.query());
+                .queryParam("query", request.getQuery());
 
-        if (request.coordinate() != null && !request.coordinate().isBlank()) {
-            builder.queryParam("coordinate", request.coordinate());
+        if (request.getCoordinate() != null && !request.getCoordinate().isBlank()) {
+            builder.queryParam("coordinate", request.getCoordinate());
         }
-        if (request.filter() != null && !request.filter().isBlank()) {
-            builder.queryParam("filter", request.filter());
+        if (request.getFilter() != null && !request.getFilter().isBlank()) {
+            builder.queryParam("filter", request.getFilter());
         }
-        if (request.language() != null && !request.language().isBlank()) {
-            builder.queryParam("language", request.language());
+        if (request.getLanguage() != null && !request.getLanguage().isBlank()) {
+            builder.queryParam("language", request.getLanguage());
         }
-        if (request.page() != null) {
-            builder.queryParam("page", request.page());
+        if (request.getPage() != null) {
+            builder.queryParam("page", request.getPage());
         }
-        if (request.count() != null) {
-            builder.queryParam("count", request.count());
+        if (request.getCount() != null) {
+            builder.queryParam("count", request.getCount());
         }
         return builder.build();
     }
 
-    private void validateRequest(GeocodeRequest request) {
-        if (request == null || request.query() == null || request.query().isBlank()) {
-            throw new IllegalArgumentException("query는 비어 있을 수 없습니다.");
+    private void validateRequest(NaverGeocodeReqDTO request) {
+        if (request == null || request.getQuery() == null || request.getQuery().isBlank()) {
+            throw LocationException.of(LocationErrorCode.LOCATION_INVALID_REQUEST);
         }
     }
 
     private void validateApiKeys() {
         if (naverMapProperties.getClientId() == null || naverMapProperties.getClientId().isBlank()
                 || naverMapProperties.getClientSecret() == null || naverMapProperties.getClientSecret().isBlank()) {
-            throw new IllegalStateException("Naver Map API 키가 설정되지 않았습니다.");
+            throw LocationException.of(LocationErrorCode.LOCATION_API_KEY_MISSING);
         }
-    }
-
-    public record GeocodeRequest(
-            String query,
-            String coordinate,
-            String filter,
-            String language,
-            Integer page,
-            Integer count
-    ) {
-    }
-
-    public record GeocodeResult(
-            String query,
-            GeocodeMeta meta,
-            List<GeocodeAddress> addresses
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private record GeocodeApiResponse(
-            String status,
-            GeocodeMeta meta,
-            List<GeocodeAddress> addresses,
-            String errorMessage
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record GeocodeMeta(
-            int totalCount,
-            int page,
-            int count
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record GeocodeAddress(
-            String roadAddress,
-            String jibunAddress,
-            String englishAddress,
-            List<AddressElement> addressElements,
-            String x,
-            String y,
-            Double distance
-    ) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public record AddressElement(
-            List<String> types,
-            String longName,
-            String shortName,
-            String code
-    ) {
     }
 }
