@@ -1,9 +1,9 @@
 package issueissyu.backend.domain.pin.service.query;
 
 import issueissyu.backend.domain.pin.dto.res.CommentResDTO;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CommentQueryService {
-    List<CommentResDTO> getComments(Long pinId, String uid);
+    Page<CommentResDTO> getComments(Long pinId, String uid, Pageable pageable);
 }

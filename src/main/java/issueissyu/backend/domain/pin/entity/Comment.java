@@ -15,7 +15,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -33,12 +32,10 @@ public class Comment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
-    @ToString.Exclude
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pin_id", nullable = false)
-    @ToString.Exclude
     private Pin pin;
 
     @Column(name = "comment_content", nullable = false, length = 1000)

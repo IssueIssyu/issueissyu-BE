@@ -7,10 +7,10 @@ import issueissyu.backend.domain.pin.repository.CommentRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,13 +20,12 @@ public class CommentQueryServiceImpl implements CommentQueryService {
     private final PinRepository pinRepository;
 
     @Override
-    public List<CommentResDTO> getComments(Long pinId, String uid) {
+    public Page<CommentResDTO> getComments(Long pinId, String uid, Pageable pageable) {
         if (!pinRepository.existsById(pinId)) {
             throw GeneralException.of(PinErrorCode.PIN_NOT_FOUND);
         }
 
-        return commentRepository.findAllByPinPinIdOrderByCreatedAtAsc(pinId).stream()
-                .map(comment -> CommentConverter.toCommentResDTO(comment, uid))
-                .toList();
+        return commentRepository.findAllByPinPinIdOrderByCreatedAtAsc(pinId, pageable)
+                .map(comment -> CommentConverter.toCommentResDTO(comment, uid));
     }
 }
