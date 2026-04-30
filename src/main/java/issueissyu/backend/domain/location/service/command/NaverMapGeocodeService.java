@@ -63,13 +63,11 @@ public class NaverMapGeocodeService {
                 throw LocationException.of(LocationErrorCode.LOCATION_RESPONSE_EMPTY);
             }
             if (response.status() == null || !"OK".equalsIgnoreCase(response.status())) {
-                throw new LocationException(LocationErrorCode.LOCATION_GEOCODE_API_FAILED,
-                        "네이버 지도 지오코딩 요청 실패: " + response.errorMessage());
+                throw LocationException.of(LocationErrorCode.LOCATION_GEOCODE_API_FAILED);
             }
             return response;
         } catch (RestClientException e) {
-            throw new LocationException(LocationErrorCode.LOCATION_GEOCODE_API_FAILED,
-                    "네이버 지도 지오코딩 API 호출에 실패했습니다.", e);
+            throw LocationException.of(LocationErrorCode.LOCATION_GEOCODE_API_FAILED);
         }
     }
 

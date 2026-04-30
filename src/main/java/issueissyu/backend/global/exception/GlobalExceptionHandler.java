@@ -3,7 +3,6 @@ package issueissyu.backend.global.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import issueissyu.backend.domain.location.exception.LocationException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.BaseErrorCode;
@@ -45,13 +44,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> onThrowException(GeneralException generalException,
                                                    HttpServletRequest request) {
         return handleExceptionInternal(generalException, generalException.getCode(), null, request);
-    }
-
-    //LocationException
-    @ExceptionHandler(value = LocationException.class)
-    public ResponseEntity<Object> onThrowLocationException(LocationException locationException,
-                                                           HttpServletRequest request) {
-        return handleExceptionInternal(locationException, locationException.getCode(), null, request);
     }
 
     // DataIntegrityViolationException

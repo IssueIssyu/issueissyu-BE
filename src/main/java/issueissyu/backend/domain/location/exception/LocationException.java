@@ -1,30 +1,12 @@
 package issueissyu.backend.domain.location.exception;
 
 import issueissyu.backend.global.api.code.BaseErrorCode;
-import lombok.Getter;
+import issueissyu.backend.global.exception.GeneralException;
 
-@Getter
-public class LocationException extends RuntimeException {
-    private final BaseErrorCode code;
+public class LocationException extends GeneralException {
 
     public LocationException(BaseErrorCode code) {
-        super(code.getReason().getMessage());
-        this.code = code;
-    }
-
-    public LocationException(BaseErrorCode code, String message) {
-        super(message);
-        this.code = code;
-    }
-
-    public LocationException(BaseErrorCode code, Throwable cause) {
-        super(code.getReason().getMessage(), cause);
-        this.code = code;
-    }
-
-    public LocationException(BaseErrorCode code, String message, Throwable cause) {
-        super(message, cause);
-        this.code = code;
+        super(code);
     }
 
     public static LocationException of(BaseErrorCode code) {

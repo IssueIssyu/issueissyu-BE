@@ -58,16 +58,13 @@ public class NaverMapReverseGeocodeService {
 
             int statusCode = response.status().code();
             if (statusCode != 0 && statusCode != 3) {
-                String message = response.status().message() == null ? "알 수 없는 오류" : response.status().message();
-                throw new LocationException(LocationErrorCode.LOCATION_REVERSE_GEOCODE_API_FAILED,
-                        "네이버 지도 리버스 지오코딩 요청 실패(" + statusCode + "): " + message);
+                throw LocationException.of(LocationErrorCode.LOCATION_REVERSE_GEOCODE_API_FAILED);
             }
 
             List<NaverReverseGeocodeResDTO.ResultItem> results = Objects.requireNonNullElse(response.results(), List.of());
             return new NaverReverseGeocodeResDTO(response.status(), results);
         } catch (RestClientException e) {
-            throw new LocationException(LocationErrorCode.LOCATION_REVERSE_GEOCODE_API_FAILED,
-                    "네이버 지도 리버스 지오코딩 API 호출에 실패했습니다.", e);
+            throw LocationException.of(LocationErrorCode.LOCATION_REVERSE_GEOCODE_API_FAILED);
         }
     }
 

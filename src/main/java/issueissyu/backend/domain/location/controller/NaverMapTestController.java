@@ -1,8 +1,8 @@
 package issueissyu.backend.domain.location.controller;
 
 import issueissyu.backend.domain.location.service.NaverMapService;
+import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
 import issueissyu.backend.global.api.ApiResponse;
-import issueissyu.backend.global.api.code.GeneralSuccessCode;
 import lombok.RequiredArgsConstructor;
 import org.postgresql.geometric.PGpoint;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +33,7 @@ public class NaverMapTestController {
         String secondAddress = naverMapService.resolveRoadAddressOf(second);
 
         return ApiResponse.onSuccess(
-                GeneralSuccessCode.OK,
+                LocationSuccessCode.LOCATION_SIGUNGU_MATCH_SUCCESS,
                 new SigunguMatchResDTO(first, second, firstAddress, secondAddress, same)
         );
     }
@@ -42,7 +42,7 @@ public class NaverMapTestController {
     public ApiResponse<GeocodeResDTO> geocode(@RequestParam String address) {
         PGpoint point = naverMapService.geocodeToPoint(address);
         return ApiResponse.onSuccess(
-                GeneralSuccessCode.OK,
+                LocationSuccessCode.LOCATION_GEOCODE_SUCCESS,
                 new GeocodeResDTO(address, point.x, point.y)
         );
     }
