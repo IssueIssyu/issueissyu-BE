@@ -5,11 +5,11 @@ import issueissyu.backend.domain.pin.dto.res.EmojiCandidateResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryResDTO;
 import issueissyu.backend.domain.pin.entity.Emoji;
 import issueissyu.backend.domain.pin.entity.mapping.PinEmoji;
+import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.EmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
-import issueissyu.backend.global.exception.GeneralException;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -48,15 +48,15 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
         Long myEmojiId = myEmoji.map(pinEmoji -> pinEmoji.getEmoji().getEmojiId()).orElse(null);
 
         return counts.stream()
-                .map(count -> PinEmojiSummaryResDTO.builder()
-                        .emojiId(count.getEmojiId())
-                        .emojiImageUrl(count.getEmojiImageUrl())
-                        .count((int) count.getCount())
-                        .isMine(count.getEmojiId().equals(myEmojiId))
-                        .build())
-                .sorted(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
-                        .thenComparing(PinEmojiSummaryResDTO::getEmojiId))
-                .toList();
+        .map(count -> PinEmojiSummaryResDTO.builder()
+                .emojiId(count.getEmojiId())
+                .emojiImageUrl(count.getEmojiImageUrl())
+                .count((int) count.getCount())
+                .isMine(count.getEmojiId().equals(myEmojiId))
+                .build())
+        .sorted(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
+                .thenComparing(PinEmojiSummaryResDTO::getEmojiId))
+        .toList();
     }
 
     @Override
@@ -86,7 +86,7 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
 
     private void ensurePinExists(Long pinId) {
         if (!pinRepository.existsById(pinId)) {
-            throw GeneralException.of(PinErrorCode.PIN_NOT_FOUND);
+            throw PinException.of(PinErrorCode.PIN_NOT_FOUND);
         }
     }
 }

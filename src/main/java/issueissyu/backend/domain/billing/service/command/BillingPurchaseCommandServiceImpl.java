@@ -5,6 +5,7 @@ import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
 import issueissyu.backend.domain.billing.converter.BillingConverter;
 import issueissyu.backend.domain.billing.dto.req.VerifyPurchaseReq;
+import issueissyu.backend.domain.billing.exception.BillingException;
 import issueissyu.backend.domain.billing.exception.code.BillingErrorCode;
 import issueissyu.backend.domain.billing.repository.UserEmojiRepository;
 import issueissyu.backend.domain.pin.entity.Emoji;
@@ -42,14 +43,14 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
     @Override
     public Long verifyPurchase(String uid, VerifyPurchaseReq request) {
         if (userEmojiRepository.existsByPurchaseToken(request.getPurchaseToken())) {
-            throw GeneralException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
+            throw BillingException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
         }
 
         Emoji emoji = emojiRepository.findByProductId(request.getProductId())
-                .orElseThrow(() -> GeneralException.of(BillingErrorCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> BillingException.of(BillingErrorCode.PRODUCT_NOT_FOUND));
 
         if (userEmojiRepository.existsByUserUidAndEmojiEmojiId(uid, emoji.getEmojiId())) {
-            throw GeneralException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
+            throw BillingException.of(BillingErrorCode.PURCHASE_ALREADY_PROCESSED);
         }
 
         User user = userRepository.findById(uid)
@@ -69,12 +70,12 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
         AndroidPublisher androidPublisher = androidPublisherProvider.getIfAvailable();
         if (androidPublisher == null) {
             log.error("[Billing] AndroidPublisher Bean이 없습니다. 설정/의존성을 확인하세요.");
-            throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
+            throw BillingException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         }
 
         if (packageName == null || packageName.isBlank()) {
             log.error("[Billing] google.play.package-name 설정이 비어 있습니다.");
-            throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
+            throw BillingException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         }
 
         try {
@@ -87,24 +88,24 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
 
             // 0 = Purchased
             if (purchaseState == null || purchaseState != 0) {
-                throw GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
+                throw BillingException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
             }
 
             if (purchase.getProductId() != null && !productId.equals(purchase.getProductId())) {
-                throw GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
+                throw BillingException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
             }
 
             // consume/acknowledge는 앱 정책 확정 후 추가
         } catch (GoogleJsonResponseException e) {
             int statusCode = e.getStatusCode();
             if (statusCode == 400 || statusCode == 404 || statusCode == 410) {
-                throw GeneralException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
+                throw BillingException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
             }
             log.error("[Billing] Google Play API 응답 오류 - status: {}, body: {}", statusCode, e.getDetails());
-            throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
+            throw BillingException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         } catch (IOException e) {
             log.error("[Billing] Google Play API 통신 실패 - {}", e.getMessage());
-            throw GeneralException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
+            throw BillingException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         }
     }
 }

@@ -1,8 +1,15 @@
 package issueissyu.backend.domain.pin.exception;
 
-public class PinException extends RuntimeException {
+import issueissyu.backend.global.api.code.BaseErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 
-    public PinException(String message) {
-        super(message);
+public class PinException extends GeneralException {
+
+    public PinException(BaseErrorCode code) {
+        super(code);
+    }
+
+    public static PinException of(BaseErrorCode code) {
+        return new PinException(code);
     }
 }

@@ -5,6 +5,7 @@ import issueissyu.backend.domain.pin.dto.req.CommentReqDTO;
 import issueissyu.backend.domain.pin.dto.res.CommentResDTO;
 import issueissyu.backend.domain.pin.entity.Comment;
 import issueissyu.backend.domain.pin.entity.Pin;
+import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.CommentRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
@@ -27,7 +28,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     @Override
     public CommentResDTO createComment(Long pinId, String uid, CommentReqDTO request) {
         Pin pin = pinRepository.findById(pinId)
-                .orElseThrow(() -> GeneralException.of(PinErrorCode.PIN_NOT_FOUND));
+                .orElseThrow(() -> PinException.of(PinErrorCode.PIN_NOT_FOUND));
         User user = userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
@@ -43,10 +44,10 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     @Override
     public CommentResDTO updateComment(Long pinId, Long commentId, String uid, CommentReqDTO request) {
         Comment comment = commentRepository.findByCommentIdAndPinPinId(commentId, pinId)
-                .orElseThrow(() -> GeneralException.of(PinErrorCode.COMMENT_NOT_FOUND));
+                .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {
-            throw GeneralException.of(PinErrorCode.COMMENT_FORBIDDEN);
+            throw PinException.of(PinErrorCode.COMMENT_FORBIDDEN);
         }
 
         comment.updateContent(request.getCommentContent());
@@ -56,10 +57,10 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     @Override
     public void deleteComment(Long pinId, Long commentId, String uid) {
         Comment comment = commentRepository.findByCommentIdAndPinPinId(commentId, pinId)
-                .orElseThrow(() -> GeneralException.of(PinErrorCode.COMMENT_NOT_FOUND));
+                .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {
-            throw GeneralException.of(PinErrorCode.COMMENT_FORBIDDEN);
+            throw PinException.of(PinErrorCode.COMMENT_FORBIDDEN);
         }
         commentRepository.delete(comment);
     }
