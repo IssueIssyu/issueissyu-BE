@@ -27,7 +27,10 @@ public class PinEmojiController {
     private final PinEmojiCommandService pinEmojiCommandService;
     private final PinEmojiQueryService pinEmojiQueryService;
 
-    @Operation(summary = "핀 반응 목록 조회")
+    @Operation(
+        summary = "핀 반응 목록 조회",
+        description = "selectedEmojiId와 함께, 기본 이모지는 항상 노출하고 비기본 이모지는 해당 핀에 반응(count>0)이 있는 경우만 반응 수/소유 여부/상품 ID를 반환합니다."
+    )
     @GetMapping
     public ApiResponse<PinEmojiSummaryListResDTO> getPinEmojis(
             @PathVariable Long pinId,

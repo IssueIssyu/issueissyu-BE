@@ -40,7 +40,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
         Emoji targetEmoji = emojiRepository.findById(request.getEmojiId())
                 .orElseThrow(() -> PinException.of(PinErrorCode.EMOJI_NOT_FOUND));
 
-        // 2) 기본 이모지가 아니면 구매(보유) 여부를 반드시 검사한다.
+        // 2) 기본 이모지가 아니면 구매(보유) 여부를 반드시 검사
         if (!targetEmoji.isDefault() && !userEmojiRepository.existsByUserUidAndEmojiEmojiId(uid, targetEmoji.getEmojiId())) {
             throw PinException.of(PinErrorCode.EMOJI_NOT_OWNED);
         }
@@ -48,7 +48,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
         User user = userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
-        // 3) pinId+uid의 현재 active=true 반응을 잠그고 토글/교체를 원자적으로 처리한다.
+        // 3) pinId+uid의 현재 active=true 반응을 잠그고 토글/교체를 원자적으로 처리
         Optional<PinEmoji> currentActiveOpt = pinEmojiRepository.findActiveByPinIdAndUidForUpdate(pinId, uid);
         Long targetEmojiId = targetEmoji.getEmojiId();
 
@@ -56,7 +56,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
             PinEmoji currentActive = currentActiveOpt.get();
             Long currentEmojiId = currentActive.getEmoji().getEmojiId();
 
-            // 같은 이모지를 다시 누르면 선택 해제(active=false)한다.
+            // 같은 이모지를 다시 누르면 선택 해제(active=false)
             if (currentEmojiId.equals(targetEmojiId)) {
                 currentActive.deactivate();
                 pinEmojiRepository.save(currentActive);
@@ -65,7 +65,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
                         .build();
             }
 
-            // 다른 이모지를 누르면 기존 선택은 해제하고 새 선택만 active=true로 만든다.
+            // 다른 이모지를 누르면 기존 선택은 해제하고 새 선택만 active=true
             currentActive.deactivate();
             pinEmojiRepository.save(currentActive);
         }

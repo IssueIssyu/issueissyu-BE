@@ -53,14 +53,19 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
                 .map(pinEmoji -> pinEmoji.getEmoji().getEmojiId())
                 .orElse(null);
 
-        // 4) 구매 상태/상품 정보까지 한 번에 내려 프론트가 잠금 UI를 판단할 수 있게 한다.
+        // 4) 구매 상태/상품 정보
         List<Emoji> allEmojis = emojiRepository.findAllByOrderByEmojiIdAsc();
         Set<Long> ownedEmojiIds = new HashSet<>(userEmojiRepository.findOwnedEmojiIdsByUid(uid));
 
         List<PinEmojiSummaryResDTO> emojis = new ArrayList<>();
         for (Emoji emoji : allEmojis) {
-            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
             long count = countByEmojiId.getOrDefault(emoji.getEmojiId(), 0L);
+            // 기본 이모지는 count=0이어도 항상 노출, 그 외 이모지는 해당 핀에 반응이 있을 때만 노출
+            if (!emoji.isDefault() && count == 0L) {
+                continue;
+            }
+
+            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
 
             emojis.add(PinEmojiSummaryResDTO.builder()
                     .emojiId(emoji.getEmojiId())
@@ -72,6 +77,7 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
                     .build());
         }
 
+        // 5) 1순위: count 내림차순, 2순위: emojiId 오름차순 으로 정렬
         emojis.sort(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
                 .thenComparing(PinEmojiSummaryResDTO::getEmojiId));
 
