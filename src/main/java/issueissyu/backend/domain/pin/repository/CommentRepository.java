@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    Page<Comment> findAllByPinPinIdOrderByCreatedAtAsc(Long pinId, Pageable pageable);
+    Page<Comment> findAllByPinPinId(Long pinId, Pageable pageable);
 
     Optional<Comment> findByCommentIdAndPinPinId(Long commentId, Long pinId);
 }
