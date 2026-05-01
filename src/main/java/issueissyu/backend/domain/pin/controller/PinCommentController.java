@@ -10,9 +10,6 @@ import issueissyu.backend.domain.pin.service.query.CommentQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +18,9 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "Pin Comment", description = "핀 댓글 API")
 @RestController
@@ -34,16 +32,13 @@ public class PinCommentController {
 
     @Operation(summary = "핀 댓글 목록 조회")
     @GetMapping
-    public ApiResponse<Page<CommentResDTO>> getComments(
+    public ApiResponse<List<CommentResDTO>> getComments(
             @PathVariable Long pinId,
-            @AuthenticationPrincipal String uid,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @AuthenticationPrincipal String uid
     ) {
-        Pageable pageable = PageRequest.of(page, size);
         return ApiResponse.onSuccess(
                 PinSuccessCode.PIN_COMMENTS_200,
-                commentQueryService.getComments(pinId, uid, pageable)
+                commentQueryService.getComments(pinId, uid)
         );
     }
 
