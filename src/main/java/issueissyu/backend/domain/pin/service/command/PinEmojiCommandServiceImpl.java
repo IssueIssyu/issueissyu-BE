@@ -85,17 +85,4 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
                 .selectedEmojiId(targetEmojiId)
                 .build();
     }
-
-    @Override
-    public void deleteMyEmoji(Long pinId, String uid) {
-        // DELETE API도 물리 삭제 대신 선택 상태만 해제하여 토글 정책과 일관성을 맞춘다.
-        if (!pinRepository.existsById(pinId)) {
-            throw PinException.of(PinErrorCode.PIN_NOT_FOUND);
-        }
-
-        PinEmoji pinEmoji = pinEmojiRepository.findByPinPinIdAndUserUidAndActiveTrue(pinId, uid)
-                .orElseThrow(() -> PinException.of(PinErrorCode.MY_EMOJI_NOT_FOUND));
-        pinEmoji.deactivate();
-        pinEmojiRepository.save(pinEmoji);
-    }
 }

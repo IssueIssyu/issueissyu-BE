@@ -5,6 +5,4 @@ import issueissyu.backend.domain.pin.dto.res.ApplyPinEmojiResDTO;
 
 public interface PinEmojiCommandService {
     ApplyPinEmojiResDTO applyMyEmoji(Long pinId, String uid, ApplyPinEmojiReqDTO request);
-
-    void deleteMyEmoji(Long pinId, String uid);
 }
