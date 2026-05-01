@@ -52,6 +52,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/dev/oauth2/**", "/dev/login/**").permitAll()
+                        .requestMatchers("/dev/location/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login/naver").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login/kakao").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
