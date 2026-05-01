@@ -25,10 +25,4 @@ public class RestClientConfig {
                 .build();
     }
 
-    @Bean
-    public RestClient kakaoRestClient(RestClient.Builder restClientBuilder) {
-        return restClientBuilder
-                .baseUrl("https://kapi.kakao.com")
-                .build();
-    }
 }

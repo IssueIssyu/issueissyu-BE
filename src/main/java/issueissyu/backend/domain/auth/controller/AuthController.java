@@ -2,7 +2,6 @@ package issueissyu.backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LocalLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LocalSignupReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LoginLinkReqDTO;
@@ -10,14 +9,12 @@ import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.OnboardingReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneSendReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneVerifyReqDTO;
-import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.LocalLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.LocalSignupResDTO;
 import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
 import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
-import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
 import issueissyu.backend.domain.auth.service.LocalLoginService;
 import issueissyu.backend.domain.auth.service.LocalSignupService;
 import issueissyu.backend.domain.auth.service.LoginLinkService;
@@ -57,7 +54,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final NaverAppLoginService naverAppLoginService;
-    private final KakaoAppLoginService kakaoAppLoginService;
     private final LocalSignupService localSignupService;
     private final LocalLoginService localLoginService;
     private final UserCommandService userCommandService;
@@ -151,18 +147,6 @@ public class AuthController {
         AuthSuccessCode successCode = result.isNew()
                 ? AuthSuccessCode.NAVER_LOGIN_200_1
                 : AuthSuccessCode.NAVER_LOGIN_200_2;
-        return ApiResponse.onSuccess(successCode, result);
-    }
-
-    @Operation(summary = "카카오 앱 로그인")
-    @PostMapping("/auth/login/kakao")
-    public ApiResponse<KakaoAppLoginResDTO> kakaoAppLogin(
-            @Valid @RequestBody KakaoAppLoginReqDTO request) {
-
-        KakaoAppLoginResDTO result = kakaoAppLoginService.login(request);
-        AuthSuccessCode successCode = result.isNew()
-                ? AuthSuccessCode.KAKAO_LOGIN_200_1
-                : AuthSuccessCode.KAKAO_LOGIN_200_2;
         return ApiResponse.onSuccess(successCode, result);
     }
 

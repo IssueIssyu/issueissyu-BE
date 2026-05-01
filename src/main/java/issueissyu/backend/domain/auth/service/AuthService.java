@@ -135,48 +135,12 @@ public class AuthService {
         return new NaverUserResult(user, true);
     }
 
-    // 카카오 앱 로그인
-    @Transactional
-    public KakaoUserResult findOrCreateKakaoAppUser(KakaoUserProfile profile) {
-        String providerId = profile.id();
-        if (providerId == null || providerId.isBlank()) {
-            throw AuthException.of(AuthErrorCode.KAKAO_LOGIN_UNAUTHORIZED);
-        }
-
-        Optional<OAuth> existing = oAuthRepository.findBySocialTypeAndProviderIdWithUser(
-                SocialType.KAKAO, providerId);
-
-        if (existing.isPresent()) {
-            return new KakaoUserResult(existing.get().getUser(), false);
-        }
-
-        User user = createNewKakaoAppUser(profile);
-        oAuthRepository.save(OAuth.builder()
-                .user(user)
-                .providerId(providerId)
-                .socialType(SocialType.KAKAO)
-                .build());
-        return new KakaoUserResult(user, true);
-    }
-
     private User createNewNaverAppUser(NaverUserProfile profile) {
         String uid  = AppUuid.newUid();
         String name = profile.name();
         return userRepository.save(User.builder()
                 .uid(uid)
                 .userName(name != null && !name.isBlank() ? name : null)
-                .build());
-    }
-
-    private User createNewKakaoAppUser(KakaoUserProfile profile) {
-        String uid = AppUuid.newUid();
-        String name = profile.name() != null ? profile.name().trim() : null;
-        if (name == null || name.isBlank()) {
-            throw AuthException.of(AuthErrorCode.KAKAO_LOGIN_UNAUTHORIZED);
-        }
-        return userRepository.save(User.builder()
-                .uid(uid)
-                .userName(name)
                 .build());
     }
 

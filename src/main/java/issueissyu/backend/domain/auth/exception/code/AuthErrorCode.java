@@ -11,7 +11,6 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     NAVER_LOGIN_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NAVER_LOGIN_401", "유효하지 않은 값이 존재합니다(만료된 인가코드 등)."),
     NAVER_API_FAILED(HttpStatus.BAD_GATEWAY, "NAVER_5021", "네이버 서버 응답에 실패했습니다."),
-    KAKAO_LOGIN_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "KAKAO_LOGIN_401", "유효하지 않은 값이 존재합니다."),
 
     // 로컬 회원가입
     LOCAL_SIGNUP_400_1(HttpStatus.BAD_REQUEST, "LOCAL_SIGNUP_400_1", "유효하지 않은 값이 존재합니다."),

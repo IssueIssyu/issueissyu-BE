@@ -35,7 +35,7 @@ public class JwtTokenProvider {
         return buildToken(uid, null, TOKEN_TYPE_ACCESS, accessExpMs);
     }
 
-    // provider: "naver", "kakao" 등 소셜 로그인 제공자 식별자
+    // provider: "naver", "local" 등 로그인 제공자 식별자
     public String createRefreshToken(String uid, String provider) {
         return buildToken(uid, provider, TOKEN_TYPE_REFRESH, refreshExpMs);
     }
