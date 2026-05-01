@@ -14,6 +14,11 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     NAVER_LOGIN_200_2(HttpStatus.OK, "NAVER_LOGIN_200_2", "로그인에 성공했습니다."),
     KAKAO_LOGIN_200_1(HttpStatus.OK, "KAKAO_LOGIN_200_1", "처음으로 카카오 로그인에 성공했습니다."),
     KAKAO_LOGIN_200_2(HttpStatus.OK, "KAKAO_LOGIN_200_2", "로그인에 성공했습니다."),
+
+    // 로컬 회원가입 / 로그인 성공 코드
+    LOCAL_SIGNUP_200_1(HttpStatus.OK, "LOCAL_SIGNUP_200_1", "회원가입에 성공했습니다."),
+    LOCAL_LOGIN_200_1(HttpStatus.OK, "LOCAL_LOGIN_200_1", "처음으로 로컬 로그인에 성공했습니다."),
+    LOCAL_LOGIN_200_2(HttpStatus.OK, "LOCAL_LOGIN_200_2", "로컬 로그인에 성공했습니다."),
     NICKNAME_200(HttpStatus.OK, "NICKNAME_200", "사용 가능한 닉네임입니다."),
     TERM_200(HttpStatus.OK, "TERM_200", "약관 동의에 성공했습니다."),
 

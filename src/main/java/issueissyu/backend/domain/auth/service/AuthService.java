@@ -9,6 +9,7 @@ import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.enums.SocialType;
 import issueissyu.backend.domain.user.repository.OAuthRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.domain.user.repository.UserTermRepository;
 import issueissyu.backend.domain.user.util.AppUuid;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
@@ -28,6 +29,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final OAuthRepository oAuthRepository;
+    private final UserTermRepository userTermRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRedisStore refreshTokenRedisStore;
 
@@ -100,11 +102,12 @@ public class AuthService {
         refreshTokenRedisStore.deleteAll(uid);
     }
 
-    // 회원탈퇴: Redis 토큰 → OAuth 레코드 → User 순으로 삭제
+    // 회원탈퇴: Redis 토큰 → OAuth → UserTerm → User 순으로 삭제
     @Transactional
     public void signout(String uid) {
         refreshTokenRedisStore.deleteAll(uid);
         oAuthRepository.deleteByUserUid(uid);
+        userTermRepository.deleteByUserUid(uid);
         userRepository.deleteById(uid);
     }
 

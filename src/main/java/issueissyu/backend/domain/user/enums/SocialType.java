@@ -2,5 +2,6 @@ package issueissyu.backend.domain.user.enums;
 
 public enum SocialType {
     NAVER,
-    KAKAO
+    KAKAO,
+    LOCAL
 }

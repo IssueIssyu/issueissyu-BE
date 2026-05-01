@@ -3,17 +3,23 @@ package issueissyu.backend.domain.auth.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.LocalLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.LocalSignupReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LoginLinkReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.OnboardingReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneSendReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneVerifyReqDTO;
 import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.LocalLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.LocalSignupResDTO;
 import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
 import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
 import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
+import issueissyu.backend.domain.auth.service.LocalLoginService;
+import issueissyu.backend.domain.auth.service.LocalSignupService;
 import issueissyu.backend.domain.auth.service.LoginLinkService;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.service.OnboardingService;
@@ -52,6 +58,8 @@ public class AuthController {
     private final AuthService authService;
     private final NaverAppLoginService naverAppLoginService;
     private final KakaoAppLoginService kakaoAppLoginService;
+    private final LocalSignupService localSignupService;
+    private final LocalLoginService localLoginService;
     private final UserCommandService userCommandService;
     private final PhoneVerificationService phoneVerificationService;
     private final LoginLinkService loginLinkService;
@@ -155,6 +163,36 @@ public class AuthController {
         AuthSuccessCode successCode = result.isNew()
                 ? AuthSuccessCode.KAKAO_LOGIN_200_1
                 : AuthSuccessCode.KAKAO_LOGIN_200_2;
+        return ApiResponse.onSuccess(successCode, result);
+    }
+
+    @Operation(summary = "로컬 회원가입",
+            description = """
+                    이메일과 비밀번호로 새 로컬 계정을 생성합니다.
+                    비밀번호는 서버에서 BCrypt 단방향 암호화 처리 후 저장됩니다.
+                    가입 성공 후 /auth/login/local 을 호출하여 인증을 수행하세요.
+                    """)
+    @PostMapping("/auth/signup/local")
+    public ApiResponse<LocalSignupResDTO> localSignup(
+            @Valid @RequestBody LocalSignupReqDTO request) {
+
+        LocalSignupResDTO result = localSignupService.signup(request);
+        return ApiResponse.onSuccess(AuthSuccessCode.LOCAL_SIGNUP_200_1, result);
+    }
+
+    @Operation(summary = "로컬 로그인",
+            description = """
+                    이메일·비밀번호를 검증하고 JWT를 발급합니다.
+                    isNew=true이면 신규 회원(온보딩 필요), false이면 기존 회원입니다.
+                    """)
+    @PostMapping("/auth/login/local")
+    public ApiResponse<LocalLoginResDTO> localLogin(
+            @Valid @RequestBody LocalLoginReqDTO request) {
+
+        LocalLoginResDTO result = localLoginService.login(request);
+        AuthSuccessCode successCode = result.isNew()
+                ? AuthSuccessCode.LOCAL_LOGIN_200_1
+                : AuthSuccessCode.LOCAL_LOGIN_200_2;
         return ApiResponse.onSuccess(successCode, result);
     }
 
