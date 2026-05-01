@@ -45,6 +45,9 @@ public class User extends BaseEntity {
     @Column(length = 255)
     private String email;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @Builder.Default
     @Column(name = "event_alarm_active", nullable = false)
     private boolean eventAlarmActive = false;
