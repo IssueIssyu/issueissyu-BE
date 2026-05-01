@@ -17,12 +17,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "emogji")
+@Table(name = "emoji")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Emogji {
+public class Emoji {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
