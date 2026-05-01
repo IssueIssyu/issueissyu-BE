@@ -25,7 +25,8 @@ import org.hibernate.annotations.OnDeleteAction;
 @Entity
 @Table(
         name = "pin_emoji",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"pin_id", "uid"})
+        // 같은 핀/유저가 같은 이모지를 중복 저장하지 않도록 제약한다.
+        uniqueConstraints = @UniqueConstraint(columnNames = {"pin_id", "uid", "emoji_id"})
 )
 @Getter
 @SuperBuilder
@@ -52,7 +53,18 @@ public class PinEmoji extends BaseEntity {
     @JoinColumn(name = "emoji_id", nullable = false)
     private Emoji emoji;
 
+    @Column(name = "active", nullable = false)
+    private boolean active;
+
     public void changeEmoji(Emoji emoji) {
         this.emoji = emoji;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
     }
 }

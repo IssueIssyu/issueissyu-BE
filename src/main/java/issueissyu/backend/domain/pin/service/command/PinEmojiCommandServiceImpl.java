@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -32,12 +34,13 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
 
     @Override
     public ApplyPinEmojiResDTO applyMyEmoji(Long pinId, String uid, ApplyPinEmojiReqDTO request) {
+        // 1) 핀/이모지는 즉시 도메인 예외
         Pin pin = pinRepository.findById(pinId)
                 .orElseThrow(() -> PinException.of(PinErrorCode.PIN_NOT_FOUND));
         Emoji targetEmoji = emojiRepository.findById(request.getEmojiId())
                 .orElseThrow(() -> PinException.of(PinErrorCode.EMOJI_NOT_FOUND));
 
-        // 기본 이모지 아니면 보유 여부 확인 필요
+        // 2) 기본 이모지가 아니면 구매(보유) 여부를 반드시 검사한다.
         if (!targetEmoji.isDefault() && !userEmojiRepository.existsByUserUidAndEmojiEmojiId(uid, targetEmoji.getEmojiId())) {
             throw PinException.of(PinErrorCode.EMOJI_NOT_OWNED);
         }
@@ -45,37 +48,54 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
         User user = userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
-        // 핀_이모지 조회 없으면 생성
-        PinEmoji pinEmoji = pinEmojiRepository.findByPinPinIdAndUserUid(pinId, uid)
+        // 3) pinId+uid의 현재 active=true 반응을 잠그고 토글/교체를 원자적으로 처리한다.
+        Optional<PinEmoji> currentActiveOpt = pinEmojiRepository.findActiveByPinIdAndUidForUpdate(pinId, uid);
+        Long targetEmojiId = targetEmoji.getEmojiId();
+
+        if (currentActiveOpt.isPresent()) {
+            PinEmoji currentActive = currentActiveOpt.get();
+            Long currentEmojiId = currentActive.getEmoji().getEmojiId();
+
+            // 같은 이모지를 다시 누르면 선택 해제(active=false)한다.
+            if (currentEmojiId.equals(targetEmojiId)) {
+                currentActive.deactivate();
+                pinEmojiRepository.save(currentActive);
+                return ApplyPinEmojiResDTO.builder()
+                        .selectedEmojiId(null)
+                        .build();
+            }
+
+            // 다른 이모지를 누르면 기존 선택은 해제하고 새 선택만 active=true로 만든다.
+            currentActive.deactivate();
+            pinEmojiRepository.save(currentActive);
+        }
+
+        PinEmoji targetRow = pinEmojiRepository.findByPinPinIdAndUserUidAndEmojiEmojiId(pinId, uid, targetEmojiId)
                 .orElse(PinEmoji.builder()
                         .pin(pin)
                         .user(user)
                         .emoji(targetEmoji)
+                        .active(false)
                         .build());
 
-        // 이모지 변경 필요 여부 확인 및 변경
-        if (!pinEmoji.getEmoji().getEmojiId().equals(targetEmoji.getEmojiId())) {
-            pinEmoji.changeEmoji(targetEmoji);
-        }
+        targetRow.activate();
+        pinEmojiRepository.save(targetRow);
 
-        pinEmojiRepository.save(pinEmoji);
-
-        // 응답 반환
         return ApplyPinEmojiResDTO.builder()
-                .emojiId(targetEmoji.getEmojiId())
-                .emojiImageUrl(targetEmoji.getEmojiImageUrl())
+                .selectedEmojiId(targetEmojiId)
                 .build();
     }
 
     @Override
     public void deleteMyEmoji(Long pinId, String uid) {
+        // DELETE API도 물리 삭제 대신 선택 상태만 해제하여 토글 정책과 일관성을 맞춘다.
         if (!pinRepository.existsById(pinId)) {
             throw PinException.of(PinErrorCode.PIN_NOT_FOUND);
         }
 
-        PinEmoji pinEmoji = pinEmojiRepository.findByPinPinIdAndUserUid(pinId, uid)
+        PinEmoji pinEmoji = pinEmojiRepository.findByPinPinIdAndUserUidAndActiveTrue(pinId, uid)
                 .orElseThrow(() -> PinException.of(PinErrorCode.MY_EMOJI_NOT_FOUND));
-
-        pinEmojiRepository.delete(pinEmoji);
+        pinEmoji.deactivate();
+        pinEmojiRepository.save(pinEmoji);
     }
 }

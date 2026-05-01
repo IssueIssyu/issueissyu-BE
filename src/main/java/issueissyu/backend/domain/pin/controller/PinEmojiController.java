@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.pin.dto.req.ApplyPinEmojiReqDTO;
 import issueissyu.backend.domain.pin.dto.res.ApplyPinEmojiResDTO;
-import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryResDTO;
+import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryListResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
 import issueissyu.backend.domain.pin.service.command.PinEmojiCommandService;
 import issueissyu.backend.domain.pin.service.query.PinEmojiQueryService;
@@ -20,8 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @Tag(name = "Pin Emoji", description = "핀 반응 관련 API")
 @RestController
 @RequestMapping("/api/pins/{pinId}/emojis")
@@ -32,7 +30,7 @@ public class PinEmojiController {
 
     @Operation(summary = "핀 반응 목록 조회")
     @GetMapping
-    public ApiResponse<List<PinEmojiSummaryResDTO>> getPinEmojis(
+    public ApiResponse<PinEmojiSummaryListResDTO> getPinEmojis(
             @PathVariable Long pinId,
             @AuthenticationPrincipal String uid
     ) {

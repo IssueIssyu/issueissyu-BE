@@ -2,9 +2,9 @@ package issueissyu.backend.domain.pin.service.query;
 
 import issueissyu.backend.domain.billing.repository.UserEmojiRepository;
 import issueissyu.backend.domain.pin.dto.res.EmojiCandidateResDTO;
+import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryListResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryResDTO;
 import issueissyu.backend.domain.pin.entity.Emoji;
-import issueissyu.backend.domain.pin.entity.mapping.PinEmoji;
 import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.EmojiRepository;
@@ -17,9 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -35,28 +36,49 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
     private final UserEmojiRepository userEmojiRepository;
 
     @Override
-    public List<PinEmojiSummaryResDTO> getPinEmojiSummaries(Long pinId, String uid) {
-        //핀 존재 확인
+    public PinEmojiSummaryListResDTO getPinEmojiSummaries(Long pinId, String uid) {
+        // 1) 핀 존재 여부 확인
         ensurePinExists(pinId);
 
-        //반응 개수 DB GROUP BY로 집계
+        // 2) active=true 집계 -> 반응 수
         List<PinEmojiRepository.PinEmojiCountProjection> counts =
                 pinEmojiRepository.countByPinIdGroupByEmoji(pinId);
+        Map<Long, Long> countByEmojiId = new HashMap<>();
+        for (PinEmojiRepository.PinEmojiCountProjection count : counts) {
+            countByEmojiId.put(count.getEmojiId(), count.getCount());
+        }
 
-        //내 현재 반응 1건 조회하여 isMine 반영
-        Optional<PinEmoji> myEmoji = pinEmojiRepository.findByPinPinIdAndUserUid(pinId, uid);
-        Long myEmojiId = myEmoji.map(pinEmoji -> pinEmoji.getEmoji().getEmojiId()).orElse(null);
+        // 3) pinId+uid 기준 active=true 1건 = selectedEmojiId
+        Long selectedEmojiId = pinEmojiRepository.findByPinPinIdAndUserUidAndActiveTrue(pinId, uid)
+                .map(pinEmoji -> pinEmoji.getEmoji().getEmojiId())
+                .orElse(null);
 
-        return counts.stream()
-        .map(count -> PinEmojiSummaryResDTO.builder()
-                .emojiId(count.getEmojiId())
-                .emojiImageUrl(count.getEmojiImageUrl())
-                .count((int) count.getCount())
-                .isMine(count.getEmojiId().equals(myEmojiId))
-                .build())
-        .sorted(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
-                .thenComparing(PinEmojiSummaryResDTO::getEmojiId))
-        .toList();
+        // 4) 구매 상태/상품 정보까지 한 번에 내려 프론트가 잠금 UI를 판단할 수 있게 한다.
+        List<Emoji> allEmojis = emojiRepository.findAllByOrderByEmojiIdAsc();
+        Set<Long> ownedEmojiIds = new HashSet<>(userEmojiRepository.findOwnedEmojiIdsByUid(uid));
+
+        List<PinEmojiSummaryResDTO> emojis = new ArrayList<>();
+        for (Emoji emoji : allEmojis) {
+            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
+            long count = countByEmojiId.getOrDefault(emoji.getEmojiId(), 0L);
+
+            emojis.add(PinEmojiSummaryResDTO.builder()
+                    .emojiId(emoji.getEmojiId())
+                    .emojiImageUrl(emoji.getEmojiImageUrl())
+                    .count((int) count)
+                    .isDefault(emoji.isDefault())
+                    .isOwned(availability.isOwned())
+                    .productId(availability.productId())
+                    .build());
+        }
+
+        emojis.sort(Comparator.comparingInt(PinEmojiSummaryResDTO::getCount).reversed()
+                .thenComparing(PinEmojiSummaryResDTO::getEmojiId));
+
+        return PinEmojiSummaryListResDTO.builder()
+                .selectedEmojiId(selectedEmojiId)
+                .emojis(emojis)
+                .build();
     }
 
     @Override
@@ -70,23 +92,31 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
         // 화면에서 바로 사용할 형태로 변환하여 리스트 반환
         List<EmojiCandidateResDTO> result = new ArrayList<>();
         for (Emoji emoji : allEmojis) {
-            boolean isOwned = ownedEmojiIds.contains(emoji.getEmojiId());
-            // 이미 사용 가능한 이모지(기본 제공 또는 보유)는 productId 불필요
-            String productId = (emoji.isDefault() || isOwned) ? null : emoji.getProductId();
+            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
             result.add(EmojiCandidateResDTO.builder()
                     .emojiId(emoji.getEmojiId())
                     .emojiImageUrl(emoji.getEmojiImageUrl())
                     .isDefault(emoji.isDefault())
-                    .isOwned(isOwned)
-                    .productId(productId)
+                    .isOwned(availability.isOwned())
+                    .productId(availability.productId())
                     .build());
         }
         return result;
+    }
+
+    // 두 API(핀 상세/이모지 피커)에서 동일하게 쓰는 구매 가능 상태 계산 로직.
+    private EmojiAvailability resolveAvailability(Emoji emoji, Set<Long> ownedEmojiIds) {
+        boolean isOwned = ownedEmojiIds.contains(emoji.getEmojiId());
+        String productId = (emoji.isDefault() || isOwned) ? null : emoji.getProductId();
+        return new EmojiAvailability(isOwned, productId);
     }
 
     private void ensurePinExists(Long pinId) {
         if (!pinRepository.existsById(pinId)) {
             throw PinException.of(PinErrorCode.PIN_NOT_FOUND);
         }
+    }
+
+    private record EmojiAvailability(boolean isOwned, String productId) {
     }
 }

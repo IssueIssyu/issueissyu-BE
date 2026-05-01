@@ -17,6 +17,12 @@ public class PinEmojiSummaryResDTO {
     @Schema(description = "해당 이모지 반응 수", example = "12")
     private int count;
 
-    @Schema(description = "내가 선택한 이모지인지 여부", example = "true")
-    private boolean isMine;
+    @Schema(description = "기본 제공 이모지 여부", example = "true")
+    private boolean isDefault;
+
+    @Schema(description = "사용자 보유 이모지 여부", example = "true")
+    private boolean isOwned;
+
+    @Schema(description = "구글 플레이 상품 ID (미보유 유료 이모지 구매 시 사용, 기본/보유 이모지는 null)", example = "emoji_sparkle")
+    private String productId;
 }
