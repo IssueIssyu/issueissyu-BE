@@ -1,8 +1,15 @@
 package issueissyu.backend.domain.location.exception;
 
-public class LocationException extends RuntimeException {
+import issueissyu.backend.global.api.code.BaseErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 
-    public LocationException(String message) {
-        super(message);
+public class LocationException extends GeneralException {
+
+    public LocationException(BaseErrorCode code) {
+        super(code);
+    }
+
+    public static LocationException of(BaseErrorCode code) {
+        return new LocationException(code);
     }
 }
