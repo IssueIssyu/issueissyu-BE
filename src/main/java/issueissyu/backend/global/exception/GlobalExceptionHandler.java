@@ -72,7 +72,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String errorMessage = Optional.ofNullable(fieldError.getDefaultMessage()).orElse("");
             errors.put(fieldName, errorMessage);
         });
-        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, GeneralErrorCode.BAD_REQUEST, request, errors);
+        BaseErrorCode errorCode = GeneralErrorCode.BAD_REQUEST;
+        if (request instanceof ServletWebRequest servletWebRequest) {
+            String uri = servletWebRequest.getRequest().getRequestURI();
+            if ("/auth/signup/local".equals(uri)) {
+                errorCode = AuthErrorCode.LOCAL_SIGNUP_400_1;
+            }
+        }
+        return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, errorCode, request, errors);
     }
 
     // Exception
