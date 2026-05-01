@@ -23,7 +23,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     TERM_400(HttpStatus.BAD_REQUEST, "TERM_400", "필수 약관(SERVICE, PRIVACY)에 모두 동의해야 합니다."),
 
     // 전화번호 인증
-    PHONE_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PHONE_SEND_500", "SMS 전송에 실패했습니다."),
+    PHONE_SEND_400_1(HttpStatus.BAD_REQUEST, "PHONE_SEND_400_1", "전화번호를 올바른 양식으로 작성해 주세요."),
+    PHONE_SEND_400_2(HttpStatus.BAD_REQUEST, "PHONE_SEND_400_2", "인증번호 전송에 실패했습니다."),
     PHONE_CODE_INVALID(HttpStatus.BAD_REQUEST, "PHONE_CODE_400", "인증번호가 일치하지 않거나 만료되었습니다."),
     PHONE_400(HttpStatus.BAD_REQUEST, "PHONE_400", "중복된 전화번호입니다."),
 

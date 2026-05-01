@@ -77,6 +77,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String uri = servletWebRequest.getRequest().getRequestURI();
             if ("/auth/signup/local".equals(uri)) {
                 errorCode = AuthErrorCode.LOCAL_SIGNUP_400_1;
+            } else if ("/api/auth/phone/send".equals(uri)) {
+                errorCode = AuthErrorCode.PHONE_SEND_400_1;
             }
         }
         return handleExceptionInternalArgs(e, HttpHeaders.EMPTY, errorCode, request, errors);
