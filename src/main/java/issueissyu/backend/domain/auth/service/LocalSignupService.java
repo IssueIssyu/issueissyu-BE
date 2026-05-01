@@ -53,9 +53,9 @@ public class LocalSignupService {
             throw AuthException.of(AuthErrorCode.LOCAL_SIGNUP_409_1);
         }
 
-        // 사용자 생성 (userName 초기값: 이메일 @ 앞부분)
+        // 사용자 생성 (userName 초기값 고정: localdefault)
         String uid = AppUuid.newUid();
-        String userName = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
+        String userName = "localdefault";
 
         User user = userRepository.save(User.builder()
                 .uid(uid)
