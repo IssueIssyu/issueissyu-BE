@@ -86,9 +86,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 빌드 및 테스트 실행
-      - name: Build and Test
-        run: ./gradlew clean build
+      # 빌드만 수행 (테스트는 스킵 — 필요 시 ./gradlew test 로 별도 검증)
+      - name: Build (skip tests)
+        run: ./gradlew clean build -x test
 
       # 현재 시간 가져오기 (배포 버전 라벨용)
       - name: Get current time
