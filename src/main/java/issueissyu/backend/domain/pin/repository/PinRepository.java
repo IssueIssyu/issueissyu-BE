@@ -18,11 +18,11 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     @Modifying(clearAutomatically = true)
     @Query(value = """
             UPDATE pin p
-            SET visibility_status = true
+            SET visibility_status = false
             FROM issue_pin ip
             WHERE ip.pin_id = p.pin_id
               AND p.pin_type = 'ISSUE'
-              AND p.created_at >= NOW() - INTERVAL '1 year'
+              AND p.created_at < NOW() - INTERVAL '1 year'
             """, nativeQuery = true)
     int updateIssuePinVisibilityBySchedule();
 
