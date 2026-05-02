@@ -16,8 +16,7 @@ public class MapPinVisibilityScheduleService {
     @Transactional
     public void refreshPinVisibilityForMap() {
         pinRepository.hidePinsRegisteredOverOneYearAgo();
-        pinRepository.updateIssuePinVisibilityBySchedule();
         pinRepository.updateCommunicationPinVisibilityBySchedule();
-        pinRepository.updateFestivalPinVisibilityBySchedule();
+        pinRepository.updateEventPinVisibilityBySchedule();
     }
 }
