@@ -46,7 +46,7 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
                  AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
             FROM event_pin ep
             WHERE ep.pin_id = p.pin_id
-              AND p.pin_type = 'FESTIVAL'
+              AND p.pin_type IN ('FESTIVAL', 'STORE')
             """, nativeQuery = true)
-    int updateFestivalPinVisibilityBySchedule();
+    int updateEventPinVisibilityBySchedule();
 }
