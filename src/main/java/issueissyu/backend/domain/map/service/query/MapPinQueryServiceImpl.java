@@ -35,8 +35,8 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
         return new MapPinResDTO.PinItemDTO(
                 view.getPinId(),
                 view.getPinType(),
-                view.getLat(),   // pinSw = 위도
-                view.getLng(),   // pinNe = 경도
+                view.getLat(),
+                view.getLng(),
                 view.getDetailAddress(),
                 view.getRegion()
         );
