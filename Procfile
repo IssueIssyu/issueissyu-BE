@@ -1,1 +1,1 @@
-web: java -jar build/libs/backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=develop
+web: java -jar backend.jar --spring.profiles.active=develop
