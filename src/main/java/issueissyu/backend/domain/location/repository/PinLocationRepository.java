@@ -18,8 +18,7 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
     // @param neLng 북동쪽 경도
     // @param neLat 북동쪽 위도
 
-    // 노출 규칙은 매일 자정 배치(scheduler)에서 pin.visibility_status로 반영된다.
-    // 조회 시에는 bbox 내 + visibility_status 가 true 인 핀만 반환한다.
+    // 노출: 등록 1년 이내, 소통 핀은 communication_pin.updated_at 기준 1개월 이내 반응, 이벤트 핀은 게시 기간.
     @Query(value = """
             SELECT
                 p.pin_id        AS pinId,
@@ -31,10 +30,21 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
             FROM pin_location pl
             INNER JOIN pin      p ON pl.pin_id      = p.pin_id
             INNER JOIN location l ON pl.location_id = l.location_id
-            WHERE p.visibility_status = true
+            LEFT JOIN communication_pin cp ON cp.pin_id = p.pin_id
+            LEFT JOIN event_pin ep ON ep.pin_id = p.pin_id
+            WHERE p.created_at >= NOW() - INTERVAL '1 year'
               AND ST_Within(
                     pl.pin_point,
                     ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
+                  )
+              AND (
+                    p.pin_type = 'ISSUE'
+                    OR (p.pin_type = 'COMMUNICATION'
+                        AND cp.communication_pin_id IS NOT NULL
+                        AND COALESCE(cp.updated_at, cp.created_at) >= NOW() - INTERVAL '1 month')
+                    OR (p.pin_type IN ('STORE', 'FESTIVAL')
+                        AND ep.event_pin_id IS NOT NULL
+                        AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
                   )
             """, nativeQuery = true)
     List<MapPinView> findPinsInBoundingBox(

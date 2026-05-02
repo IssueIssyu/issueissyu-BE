@@ -21,8 +21,9 @@ public class MapController {
     private final MapPinQueryService mapPinQueryService;
 
     @Operation(summary = "현재 화면 전체 핀 조회",
-               description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. " +
-                             "이슈/소통/이벤트 핀은 각 노출 기간 조건을 적용합니다.")
+                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. " +
+                             "이슈는 등록 1년 이내, 소통 핀은 등록 1년 이내·최근 1개월 이내 반응, " +
+                             "이벤트 핀(스토어·축제)은 설정된 게시 기간 내인 핀만 반환합니다.")
     @GetMapping("/pins")
     public ApiResponse<MapPinResDTO> getPinsInScreen(
             @RequestParam double swLat,

@@ -40,10 +40,6 @@ public class Pin extends BaseEntity {
     private ToneType toneType = ToneType.NONE;
 
     @Builder.Default
-    @Column(name = "visibility_status")
-    private Boolean visibilityStatus = Boolean.TRUE;
-
-    @Builder.Default
     @OneToMany(mappedBy = "pin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     private List<PinImage> pinImages = new ArrayList<>();
