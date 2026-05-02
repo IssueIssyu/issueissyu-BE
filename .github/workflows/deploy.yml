@@ -1,0 +1,128 @@
+name: Issueissyu Dev CI/CD
+
+on:
+  pull_request:
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # develop 브랜치로 PR이 머지되거나 수동 실행 시 작동
+    if: (github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'develop')
+      || github.event_name == 'workflow_dispatch'
+
+    services:
+      # CI용 PostgreSQL DB 띄우기
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      # CI용 Redis 띄우기
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      # 코드 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # JDK 21 설치
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # Gradle 캐시
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # .env 파일 생성 (GitHub Secrets에서 주입)
+      - name: Create .env file from secret
+        run: |
+          printf '%s' "${{ secrets.ISSUEISSYU_ENV }}" > .env
+          chmod 600 .env
+
+      # CI용 로컬 DB/Redis 연결 설정 주입
+      - name: Override local datasource for CI
+        run: |
+          cat >> .env << EOF
+          LOCAL_DB_URL=jdbc:postgresql://localhost:5432/app
+          LOCAL_DB_USERNAME=postgres
+          LOCAL_DB_PASSWORD=postgres
+          LOCAL_REDIS_HOST=localhost
+          LOCAL_REDIS_PORT=6379
+          EOF
+
+      # gradlew 실행 권한 부여
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 빌드 및 테스트 실행
+      - name: Build and Test
+        run: ./gradlew clean build
+
+      # 현재 시간 가져오기 (배포 버전 라벨용)
+      - name: Get current time
+        uses: josStorer/get-current-time@v2
+        id: current-time
+        with:
+          format: 'YYYYMMDD-HHmmss'
+          utcOffset: '+09:00'
+
+      # 배포 패키지 구성 (jar + Procfile + .env + .platform 묶기)
+      - name: Generate deployment package
+        run: |
+          mkdir -p deploy
+          cp build/libs/backend-0.0.1-SNAPSHOT.jar deploy/application.jar
+          cp Procfile deploy/Procfile
+          cp .env deploy/.env
+          cp -r .platform deploy/.platform
+          cd deploy && zip -r deploy.zip .
+
+      # 배포 패키지 내용 검증
+      - name: Verify deploy zip content
+        run: |
+          unzip -l deploy/deploy.zip | head -n 50
+          unzip -l deploy/deploy.zip | egrep -i "pom.xml|Buildfile|src/|repository/" && exit 1 || echo "OK"
+
+      # EB에 배포
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: 'issueissyu-backend-dev'
+          environment_name: 'issueissyu-backend-dev-env'
+          version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
+          region: ap-northeast-2
+          deployment_package: deploy/deploy.zip
+          wait_for_deployment: true
