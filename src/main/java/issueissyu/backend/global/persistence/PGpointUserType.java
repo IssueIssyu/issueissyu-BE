@@ -1,6 +1,6 @@
 package issueissyu.backend.global.persistence;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.usertype.UserType;
 import org.postgresql.geometric.PGpoint;
 
@@ -41,8 +41,7 @@ public class PGpointUserType implements UserType<PGpoint> {
 
     @Override
     public PGpoint nullSafeGet(ResultSet rs, int position,
-                               SharedSessionContractImplementor session,
-                               Object owner) throws SQLException {
+                               WrapperOptions options) throws SQLException {
         Object obj = rs.getObject(position);
         if (obj == null || rs.wasNull()) return null;
         if (obj instanceof PGpoint p) return p;
@@ -51,7 +50,7 @@ public class PGpointUserType implements UserType<PGpoint> {
 
     @Override
     public void nullSafeSet(PreparedStatement st, PGpoint value, int index,
-                            SharedSessionContractImplementor session) throws SQLException {
+                            WrapperOptions options) throws SQLException {
         if (value == null) {
             st.setNull(index, Types.OTHER);
         } else {

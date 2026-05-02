@@ -53,7 +53,7 @@ public class SmsService {
             log.debug("SMS 발송 성공: phone={}, messageId={}", phone, response.getMessageId());
         } catch (Exception e) {
             log.error("SMS 발송 실패: phone={}", phone, e);
-            throw AuthException.of(AuthErrorCode.PHONE_SEND_FAILED);
+            throw AuthException.of(AuthErrorCode.PHONE_SEND_400_2);
         }
 
         redisUtil.setDataExpire(redisKey, code, SMS_CODE_TTL_SECONDS);

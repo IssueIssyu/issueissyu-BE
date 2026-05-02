@@ -75,6 +75,7 @@ public class NaverAppLoginService {
                 .refreshToken(refreshToken)
                 .expiresIn(jwtTokenProvider.getAccessExpMs() / 1000)
                 .isNew(isNew)
+                .socialType(SocialType.NAVER.name())
                 .user(userInfo)
                 .build();
     }

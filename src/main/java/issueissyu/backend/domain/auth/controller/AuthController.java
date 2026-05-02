@@ -2,18 +2,21 @@ package issueissyu.backend.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import issueissyu.backend.domain.auth.dto.req.KakaoAppLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.LocalLoginReqDTO;
+import issueissyu.backend.domain.auth.dto.req.LocalSignupReqDTO;
 import issueissyu.backend.domain.auth.dto.req.LoginLinkReqDTO;
 import issueissyu.backend.domain.auth.dto.req.NaverAppLoginReqDTO;
 import issueissyu.backend.domain.auth.dto.req.OnboardingReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneSendReqDTO;
 import issueissyu.backend.domain.auth.dto.req.PhoneVerifyReqDTO;
-import issueissyu.backend.domain.auth.dto.res.KakaoAppLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.LocalLoginResDTO;
+import issueissyu.backend.domain.auth.dto.res.LocalSignupResDTO;
 import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
 import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
-import issueissyu.backend.domain.auth.service.KakaoAppLoginService;
+import issueissyu.backend.domain.auth.service.LocalLoginService;
+import issueissyu.backend.domain.auth.service.LocalSignupService;
 import issueissyu.backend.domain.auth.service.LoginLinkService;
 import issueissyu.backend.domain.auth.service.NaverAppLoginService;
 import issueissyu.backend.domain.auth.service.OnboardingService;
@@ -51,7 +54,8 @@ public class AuthController {
 
     private final AuthService authService;
     private final NaverAppLoginService naverAppLoginService;
-    private final KakaoAppLoginService kakaoAppLoginService;
+    private final LocalSignupService localSignupService;
+    private final LocalLoginService localLoginService;
     private final UserCommandService userCommandService;
     private final PhoneVerificationService phoneVerificationService;
     private final LoginLinkService loginLinkService;
@@ -146,15 +150,33 @@ public class AuthController {
         return ApiResponse.onSuccess(successCode, result);
     }
 
-    @Operation(summary = "카카오 앱 로그인")
-    @PostMapping("/auth/login/kakao")
-    public ApiResponse<KakaoAppLoginResDTO> kakaoAppLogin(
-            @Valid @RequestBody KakaoAppLoginReqDTO request) {
+    @Operation(summary = "로컬 회원가입",
+            description = """
+                    이메일과 비밀번호로 새 로컬 계정을 생성합니다.
+                    비밀번호는 서버에서 BCrypt 단방향 암호화 처리 후 저장됩니다.
+                    가입 성공 후 /auth/login/local 을 호출하여 인증을 수행하세요.
+                    """)
+    @PostMapping("/auth/signup/local")
+    public ApiResponse<LocalSignupResDTO> localSignup(
+            @Valid @RequestBody LocalSignupReqDTO request) {
 
-        KakaoAppLoginResDTO result = kakaoAppLoginService.login(request);
+        LocalSignupResDTO result = localSignupService.signup(request);
+        return ApiResponse.onSuccess(AuthSuccessCode.LOCAL_SIGNUP_200_1, result);
+    }
+
+    @Operation(summary = "로컬 로그인",
+            description = """
+                    이메일·비밀번호를 검증하고 JWT를 발급합니다.
+                    isNew=true이면 신규 회원(온보딩 필요), false이면 기존 회원입니다.
+                    """)
+    @PostMapping("/auth/login/local")
+    public ApiResponse<LocalLoginResDTO> localLogin(
+            @Valid @RequestBody LocalLoginReqDTO request) {
+
+        LocalLoginResDTO result = localLoginService.login(request);
         AuthSuccessCode successCode = result.isNew()
-                ? AuthSuccessCode.KAKAO_LOGIN_200_1
-                : AuthSuccessCode.KAKAO_LOGIN_200_2;
+                ? AuthSuccessCode.LOCAL_LOGIN_200_1
+                : AuthSuccessCode.LOCAL_LOGIN_200_2;
         return ApiResponse.onSuccess(successCode, result);
     }
 
@@ -165,7 +187,7 @@ public class AuthController {
     }
 
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 형식 및 중복 여부를 확인합니다.")
-    @GetMapping("/auth/{nickname}/check")
+    @GetMapping("/api/auth/{nickname}/check")
     public ApiResponse<NicknameCheckResDTO> checkNickname(
             @PathVariable String nickname
     ) {
@@ -190,14 +212,14 @@ public class AuthController {
     }
 
     @Operation(summary = "회원탈퇴", description = "인증된 사용자의 Redis 토큰·OAuth·User 레코드를 모두 삭제합니다.")
-    @DeleteMapping("/auth/signout")
+    @DeleteMapping("/api/auth/signout")
     public ApiResponse<Void> signout(@AuthenticationPrincipal String uid) {
         authService.signout(uid);
         return ApiResponse.onSuccess(AuthSuccessCode.SIGNOUT_200, null);
     }
 
     @Operation(summary = "로그아웃", description = "인증된 사용자의 Redis refresh token을 삭제합니다.")
-    @PostMapping("/auth/logout")
+    @PostMapping("/api/auth/logout")
     public ApiResponse<Void> logout(@AuthenticationPrincipal String uid) {
         authService.logout(uid);
         return ApiResponse.onSuccess(AuthSuccessCode.LOGOUT_200, null);
@@ -205,7 +227,7 @@ public class AuthController {
 
     @Operation(summary = "약관 동의",
             description = "SERVICE, PRIVACY(필수), LOCATION, MARKETING(선택) 약관 동의 정보를 저장합니다.")
-    @PostMapping("/auth/term")
+    @PostMapping("/api/auth/term")
     public ApiResponse<TermResDTO> agreeTerm(@AuthenticationPrincipal String uid,
                                              @Valid @RequestBody TermReqDTO request) {
         TermResDTO result = userCommandService.agreeTerms(uid, request);
@@ -214,7 +236,7 @@ public class AuthController {
 
     @Operation(summary = "전화번호 인증번호 전송",
             description = "입력한 전화번호로 6자리 SMS 인증번호를 전송합니다.")
-    @PostMapping("/auth/phone/send")
+    @PostMapping("/api/auth/phone/send")
     public ApiResponse<Void> sendPhoneCode(@AuthenticationPrincipal String uid,
                                            @Valid @RequestBody PhoneSendReqDTO request) {
         phoneVerificationService.sendCode(request.getPhone());
@@ -228,7 +250,7 @@ public class AuthController {
                     - 중복 있음 + 닉네임 인증 완료(is_available_nickname=true) → PHONE_201 (로그인 연동 단계)
                     - 중복 있음 + 닉네임 미인증(is_available_nickname=false) → 400 에러
                     """)
-    @PostMapping("/auth/phone")
+    @PostMapping("/api/auth/phone")
     public ApiResponse<Void> verifyPhone(@AuthenticationPrincipal String uid,
                                          @Valid @RequestBody PhoneVerifyReqDTO request) {
         boolean isAvailableNickname = Boolean.TRUE.equals(request.getIsAvailableNickname());
@@ -243,7 +265,7 @@ public class AuthController {
                     임시 uid 사용자를 완전 제거하고, 기존 계정에 새 소셜 타입을 추가합니다.
                     Redis의 refresh token도 기존 uid로 갱신됩니다.
                     """)
-    @PostMapping("/auth/login/link")
+    @PostMapping("/api/auth/login/link")
     public ApiResponse<LoginLinkResDTO> loginLink(@AuthenticationPrincipal String uid,
                                                   @Valid @RequestBody LoginLinkReqDTO request) {
         LoginLinkResDTO result = loginLinkService.link(uid, request.getSocialType(), request.getPhone());
@@ -255,7 +277,7 @@ public class AuthController {
                     첫 로그인한 신규 사용자의 기본 정보를 저장합니다.
                     이 API는 전화번호가 신규인 경우만 호출해야 합니다.
                     """)
-    @PostMapping("/auth/onboarding")
+    @PostMapping("/api/auth/onboarding")
     public ApiResponse<OnboardingResDTO> onboarding(@AuthenticationPrincipal String uid,
                                                     @Valid @RequestBody OnboardingReqDTO request) {
         OnboardingResDTO result = onboardingService.onboard(uid, request);

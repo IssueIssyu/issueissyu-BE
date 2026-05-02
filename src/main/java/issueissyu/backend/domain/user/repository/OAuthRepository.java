@@ -23,4 +23,6 @@ public interface OAuthRepository extends JpaRepository<OAuth, Long> {
 
     boolean existsByUser_UidAndSocialType(String uid, SocialType socialType);
     Optional<OAuth> findFirstByUser_Uid(String uid);
+    Optional<OAuth> findByUser_UidAndSocialType(String uid, SocialType socialType);
+    boolean existsByProviderIdAndSocialType(String providerId, SocialType socialType);
 }

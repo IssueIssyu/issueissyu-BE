@@ -19,7 +19,11 @@ public class NaverAppLoginResDTO {
     private long expiresIn;
 
     // 첫 로그인 여부 (true: 신규 회원 → 온보딩, false: 기존 회원)
+    @JsonProperty("isNew")
     private boolean isNew;
+
+    @JsonProperty("social_type")
+    private String socialType;
 
     private UserInfo user;
 

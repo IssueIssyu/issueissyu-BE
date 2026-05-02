@@ -44,4 +44,8 @@ public class OAuth extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "social_type", nullable = false)
     private SocialType socialType;
+
+    // 로컬 로그인 전용 BCrypt 해시 비밀번호 (소셜 로그인은 null)
+    @Column(name = "password")
+    private String password;
 }
