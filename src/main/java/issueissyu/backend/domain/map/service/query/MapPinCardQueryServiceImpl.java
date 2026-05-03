@@ -69,10 +69,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
 
         Optional<String> profileImgOpt =
                 type == PinType.ISSUE
-                        ? userCustomCollectionRepository
-                                .fetchProfileMarkedForUser(author.getUid())
-                                .map(ucc ->
-                                        ucc.getCustomCollection().getCustomCollectionS3Url())
+                        ? profileCollectionS3UrlOfViewer(currentUserUid)
                         : Optional.empty();
 
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
@@ -114,6 +111,12 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         }
 
         return b.build();
+    }
+
+    private Optional<String> profileCollectionS3UrlOfViewer(String viewerUid) {
+        return userCustomCollectionRepository
+                .fetchProfileMarkedForUser(viewerUid)
+                .map(ucc -> ucc.getCustomCollection().getCustomCollectionS3Url());
     }
 
     /** 대표 이미지 우선, 없으면 첫 장. */
