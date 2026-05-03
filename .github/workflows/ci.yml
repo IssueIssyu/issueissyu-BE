@@ -1,0 +1,144 @@
+# PR / push 시 Spring Boot 백엔드 통합 CI
+# 인프라 스모크(Postgres / Redis / S3) → bootJar → JAR 기동 후 /health 200 확인
+
+name: IssueIssyu Backend CI
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # GitHub Actions 서비스 컨테이너
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 캐시 설정
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # gradlew 실행 권한 부여
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # GitHub → Settings → Secrets → CI_ENV (파일 상단 주석의 필수 키 참고)
+      - name: Create .env from secret (CI_ENV)
+        run: |
+          if [ -z "${{ secrets.CI_ENV }}" ]; then
+            echo "Repository secret CI_ENV 가 비어 있습니다."
+            exit 1
+          fi
+          printf '%s' "${{ secrets.CI_ENV }}" > .env
+          chmod 600 .env
+
+      # CI 서비스(Postgres/Redis) 주소로 덮어쓰기 
+      - name: Override datasource and Redis for CI services
+        run: |
+          cat >> .env << 'EOF'
+          LOCAL_DB_URL=jdbc:postgresql://127.0.0.1:5432/app
+          LOCAL_DB_USERNAME=postgres
+          LOCAL_DB_PASSWORD=postgres
+          LOCAL_REDIS_HOST=127.0.0.1
+          LOCAL_REDIS_PORT=6379
+          EOF
+
+      # Postgres / Redis 가 실제로 응답하는지
+      - name: Infra smoke (PostgreSQL / Redis)
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client redis-tools
+          pg_isready -h 127.0.0.1 -p 5432 -U postgres -d app
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d app -c 'SELECT 1'
+          redis-cli -h 127.0.0.1 -p 6379 ping
+
+      # S3: 프로젝트의 AWS SDK v2 + dotenv-java 로 동일 스모크 (Python 단계 제거)
+      - name: Infra smoke (S3)
+        run: ./gradlew s3Smoke -x test
+
+      - name: Build bootJar (skip tests)
+        run: ./gradlew clean bootJar -x test
+
+      # 실제 JAR 기동 후 헬스체크 — RootController GET /health
+      # 빈 CI Postgres 기준: ddl-auto 는 CLI로 create-drop 고정(CI_ENV에 validate 등이 있어도 덮어씀). 실패 시 로그 tail.
+      # OS env 로 DB/Redis 주입 — .env import 타이밍/경로와 무관하게 LOCAL_* 플레이스홀더가 풀리도록 함
+      - name: Start app and verify /health
+        env:
+          LOCAL_DB_URL: jdbc:postgresql://127.0.0.1:5432/app
+          LOCAL_DB_USERNAME: postgres
+          LOCAL_DB_PASSWORD: postgres
+          LOCAL_REDIS_HOST: 127.0.0.1
+          LOCAL_REDIS_PORT: '6379'
+        run: |
+          set -euo pipefail
+          LOG=/tmp/backend-boot.log
+          : >"$LOG"
+          java -jar build/libs/backend.jar \
+            --spring.profiles.active=local \
+            --spring.jpa.hibernate.ddl-auto=create-drop \
+            >>"$LOG" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if ! kill -0 "$PID" 2>/dev/null; then
+              echo "Java process exited early (iteration $i)"
+              break
+            fi
+            code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/health || true)"
+            if [ "$code" = "200" ]; then
+              echo "health OK"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "health check failed (last HTTP code=${code:-n/a})"
+          echo "---- last 250 lines of boot log ----"
+          tail -n 250 "$LOG" || true
+          exit 1
