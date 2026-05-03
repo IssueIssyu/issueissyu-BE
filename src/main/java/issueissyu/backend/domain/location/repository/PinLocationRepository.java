@@ -46,11 +46,13 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                         AND ep.event_pin_id IS NOT NULL
                         AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
                   )
+              AND (:pinTypeFilter IS NULL OR p.pin_type = :pinTypeFilter)
             """, nativeQuery = true)
     List<MapPinView> findPinsInBoundingBox(
             @Param("swLng") double swLng,
             @Param("swLat") double swLat,
             @Param("neLng") double neLng,
-            @Param("neLat") double neLat
+            @Param("neLat") double neLat,
+            @Param("pinTypeFilter") String pinTypeFilter
     );
 }

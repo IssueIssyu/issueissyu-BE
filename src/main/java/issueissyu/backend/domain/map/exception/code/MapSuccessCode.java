@@ -9,7 +9,11 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MapSuccessCode implements BaseSuccessCode {
 
-    MAP_200(HttpStatus.OK, "MAP_200", "현재 화면의 전체 핀 조회에 성공했습니다.");
+    MAP_200_1(HttpStatus.OK, "MAP_200_1", "현재 화면의 전체 핀 조회에 성공했습니다."),
+    MAP_200_2(HttpStatus.OK, "MAP_200_2", "현재 화면의 이슈 핀 조회에 성공했습니다."),
+    MAP_200_3(HttpStatus.OK, "MAP_200_3", "현재 화면의 소통 핀 조회에 성공했습니다."),
+    MAP_200_4(HttpStatus.OK, "MAP_200_4", "현재 화면의 가게 핀 조회에 성공했습니다."),
+    MAP_200_5(HttpStatus.OK, "MAP_200_5", "현재 화면의 축제 핀 조회에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
