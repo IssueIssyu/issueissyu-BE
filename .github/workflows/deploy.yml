@@ -6,13 +6,16 @@ on:
       - closed
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     # main 브랜치로 PR이 머지되거나 수동 실행 시 작동
     if: (github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'develop')
+      github.event.pull_request.base.ref == 'main')
       || github.event_name == 'workflow_dispatch'
 
     steps:
@@ -48,11 +51,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 빌드만 수행 (테스트는 스킵 — 필요 시 ./gradlew test 로 별도 검증)
+      # 빌드 수행
       - name: Build (skip tests)
         run: ./gradlew clean build -x test
 
-      # 현재 시간 가져오기 (배포 버전 라벨용)
+      # 현재 시간 가져오기
       - name: Get current time
         uses: josStorer/get-current-time@v2
         id: current-time
@@ -60,7 +63,7 @@ jobs:
           format: 'YYYYMMDD-HHmmss'
           utcOffset: '+09:00'
 
-      # 배포 패키지 구성 (jar + Procfile + .env + .platform 묶기)
+      # 배포 패키지 구성 (JAR + Procfile + .env + .platform + .ebextensions — AI 쪽 rsync와 동일하게 EB 설정 포함)
       - name: Generate deployment package
         run: |
           mkdir -p deploy
@@ -68,6 +71,7 @@ jobs:
           cp Procfile deploy/Procfile
           cp .env deploy/.env
           cp -r .platform deploy/.platform
+          cp -r .ebextensions deploy/.ebextensions
           cd deploy && zip -r deploy.zip .
 
       # 배포 패키지 내용 검증
@@ -78,13 +82,14 @@ jobs:
 
       # EB에 배포
       - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v20
+        uses: einaregilsson/beanstalk-deploy@v22
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: 'issueissyu-backend-dev'
           environment_name: 'issueissyu-backend-dev-env'
-          version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
           region: ap-northeast-2
+          version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
+          version_description: ${{ github.ref_name }}@${{ github.sha }}
           deployment_package: deploy/deploy.zip
           wait_for_deployment: true

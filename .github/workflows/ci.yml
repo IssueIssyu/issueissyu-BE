@@ -107,7 +107,6 @@ jobs:
       - name: Infra smoke (S3)
         run: ./gradlew s3Smoke -x test
 
-      # 컴파일 + bootJar (테스트는 생략 — deploy 와 동일)
       - name: Build bootJar (skip tests)
         run: ./gradlew clean bootJar -x test
 
