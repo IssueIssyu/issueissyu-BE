@@ -2,15 +2,20 @@ package issueissyu.backend.domain.map.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
 import issueissyu.backend.domain.map.enums.MapPinCategory;
 import issueissyu.backend.domain.map.exception.MapException;
 import issueissyu.backend.domain.map.exception.code.MapErrorCode;
 import issueissyu.backend.domain.map.exception.code.MapSuccessCode;
+import issueissyu.backend.domain.map.service.query.MapPinCardQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinQueryService;
+import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.global.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +29,7 @@ import java.util.Optional;
 public class MapController {
 
     private final MapPinQueryService mapPinQueryService;
+    private final MapPinCardQueryService mapPinCardQueryService;
 
     @Operation(summary = "현재 화면 핀 조회",
                 description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. ")
@@ -50,5 +56,16 @@ public class MapController {
                 successCode,
                 mapPinQueryService.getPinsInBoundingBox(swLng, swLat, neLng, neLat, pinTypeFilter)
         );
+    }
+
+    @Operation(
+            summary = "단일 핀 카드 조회",
+            description = "pin 유형(ISSUE, COMMUNICATION, STORE, FESTIVAL)에 따라 카드 필드를 채워 반환합니다. "
+                    + "이슈는 issuePinState·작성자 프로필(프로필 컬렉션)을, 가게는 discount·storeImageUrl을 제공합니다.")
+    @GetMapping("/{pinId}/card")
+    public ApiResponse<MapPinCardResDTO> getPinCard(
+            @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+        MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
+        return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
     }
 }
