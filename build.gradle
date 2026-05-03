@@ -102,3 +102,11 @@ dependencies {
 tasks.named('jar') {
 	enabled = false
 }
+
+// CI / 로컬: .env 의 AWS_* 로 S3 head·put·get·delete 스모크 (JUnit 아님)
+tasks.register('s3Smoke', JavaExec) {
+	group = 'verification'
+	description = 'S3 credentials smoke; expects .env in working directory'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'issueissyu.backend.ci.S3SmokeMain'
+}

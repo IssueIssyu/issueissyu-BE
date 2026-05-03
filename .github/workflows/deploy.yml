@@ -9,38 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # develop 브랜치로 PR이 머지되거나 수동 실행 시 작동
+    # main 브랜치로 PR이 머지되거나 수동 실행 시 작동
     if: (github.event_name == 'pull_request' &&
       github.event.pull_request.merged == true &&
       github.event.pull_request.base.ref == 'develop')
       || github.event_name == 'workflow_dispatch'
-
-    services:
-      # CI용 PostgreSQL DB 띄우기
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: app
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d app"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-      # CI용 Redis 띄우기
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
 
     steps:
       # 코드 체크아웃
@@ -70,17 +43,6 @@ jobs:
         run: |
           printf '%s' "${{ secrets.ISSUEISSYU_ENV }}" > .env
           chmod 600 .env
-
-      # CI용 로컬 DB/Redis 연결 설정 주입
-      - name: Override local datasource for CI
-        run: |
-          cat >> .env << EOF
-          LOCAL_DB_URL=jdbc:postgresql://localhost:5432/app
-          LOCAL_DB_USERNAME=postgres
-          LOCAL_DB_PASSWORD=postgres
-          LOCAL_REDIS_HOST=localhost
-          LOCAL_REDIS_PORT=6379
-          EOF
 
       # gradlew 실행 권한 부여
       - name: Grant execute permission for gradlew
