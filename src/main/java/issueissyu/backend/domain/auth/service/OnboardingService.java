@@ -4,6 +4,10 @@ import issueissyu.backend.domain.auth.dto.req.OnboardingReqDTO;
 import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
 import issueissyu.backend.domain.auth.exception.AuthException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
+import issueissyu.backend.domain.collection.entity.CustomCollection;
+import issueissyu.backend.domain.collection.entity.mapping.UserCustomCollection;
+import issueissyu.backend.domain.collection.repository.CustomCollectionRepository;
+import issueissyu.backend.domain.collection.repository.UserCustomCollectionRepository;
 import issueissyu.backend.domain.user.entity.OAuth;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.OAuthRepository;
@@ -16,8 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OnboardingService {
 
+    private static final String DEFAULT_PROFILE_NAME = "default";
+
     private final UserRepository userRepository;
     private final OAuthRepository oAuthRepository;
+    private final CustomCollectionRepository customCollectionRepository;
+    private final UserCustomCollectionRepository userCustomCollectionRepository;
 
     @Transactional
     public OnboardingResDTO onboard(String uid, OnboardingReqDTO request) {
@@ -37,9 +45,29 @@ public class OnboardingService {
 
         user.onboard(request.getNickname(), request.getEmail(), request.getPhone());
 
+        CustomCollection defaultProfile = customCollectionRepository
+                .findByCustomCollectionName(DEFAULT_PROFILE_NAME)
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOAREDING_400));
+
+        UserCustomCollection savedProfile =
+                userCustomCollectionRepository
+                        .findByUser_UidAndCustomCollection_CustomCollectionName(
+                                uid, DEFAULT_PROFILE_NAME)
+                        .orElseGet(
+                                () ->
+                                        userCustomCollectionRepository.save(
+                                                UserCustomCollection.builder()
+                                                        .user(user)
+                                                        .customCollection(
+                                                                defaultProfile)
+                                                        .build()));
+
         return OnboardingResDTO.builder()
                 .uuid(user.getUid())
                 .socialType(oauth.getSocialType().name())
+                .userCustomCollectionId(savedProfile.getUserCustomCollectionId())
+                .customCollectionId(defaultProfile.getCustomCollectionId())
+                .customCollectionName(defaultProfile.getCustomCollectionName())
                 .build();
     }
 }
