@@ -61,4 +61,8 @@ public class Pin extends BaseEntity {
     public void assignUser(User user) {
         this.user = user;
     }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
 }
