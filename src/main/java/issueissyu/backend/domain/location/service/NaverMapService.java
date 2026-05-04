@@ -18,6 +18,7 @@ public class NaverMapService {
     private final NaverMapReverseGeocodeService naverMapReverseGeocodeService;
     private final NaverMapGeocodeService naverMapGeocodeService;
 
+
     public PGpoint geocodeToPoint(String address) {
         return naverMapGeocodeService.geocodeToPoint(address);
     }
@@ -25,6 +26,17 @@ public class NaverMapService {
     public NaverReverseGeocodeResDTO reverseGeocode(PGpoint point) {
         return naverMapReverseGeocodeService.reverseGeocode(point);
     }
+    public PGpoint normalizePoint(PGpoint point) {
+        String roadAddress = resolveRoadAddress(point);
+        return geocodeToPoint(roadAddress);
+    }
+    // 두좌표가 같은 구인지 확인하는 서비스 메소드
+    public boolean isSameSigungu(PGpoint firstPoint, PGpoint secondPoint) {
+        String firstSigungu = resolveSigungu(firstPoint);
+        String secondSigungu = resolveSigungu(secondPoint);
+        return firstSigungu.equals(secondSigungu);
+    }
+
 
     public String resolveRoadAddressOf(PGpoint point) {
         return resolveRoadAddress(point);
@@ -113,16 +125,6 @@ public class NaverMapService {
         return (area1 + " " + area2 + " " + area3).trim().replaceAll("\\s+", " ");
     }
 
-    public PGpoint normalizePoint(PGpoint point) {
-        String roadAddress = resolveRoadAddress(point);
-        return geocodeToPoint(roadAddress);
-    }
-    // 두좌표가 같은 구인지 확인하는 서비스 메소드
-    public boolean isSameSigungu(PGpoint firstPoint, PGpoint secondPoint) {
-        String firstSigungu = resolveSigungu(firstPoint);
-        String secondSigungu = resolveSigungu(secondPoint);
-        return firstSigungu.equals(secondSigungu);
-    }
 
     private String resolveSigungu(PGpoint point) {
         NaverReverseGeocodeResDTO response = naverMapReverseGeocodeService.reverseGeocode(point);
