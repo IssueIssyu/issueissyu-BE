@@ -37,7 +37,7 @@ public class SwaggerConfig {
 
         Server httpServer = new Server()
                 .url("http://issueissyu-backend-dev-env.eba-uim2fupp.ap-northeast-2.elasticbeanstalk.com")
-                .description("IssueIssyu HTTP Server");
+                .description("IssueIssyu Develop Server");
 
 
         return new OpenAPI()
