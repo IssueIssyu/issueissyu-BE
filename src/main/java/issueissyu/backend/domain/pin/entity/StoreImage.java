@@ -35,9 +35,9 @@ public class StoreImage extends BaseEntity {
     @ToString.Exclude
     private EventPin eventPin;
 
-    @Column(name = "image_s3_key", nullable = false, length = 500)
+    @Column(name = "store_image_s3_key", nullable = false, length = 500)
     private String imageS3Key;
 
-    @Column(name = "image_s3_url", nullable = false, length = 500)
+    @Column(name = "store_image_s3_url", nullable = false, length = 500)
     private String imageS3Url;
 }
