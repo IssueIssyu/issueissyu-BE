@@ -1,4 +1,9 @@
 package issueissyu.backend.domain.issue.repository;
 
-public interface IssuePetitionRepository {
+import issueissyu.backend.domain.issue.entity.IssuePetition;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface IssuePetitionRepository extends JpaRepository<IssuePetition, Long> {
+
+    boolean existsByIssuePin_Pin_PinIdAndUser_Uid(Long pinId, String uid);
 }
