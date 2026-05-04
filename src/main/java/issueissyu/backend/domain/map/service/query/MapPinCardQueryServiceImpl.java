@@ -69,7 +69,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
 
         Optional<String> profileImgOpt =
                 type == PinType.ISSUE
-                        ? profileCollectionS3UrlOfViewer(currentUserUid)
+                        ? profileCollectionS3UrlOfViewer(author.getUid())
                         : Optional.empty();
 
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
