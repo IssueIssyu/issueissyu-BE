@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.location.service;
 
+import issueissyu.backend.domain.location.dto.res.NaverReverseGeocodeCodeAddressResDTO;
 import issueissyu.backend.domain.location.dto.res.NaverReverseGeocodeResDTO;
 import issueissyu.backend.domain.location.exception.LocationException;
 import issueissyu.backend.domain.location.exception.code.LocationErrorCode;
@@ -42,8 +43,23 @@ public class NaverMapService {
         return resolveRoadAddress(point);
     }
 
+    /**
+     * 한 번의 역지오코딩으로 법정동 코드와 표시용 주소(도로명 → 지번 → 지역명 순)를 반환합니다.
+     */
+    public NaverReverseGeocodeCodeAddressResDTO resolveLegalDistrictCodeAndAddress(PGpoint point) {
+        NaverReverseGeocodeResDTO result = naverMapReverseGeocodeService.reverseGeocode(point);
+        String legalDistrictCode = result.legalDistrictCode()
+                .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND));
+        String address = resolveRoadAddressFromResult(result);
+        return new NaverReverseGeocodeCodeAddressResDTO(legalDistrictCode, address);
+    }
+
     private String resolveRoadAddress(PGpoint point) {
         NaverReverseGeocodeResDTO result = naverMapReverseGeocodeService.reverseGeocode(point);
+        return resolveRoadAddressFromResult(result);
+    }
+
+    private String resolveRoadAddressFromResult(NaverReverseGeocodeResDTO result) {
         return result.results().stream()
                 .filter(item -> "roadaddr".equalsIgnoreCase(item.name()))
                 .map(this::buildRoadAddress)
