@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
+import issueissyu.backend.domain.map.exception.code.MapErrorCode;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.BaseErrorCode;
@@ -89,10 +90,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<Object> exception(Exception e, WebRequest request) {
         e.printStackTrace();
-        if (request instanceof ServletWebRequest servletWebRequest
-                && "POST".equalsIgnoreCase(servletWebRequest.getRequest().getMethod())) {
+        if (request instanceof ServletWebRequest servletWebRequest) {
             String uri = servletWebRequest.getRequest().getRequestURI();
-            if (uri != null && uri.matches("/api/pins/\\d+/like")) {
+            String method = servletWebRequest.getRequest().getMethod();
+            if ("GET".equalsIgnoreCase(method) && "/api/map/notices".equals(uri)) {
+                return handleExceptionInternal(
+                        e, MapErrorCode.MAP_NOTICE_500, HttpHeaders.EMPTY, servletWebRequest.getRequest());
+            }
+            if ("POST".equalsIgnoreCase(method) && uri != null && uri.matches("/api/pins/\\d+/like")) {
                 return handleExceptionInternal(
                         e, PinErrorCode.PIN_LIKE_INTERNAL_ERROR, HttpHeaders.EMPTY, servletWebRequest.getRequest());
             }
