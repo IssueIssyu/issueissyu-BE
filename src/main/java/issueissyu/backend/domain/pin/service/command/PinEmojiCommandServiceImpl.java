@@ -11,6 +11,7 @@ import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.EmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
+import issueissyu.backend.domain.pin.service.command.CommunicationPinActivityMarker;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -31,6 +32,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
     private final PinEmojiRepository pinEmojiRepository;
     private final UserEmojiRepository userEmojiRepository;
     private final UserRepository userRepository;
+    private final CommunicationPinActivityMarker communicationPinActivityMarker;
 
     @Override
     public ApplyPinEmojiResDTO applyMyEmoji(Long pinId, String uid, ApplyPinEmojiReqDTO request) {
@@ -60,6 +62,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
             if (currentEmojiId.equals(targetEmojiId)) {
                 currentActive.deactivate();
                 pinEmojiRepository.save(currentActive);
+                communicationPinActivityMarker.markReactionOrComment(pinId);
                 return ApplyPinEmojiResDTO.builder()
                         .selectedEmojiId(null)
                         .build();
@@ -80,6 +83,8 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
 
         targetRow.activate();
         pinEmojiRepository.save(targetRow);
+
+        communicationPinActivityMarker.markReactionOrComment(pinId);
 
         return ApplyPinEmojiResDTO.builder()
                 .selectedEmojiId(targetEmojiId)

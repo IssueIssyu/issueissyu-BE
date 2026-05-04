@@ -96,6 +96,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+	// PostGIS 및 공간 데이터 처리를 위한 의존성
+	implementation 'org.hibernate.orm:hibernate-spatial'
 }
 
 

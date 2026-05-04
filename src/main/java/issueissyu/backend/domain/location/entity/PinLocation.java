@@ -2,7 +2,6 @@ package issueissyu.backend.domain.location.entity;
 
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.global.entity.BaseEntity;
-import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,8 +17,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Type;
-import org.postgresql.geometric.PGpoint;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "pin_location")
@@ -44,9 +44,9 @@ public class PinLocation extends BaseEntity {
     @ToString.Exclude
     private Location location;
 
-    @Type(PGpointUserType.class)
-    @Column(name = "pin_point", nullable = false, columnDefinition = "point")
-    private PGpoint pinPoint;
+    @JdbcTypeCode(SqlTypes.GEOMETRY)
+    @Column(name = "pin_point", nullable = false, columnDefinition = "geometry(Point,4326)") // 4326은 WGS84 좌표계(GPS가 사용하는 전 세계 표준 위경도 시스템)를 의미합니다. 네이버 지도 API가 해당 좌표계를 이용하므로 반드시 맞추어야 합니다.
+    private Point pinPoint;
 
     @Column(name = "detail_address", nullable = false, length = 150)
     private String detailAddress;

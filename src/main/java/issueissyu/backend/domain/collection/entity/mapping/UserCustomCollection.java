@@ -40,4 +40,8 @@ public class UserCustomCollection {
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
     private User user;
+
+    @Builder.Default
+    @Column(name = "is_profile", nullable = false)
+    private boolean profileCollection = false;
 }

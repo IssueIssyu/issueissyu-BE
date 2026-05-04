@@ -11,4 +11,13 @@ public class OnboardingResDTO {
 
     @JsonProperty("social_type")
     private String socialType;
+
+    @JsonProperty("user_custom_collection_id")
+    private Long userCustomCollectionId;
+
+    @JsonProperty("custom_collection_id")
+    private Long customCollectionId;
+
+    @JsonProperty("custom_collection_name")
+    private String customCollectionName;
 }
