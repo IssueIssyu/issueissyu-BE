@@ -32,7 +32,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
                 userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
         Pin pin = pinRepository
                 .findWithPessimisticWriteByPinId(pinId)
-                .orElseThrow(() -> PinException.of(PinErrorCode.PIN_LIKE_NOT_FOUND));
+                .orElseThrow(() -> PinException.of(PinErrorCode.PIN_NOT_FOUND));
 
         if (pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid)) {
             throw PinException.of(PinErrorCode.PIN_LIKE_ALREADY);
