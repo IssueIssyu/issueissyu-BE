@@ -30,24 +30,24 @@ public class OnboardingService {
     @Transactional
     public OnboardingResDTO onboard(String uid, OnboardingReqDTO request) {
         User user = userRepository.findById(uid)
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOAREDING_400));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
 
         if (userRepository.existsByNickname(request.getNickname())) {
-            throw AuthException.of(AuthErrorCode.ONBOAREDING_400);
+            throw AuthException.of(AuthErrorCode.ONBOARDING_400);
         }
 
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw AuthException.of(AuthErrorCode.ONBOAREDING_400);
+            throw AuthException.of(AuthErrorCode.ONBOARDING_400);
         }
 
         OAuth oauth = oAuthRepository.findFirstByUser_Uid(uid)
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOAREDING_400));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
 
         user.onboard(request.getNickname(), request.getEmail(), request.getPhone());
 
         CustomCollection defaultProfile = customCollectionRepository
                 .findByCustomCollectionName(DEFAULT_PROFILE_NAME)
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOAREDING_400));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
 
         UserCustomCollection savedProfile =
                 userCustomCollectionRepository

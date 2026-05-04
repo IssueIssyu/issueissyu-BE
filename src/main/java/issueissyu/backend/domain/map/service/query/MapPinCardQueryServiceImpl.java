@@ -69,7 +69,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
 
         Optional<String> profileImgOpt =
                 type == PinType.ISSUE
-                        ? profileCollectionS3UrlOfViewer(author.getUid())
+                        ? getProfileImageUrl(author.getUid())
                         : Optional.empty();
 
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
@@ -113,9 +113,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         return b.build();
     }
 
-    private Optional<String> profileCollectionS3UrlOfViewer(String viewerUid) {
+    private Optional<String> getProfileImageUrl(String uid) {
         return userCustomCollectionRepository
-                .fetchProfileMarkedForUser(viewerUid)
+                .fetchProfileMarkedForUser(uid)
                 .map(ucc -> ucc.getCustomCollection().getCustomCollectionS3Url());
     }
 
