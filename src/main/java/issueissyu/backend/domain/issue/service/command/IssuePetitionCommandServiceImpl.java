@@ -45,10 +45,6 @@ public class IssuePetitionCommandServiceImpl implements IssuePetitionCommandServ
                 .findWithPessimisticWriteByPinId(pinId)
                 .orElseThrow(() -> PetitionException.of(IssueErrorCode.PETITION_404));
 
-        if (issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)) {
-            throw PetitionException.of(IssueErrorCode.PETITION_400_1);
-        }
-
         IssuePetition petition = IssuePetition.builder().user(user).issuePin(issuePin).build();
         try {
             issuePetitionRepository.saveAndFlush(petition);

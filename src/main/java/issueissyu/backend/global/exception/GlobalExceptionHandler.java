@@ -47,7 +47,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return handleExceptionInternal(generalException, generalException.getCode(), null, request);
     }
 
-    /** 청원 도메인에서 명시적으로 던진 서버 오류 → PETITION_500 / PETITION_STATUS_500 */
+    // 청원 도메인에서 명시적으로 던진 서버 오류 → PETITION_500 / PETITION_STATUS_500
     @ExceptionHandler(PetitionServerException.class)
     public ResponseEntity<Object> onPetitionServerException(
             PetitionServerException petitionServerException, HttpServletRequest request) {
