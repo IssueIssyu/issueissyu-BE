@@ -1,5 +1,8 @@
-package issueissyu.backend.domain.pin.entity;
+package issueissyu.backend.domain.pin.entity.mapping;
 
+import issueissyu.backend.domain.pin.entity.Pin;
+import issueissyu.backend.domain.user.entity.User;
+import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,42 +12,36 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "pin_image")
+@Table(
+        name = "pin_like",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"pin_id", "uid"}))
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class PinImage {
+public class PinLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pin_image_id")
-    private Long pinImageId;
+    @Column(name = "pin_like_id")
+    private Long pinLikeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pin_id", nullable = false)
     @ToString.Exclude
     private Pin pin;
 
-    @Builder.Default
-    @Column(name = "is_main", nullable = false)
-    private boolean mainImage = false;
-
-    @Column(name = "pin_s3_key", nullable = false, length = 500)
-    private String pinS3Key;
-
-    @Column(name = "pin_s3_url", nullable = false, length = 500)
-    private String pinS3Url;
-
-    public void assignPin(Pin pin) {
-        this.pin = pin;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uid", nullable = false)
+    @ToString.Exclude
+    private User user;
 }

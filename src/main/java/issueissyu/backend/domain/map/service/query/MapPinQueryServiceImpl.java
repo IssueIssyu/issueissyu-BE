@@ -19,15 +19,15 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
     private final PinLocationRepository pinLocationRepository;
 
     @Override
-    public MapPinResDTO getPinsInBoundingBox(double swLng, double swLat, double neLng, double neLat) {
+    public MapPinResDTO getPinsInBoundingBox(double swLng, double swLat, double neLng, double neLat, String pinTypeFilter) {
         try {
-            List<MapPinView> views = pinLocationRepository.findPinsInBoundingBox(swLng, swLat, neLng, neLat);
+            List<MapPinView> views = pinLocationRepository.findPinsInBoundingBox(swLng, swLat, neLng, neLat, pinTypeFilter);
             List<MapPinResDTO.PinItemDTO> pins = views.stream()
                     .map(this::toDto)
                     .toList();
             return new MapPinResDTO(pins);
         } catch (Exception e) {
-            throw MapException.of(MapErrorCode.MAP_400_2);
+            throw MapException.of(MapErrorCode.MAP_400_3);
         }
     }
 

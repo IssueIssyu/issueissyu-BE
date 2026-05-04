@@ -28,6 +28,10 @@ public class Pin extends BaseEntity {
     @Column(name = "pin_type", nullable = false)
     private PinType pinType;
 
+    @Builder.Default
+    @Column(name = "like_count", nullable = false)
+    private long likeCount = 0L;
+
     @Column(name = "pin_title", nullable = false, length = 100)
     private String pinTitle;
 

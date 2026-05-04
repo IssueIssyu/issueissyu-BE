@@ -9,5 +9,5 @@ public interface MapPinQueryService {
     // @param swLat 남서쪽 위도
     // @param neLng 북동쪽 경도
     // @param neLat 북동쪽 위도
-    MapPinResDTO getPinsInBoundingBox(double swLng, double swLat, double neLng, double neLat);
+    MapPinResDTO getPinsInBoundingBox(double swLng, double swLat, double neLng, double neLat, String pinTypeFilter);
 }

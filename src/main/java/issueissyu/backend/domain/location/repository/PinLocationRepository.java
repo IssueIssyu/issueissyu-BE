@@ -7,8 +7,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PinLocationRepository extends JpaRepository<PinLocation, Long> {
+
+    Optional<PinLocation> findFirstByPin_PinIdOrderByPinLocationIdAsc(Long pinId);
 
     // 화면 BBox(Bounding Box) 안에 있는 핀을 조회합니다.
     // PostGIS ST_MakeEnvelope 인자 순서: (Xmin, Ymin, Xmax, Ymax) = (swLng, swLat, neLng, neLat)
@@ -46,11 +49,13 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                         AND ep.event_pin_id IS NOT NULL
                         AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
                   )
+              AND (:pinTypeFilter IS NULL OR p.pin_type = :pinTypeFilter)
             """, nativeQuery = true)
     List<MapPinView> findPinsInBoundingBox(
             @Param("swLng") double swLng,
             @Param("swLat") double swLat,
             @Param("neLng") double neLng,
-            @Param("neLat") double neLat
+            @Param("neLat") double neLat,
+            @Param("pinTypeFilter") String pinTypeFilter
     );
 }

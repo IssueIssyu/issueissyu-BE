@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.pin.entity;
 
+import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -7,44 +8,36 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "pin_image")
+@Table(name = "store_image")
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class PinImage {
+public class StoreImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pin_image_id")
-    private Long pinImageId;
+    @Column(name = "store_image_id")
+    private Long storeImageId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pin_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_pin_id", nullable = false, unique = true)
     @ToString.Exclude
-    private Pin pin;
+    private EventPin eventPin;
 
-    @Builder.Default
-    @Column(name = "is_main", nullable = false)
-    private boolean mainImage = false;
+    @Column(name = "store_image_s3_key", nullable = false, length = 500)
+    private String imageS3Key;
 
-    @Column(name = "pin_s3_key", nullable = false, length = 500)
-    private String pinS3Key;
-
-    @Column(name = "pin_s3_url", nullable = false, length = 500)
-    private String pinS3Url;
-
-    public void assignPin(Pin pin) {
-        this.pin = pin;
-    }
+    @Column(name = "store_image_s3_url", nullable = false, length = 500)
+    private String imageS3Url;
 }
