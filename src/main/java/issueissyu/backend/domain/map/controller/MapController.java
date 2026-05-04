@@ -66,7 +66,7 @@ public class MapController {
     public ApiResponse<MapNoticeListResDTO> getMapNotices() {
         MapNoticeListResDTO body = mapNoticeQueryService.getActiveNotices();
         if (body.notices().isEmpty()) {
-            return ApiResponse.<MapNoticeListResDTO>onFailure(MapErrorCode.MAP_NOTICE_204, null);
+            return ApiResponse.onSuccess(MapSuccessCode.MAP_NOTICE_204, null);
         }
         return ApiResponse.onSuccess(MapSuccessCode.MAP_NOTICE_200, body);
     }

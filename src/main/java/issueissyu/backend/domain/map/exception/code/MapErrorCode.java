@@ -15,7 +15,6 @@ public enum MapErrorCode implements BaseErrorCode {
     MAP_CARD_404(HttpStatus.NOT_FOUND, "MAP_CARD_404", "존재하지 않는 핀 입니다."),
     MAP_CARD_500(HttpStatus.INTERNAL_SERVER_ERROR, "MAP_CARD_500", "핀 카드 조회 중 서버 오류가 발생했습니다."),
 
-    MAP_NOTICE_204(HttpStatus.OK, "MAP_NOTICE_204", "등록된 공지가 없습니다."),
     MAP_NOTICE_500(HttpStatus.INTERNAL_SERVER_ERROR, "MAP_NOTICE_500", "공지 조회 중 서버 오류가 발생했습니다.");
 
     private final HttpStatus httpStatus;
