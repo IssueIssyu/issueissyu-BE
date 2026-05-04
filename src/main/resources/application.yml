@@ -138,8 +138,8 @@ spring:
       client:
         registration:
           naver:
-            client-id: ${NAVER_CLIENT_ID}
-            client-secret: ${NAVER_CLIENT_SECRET}
+            client-id: ${DEV_NAVER_CLIENT_ID}
+            client-secret: ${DEV_NAVER_CLIENT_SECRET}
             client-authentication-method: client_secret_post
             redirect-uri: "{baseUrl}/dev/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
