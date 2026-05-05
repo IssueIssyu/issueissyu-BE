@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import issueissyu.backend.domain.auth.exception.code.AuthErrorCode;
-import issueissyu.backend.domain.issue.exception.PetitionServerException;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.BaseErrorCode;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -45,15 +44,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> onThrowException(GeneralException generalException,
                                                    HttpServletRequest request) {
         return handleExceptionInternal(generalException, generalException.getCode(), null, request);
-    }
-
-    // 청원 도메인에서 명시적으로 던진 서버 오류 → PETITION_500 / PETITION_STATUS_500
-    @ExceptionHandler(PetitionServerException.class)
-    public ResponseEntity<Object> onPetitionServerException(
-            PetitionServerException petitionServerException, HttpServletRequest request) {
-        petitionServerException.printStackTrace();
-        return handleExceptionInternal(
-                petitionServerException, petitionServerException.getCode(), null, request);
     }
 
     // DataIntegrityViolationException

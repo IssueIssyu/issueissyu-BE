@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record MapNoticeItemResDTO(
-        @JsonProperty("notice_id") long noticeId,
-        @JsonProperty("pin_id") long pinId,
-        @JsonProperty("notice_content") String noticeContent
+        long noticeId,
+        long pinId,
+        String noticeContent
 ) {}

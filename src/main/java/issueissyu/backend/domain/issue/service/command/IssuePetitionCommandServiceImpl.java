@@ -34,16 +34,20 @@ public class IssuePetitionCommandServiceImpl implements IssuePetitionCommandServ
     public PetitionSubmitResDTO submitPetition(Long pinId, String uid) {
         User user =
                 userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
-        Pin pin = pinRepository
-                .findWithPessimisticWriteByPinId(pinId)
-                .orElseThrow(() -> PetitionException.of(IssueErrorCode.PETITION_404));
-        if (pin.getPinType() != PinType.ISSUE) {
-            throw PetitionException.of(IssueErrorCode.PETITION_400_2);
-        }
 
         IssuePin issuePin = issuePinRepository
                 .findWithPessimisticWriteByPinId(pinId)
-                .orElseThrow(() -> PetitionException.of(IssueErrorCode.PETITION_404));
+                .orElseThrow(() -> {
+                    Pin pin = pinRepository.findById(pinId)
+                            .orElseThrow(() -> PetitionException.of(IssueErrorCode.PETITION_404));
+                    return (pin.getPinType() != PinType.ISSUE)
+                            ? PetitionException.of(IssueErrorCode.PETITION_400_2)
+                            : PetitionException.of(IssueErrorCode.PETITION_404);
+                });
+
+        if (issuePin.getPin().getPinType() != PinType.ISSUE) {
+            throw PetitionException.of(IssueErrorCode.PETITION_400_2);
+        }
 
         IssuePetition petition = IssuePetition.builder().user(user).issuePin(issuePin).build();
         try {
