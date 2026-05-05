@@ -36,7 +36,7 @@ public class LocationService {
 
         NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(point);
         Location userLocation = findLocationByLegalDistrictCode(resolved.legalDistrictCode());
-        user.setUserLocation(userLocation,point);
+        user.setUserLocation(userLocation, point);
         return UserLocationCertResDto.from(user.getUserLocation().getLocation());
     }
 
