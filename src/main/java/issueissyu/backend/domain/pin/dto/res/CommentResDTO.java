@@ -12,9 +12,6 @@ public class CommentResDTO {
     @Schema(description = "댓글 ID", example = "1")
     private Long commentId;
 
-    @Schema(description = "작성자 uid", example = "2f1f3f84-7a83-4e7f-8f09-7f2c1a93f236")
-    private String uid;
-
     @Schema(description = "작성자 닉네임", example = "이슈쟁이")
     private String nickname;
 

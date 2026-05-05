@@ -46,7 +46,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
     @Override
     public CommentResDTO updateComment(Long commentId, String uid, CommentReqDTO request) {
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByIdWithUserAndPin(commentId)
                 .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {
@@ -60,7 +60,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
     @Override
     public void deleteComment(Long commentId, String uid) {
-        Comment comment = commentRepository.findById(commentId)
+        Comment comment = commentRepository.findByIdWithUserAndPin(commentId)
                 .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {
