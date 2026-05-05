@@ -15,6 +15,7 @@ public class CommentConverter {
                 .profileImageUrl(comment.getUser().getProfileImageUrl())
                 .commentContent(comment.getCommentContent())
                 .isMine(comment.getUser().getUid().equals(uid))
+                .edited(comment.isEdited())
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

@@ -27,6 +27,9 @@ public class CommentResDTO {
     @Schema(description = "내 댓글 여부", example = "true")
     private boolean isMine;
 
+    @Schema(description = "수정 여부", example = "true")
+    private boolean edited;
+
     @Schema(description = "댓글 생성 시각")
     private LocalDateTime createdAt;
 }
