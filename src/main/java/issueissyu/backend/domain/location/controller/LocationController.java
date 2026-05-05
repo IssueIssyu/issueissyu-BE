@@ -37,9 +37,9 @@ public class LocationController {
     public ApiResponse<UserLocationCertResDto> userLocationCert(
             @AuthenticationPrincipal String uid,
             @RequestParam("lat") double lat,
-            @RequestParam("lnt") double lnt
+            @RequestParam("lng") double lng
     ) {
-        UserLocationCertResDto result = locationService.userLocationCert(uid, toPoint(lat, lnt));
+        UserLocationCertResDto result = locationService.userLocationCert(uid, toPoint(lat, lng));
         return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_USER_CERT_SUCCESS, result);
     }
 
@@ -48,30 +48,30 @@ public class LocationController {
     public ApiResponse<UserLocationResDTO> isUserCanPostPin(
             @AuthenticationPrincipal String uid,
             @RequestParam("userLat") double userLat,
-            @RequestParam("userLnt") double userLnt,
+            @RequestParam("userLng") double userLng,
             @RequestParam("pinLat") double pinLat,
-            @RequestParam("pinLnt") double pinLnt
+            @RequestParam("pinLng") double pinLng
     ) {
         UserLocationResDTO result = locationService.isUserCanPostPin(
                 uid,
-                toPoint(userLat, userLnt),
-                toPoint(pinLat, pinLnt)
+                toPoint(userLat, userLng),
+                toPoint(pinLat, pinLng)
         );
         return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_PIN_CREATION_CHECK_SUCCESS, result);
     }
 
-    private PGpoint toPoint(double lat, double lnt) {
-        validateLatLntCoordinate(lat, lnt);
-        // 내부 좌표계: x=경도(lnt), y=위도(lat)
-        return new PGpoint(lnt, lat);
+    private PGpoint toPoint(double lat, double lng) {
+        validateLatLngCoordinate(lat, lng);
+        // 내부 좌표계: x=경도(lng), y=위도(lat)
+        return new PGpoint(lng, lat);
     }
 
-    private void validateLatLntCoordinate(double lat, double lnt) {
-        if (Double.isNaN(lat) || Double.isNaN(lnt) || Double.isInfinite(lat) || Double.isInfinite(lnt)) {
+    private void validateLatLngCoordinate(double lat, double lng) {
+        if (Double.isNaN(lat) || Double.isNaN(lng) || Double.isInfinite(lat) || Double.isInfinite(lng)) {
             throw GeneralException.of(GeneralErrorCode.BAD_REQUEST);
         }
-        // lat=위도[-90,90], lnt=경도[-180,180]
-        if (lat < -90 || lat > 90 || lnt < -180 || lnt > 180) {
+        // lat=위도[-90,90], lng=경도[-180,180]
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
             throw GeneralException.of(GeneralErrorCode.BAD_REQUEST);
         }
     }

@@ -84,7 +84,7 @@ public class LocationService {
 
     private Location findLocationByLegalDistrictCode(String legalDistrictCode) {
         String sigunguPrefix = extractSigunguPrefix(legalDistrictCode);
-        return locationRepository.findAllByLocationSigunguPrefix(sigunguPrefix).stream()
+        return locationRepository.findAllByRegionStartingWith(sigunguPrefix).stream()
                 .findFirst()
                 .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND));
     }
