@@ -21,8 +21,8 @@ public class UserLocation {
     @Column(name = "user_point", columnDefinition = "point")
     private PGpoint userPoint;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
     private Location location;
 
 }

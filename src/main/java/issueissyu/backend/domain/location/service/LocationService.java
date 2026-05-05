@@ -35,10 +35,7 @@ public class LocationService {
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
         NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(point);
-        Location userLocation = locationRepository.findAllByLocationSigunguPrefix(resolved.legalDistrictCode().substring(0, 5)).getFirst();
-        if(userLocation == null){
-            throw LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND);
-        }
+        Location userLocation = findLocationByLegalDistrictCode(resolved.legalDistrictCode());
         user.setUserLocation(userLocation,point);
         return UserLocationCertResDto.from(user.getUserLocation().getLocation());
     }
@@ -57,18 +54,21 @@ public class LocationService {
     public UserLocationResDTO isUserCanPostPin(String userId, PGpoint userPoint, PGpoint pinPoint){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+        if (user.getUserLocation() == null || user.getUserLocation().getLocation() == null) {
+            throw LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND);
+        }
 
         // 내부 좌표계: x=경도(lnt), y=위도(lat)
         double distanceInMeters = calDist(userPoint.y, userPoint.x, pinPoint.y, pinPoint.x);
+        NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(pinPoint);
+        String pinSigunguPrefix = extractSigunguPrefix(resolved.legalDistrictCode());
+        String userSigunguPrefix = extractSigunguPrefix(user.getUserLocation().getLocation().getRegion());
 
         if(distanceInMeters <= 100){
-            return new UserLocationResDTO(naverMapService.resolveLegalDistrictCodeAndAddress(pinPoint).address());
+            return new UserLocationResDTO(resolved.address());
         }
-        NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(pinPoint);
-        if(user.getUserLocation().getLocation().getLocationId().equals(
-                locationRepository.findAllByLocationSigunguPrefix(resolved.legalDistrictCode().substring(0, 5)).getFirst().getLocationId())
-        ){
-            return new UserLocationResDTO(naverMapService.resolveLegalDistrictCodeAndAddress(pinPoint).address());
+        if(userSigunguPrefix.equals(pinSigunguPrefix)){
+            return new UserLocationResDTO(resolved.address());
         }
 
         throw LocationException.of(LocationErrorCode.LOCATION_PIN_CREATION_FORBIDDEN);
@@ -80,5 +80,19 @@ public class LocationService {
     private Double calDist(Double userLat,Double userLng, Double pinLat, Double pinLng){
         GeodesicData geodesicData = Geodesic.WGS84.Inverse(userLat, userLng, pinLat, pinLng);
         return geodesicData.s12;
+    }
+
+    private Location findLocationByLegalDistrictCode(String legalDistrictCode) {
+        String sigunguPrefix = extractSigunguPrefix(legalDistrictCode);
+        return locationRepository.findAllByLocationSigunguPrefix(sigunguPrefix).stream()
+                .findFirst()
+                .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND));
+    }
+
+    private String extractSigunguPrefix(String legalDistrictCode) {
+        if (legalDistrictCode == null || legalDistrictCode.length() < 5) {
+            throw LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND);
+        }
+        return legalDistrictCode.substring(0, 5);
     }
 }
