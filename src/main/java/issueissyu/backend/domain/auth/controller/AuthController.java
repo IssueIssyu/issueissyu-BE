@@ -211,7 +211,7 @@ public class AuthController {
         return ApiResponse.onSuccess(AuthSuccessCode.NICKNAME_200, available);
     }
 
-    @Operation(summary = "회원탈퇴", description = "인증된 사용자의 Redis 토큰·OAuth·User 레코드를 모두 삭제합니다.")
+    @Operation(summary = "회원탈퇴", description = "인증된 사용자의 연관 데이터(pin·댓글·알림 등)를 정리한 뒤 Redis 토큰·OAuth·User 레코드를 삭제합니다.")
     @DeleteMapping("/api/auth/signout")
     public ApiResponse<Void> signout(@AuthenticationPrincipal String uid) {
         authService.signout(uid);

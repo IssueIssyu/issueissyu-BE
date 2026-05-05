@@ -122,6 +122,10 @@ spring:
     redis:
       host: ${VALKEY_HOST}
       port: ${VALKEY_PORT}
+      ssl:
+        enabled: true
+      timeout: 3s
+      connect-timeout: 3s
   sql:
     init:
       mode: never

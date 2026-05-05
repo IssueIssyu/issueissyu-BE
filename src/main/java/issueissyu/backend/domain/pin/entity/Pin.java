@@ -28,6 +28,10 @@ public class Pin extends BaseEntity {
     @Column(name = "pin_type", nullable = false)
     private PinType pinType;
 
+    @Builder.Default
+    @Column(name = "like_count", nullable = false)
+    private long likeCount = 0L;
+
     @Column(name = "pin_title", nullable = false, length = 100)
     private String pinTitle;
 
@@ -38,10 +42,6 @@ public class Pin extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "tone_type", nullable = false)
     private ToneType toneType = ToneType.NONE;
-
-    @Builder.Default
-    @Column(name = "visibility_status")
-    private Boolean visibilityStatus = Boolean.TRUE;
 
     @Builder.Default
     @OneToMany(mappedBy = "pin", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
