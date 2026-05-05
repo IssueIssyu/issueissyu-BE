@@ -63,7 +63,7 @@ public class User extends BaseEntity {
 
 
     public void setUserLocation(Location location, PGpoint point) {
-        this.userLocation= UserLocation.builder()
+        this.userLocation = UserLocation.builder()
                 .userPoint(point)
                 .location(location)
                 .build();
