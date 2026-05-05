@@ -77,7 +77,7 @@ public class LocationService {
 
 
 
-    private Double calDist(Double userLat,Double userLng, Double pinLat, Double pinLng){
+    private double calDist(double userLat, double userLng, double pinLat, double pinLng){
         GeodesicData geodesicData = Geodesic.WGS84.Inverse(userLat, userLng, pinLat, pinLng);
         return geodesicData.s12;
     }
