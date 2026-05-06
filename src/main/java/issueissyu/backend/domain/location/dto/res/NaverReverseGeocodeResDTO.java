@@ -3,6 +3,7 @@ package issueissyu.backend.domain.location.dto.res;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,6 +28,24 @@ public record NaverReverseGeocodeResDTO(
                     return full.isBlank() ? null : full;
                 })
                 .filter(address -> address != null && !address.isBlank())
+                .findFirst();
+    }
+
+    /**
+     * {@code name=legalcode} 결과의 법정동코드(행정안전부 법정동 10자리) {@link Code#id}를 반환합니다.
+     * {@code code.type}이 {@code L}(법정동)인 항목만 사용합니다.
+     */
+    public Optional<String> legalDistrictCode() {
+        if (results == null || results.isEmpty()) {
+            return Optional.empty();
+        }
+        return results.stream()
+                .filter(item -> "legalcode".equalsIgnoreCase(item.name()))
+                .map(ResultItem::code)
+                .filter(Objects::nonNull)
+                .filter(code -> code.type() == null || "L".equalsIgnoreCase(code.type()))
+                .map(Code::id)
+                .filter(id -> id != null && !id.isBlank())
                 .findFirst();
     }
 

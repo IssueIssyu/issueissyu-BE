@@ -1,10 +1,7 @@
 package issueissyu.backend.domain.location.entity;
 
-import issueissyu.backend.domain.location.enums.RegionCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,10 +25,9 @@ public class Location {
     @Column(name = "location_id")
     private Long locationId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "location", nullable = false)
-    private RegionCode region;
+    @Column(name = "location", nullable = false, length = 10)
+    private String region;
 
-    @Column(name = "adm_code", nullable = false, length = 5)
+    @Column(name = "adm_code", nullable = false, length = 50)
     private String admCode;
 }

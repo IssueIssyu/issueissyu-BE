@@ -14,10 +14,10 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     // 로컬 회원가입
     LOCAL_SIGNUP_400_1(HttpStatus.BAD_REQUEST, "LOCAL_SIGNUP_400_1", "유효하지 않은 값이 존재합니다."),
-    LOCAL_SIGNUP_409_1(HttpStatus.CONFLICT, "LOCAL_SIGNUP_409_1", "이미 존재하는 이메일입니다."),
+    LOCAL_SIGNUP_409_1(HttpStatus.CONFLICT, "LOCAL_SIGNUP_409_1", "이미 존재하는 아이디입니다."),
 
     // 로컬 로그인
-    LOCAL_LOGIN_401(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    LOCAL_LOGIN_401(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401", "아이디 또는 비밀번호가 올바르지 않습니다."),
     NICKNAME_400(HttpStatus.BAD_REQUEST, "NICKNAME_400", "닉네임은 15자 이내의 영문, 숫자, 한글만 사용 가능합니다."),
     NICKNAME_409(HttpStatus.CONFLICT, "NICKNAME_409", "이미 사용 중인 닉네임입니다."),
     TERM_400(HttpStatus.BAD_REQUEST, "TERM_400", "필수 약관(SERVICE, PRIVACY)에 모두 동의해야 합니다."),
