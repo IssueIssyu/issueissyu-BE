@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -41,7 +42,12 @@ public class Comment extends BaseEntity {
     @Column(name = "comment_content", nullable = false, length = 1000)
     private String commentContent;
 
+    @Builder.Default
+    @Column(name = "is_edited", nullable = false)
+    private boolean edited = false;
+
     public void updateContent(String commentContent) {
         this.commentContent = commentContent;
+        this.edited = true;
     }
 }
