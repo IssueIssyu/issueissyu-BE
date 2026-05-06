@@ -98,6 +98,7 @@ dependencies {
 
 	// PostGIS 및 공간 데이터 처리를 위한 의존성
 	implementation 'org.hibernate.orm:hibernate-spatial'
+	implementation 'net.sf.geographiclib:GeographicLib-Java:2.0'
 }
 
 

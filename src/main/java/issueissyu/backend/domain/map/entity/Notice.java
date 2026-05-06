@@ -1,7 +1,6 @@
-package issueissyu.backend.domain.location.entity.mapping;
+package issueissyu.backend.domain.map.entity;
 
-import issueissyu.backend.domain.location.entity.Location;
-import issueissyu.backend.domain.user.entity.User;
+import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,8 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,25 +20,29 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "user_location")
+@Table(name = "notice")
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UserLocation extends BaseEntity {
+public class Notice extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_location_id")
-    private Long userLocationId;
+    @Column(name = "notice_id")
+    private Long noticeId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pin_id", nullable = false, unique = true)
     @ToString.Exclude
-    private Location location;
+    private Pin pin;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uid", nullable = false)
-    @ToString.Exclude
-    private User user;
+    @Column(name = "notice_start_time", nullable = false)
+    private LocalDateTime noticeStartTime;
+
+    @Column(name = "notice_end_time", nullable = false)
+    private LocalDateTime noticeEndTime;
+
+    @Column(name = "notice_content", nullable = false, length = 255)
+    private String noticeContent;
 }

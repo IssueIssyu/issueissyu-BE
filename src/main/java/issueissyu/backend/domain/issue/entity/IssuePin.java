@@ -16,6 +16,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -42,4 +43,12 @@ public class IssuePin extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "issue_pin_state", nullable = false)
     private IssuePinState issuePinState;
+
+    @Builder.Default
+    @Column(name = "petition_count", nullable = false)
+    private int petitionCount = 0;
+
+    public void incrementPetitionCount() {
+        this.petitionCount++;
+    }
 }
