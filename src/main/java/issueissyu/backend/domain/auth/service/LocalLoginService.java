@@ -47,8 +47,7 @@ public class LocalLoginService {
         User user = oauth.getUser();
         String uid = user.getUid();
 
-        // 온보딩 완료 여부: 전화번호가 저장되었으면 기존 회원
-        boolean isNew = (user.getPhone() == null);
+        boolean isNew = user.needsLoginOnboarding();
 
         // JWT 발급 + Redis 저장
         String accessToken = jwtTokenProvider.createAccessToken(uid);
