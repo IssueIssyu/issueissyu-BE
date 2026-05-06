@@ -32,11 +32,11 @@ public class LocalLoginService {
 
     @Transactional
     public LocalLoginResDTO login(LocalLoginReqDTO req) {
-        String email = req.getEmail().trim().toLowerCase();
+        String loginId = req.getUserName().trim();
 
-        // 로컬 OAuth 레코드 조회 (providerId = email)
+        // 로컬 OAuth 레코드 조회 (providerId = 회원가입 시 저장한 로그인 아이디)
         OAuth oauth = oAuthRepository
-                .findBySocialTypeAndProviderIdWithUser(SocialType.LOCAL, email)
+                .findBySocialTypeAndProviderIdWithUser(SocialType.LOCAL, loginId)
                 .orElseThrow(() -> AuthException.of(AuthErrorCode.LOCAL_LOGIN_401));
 
         // 비밀번호 검증
