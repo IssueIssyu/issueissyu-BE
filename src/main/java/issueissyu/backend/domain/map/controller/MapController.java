@@ -2,12 +2,14 @@ package issueissyu.backend.domain.map.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.map.dto.res.MapNoticeListResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
 import issueissyu.backend.domain.map.enums.MapPinCategory;
 import issueissyu.backend.domain.map.exception.MapException;
 import issueissyu.backend.domain.map.exception.code.MapErrorCode;
 import issueissyu.backend.domain.map.exception.code.MapSuccessCode;
+import issueissyu.backend.domain.map.service.query.MapNoticeQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinCardQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinQueryService;
 import issueissyu.backend.domain.pin.enums.PinType;
@@ -30,6 +32,7 @@ public class MapController {
 
     private final MapPinQueryService mapPinQueryService;
     private final MapPinCardQueryService mapPinCardQueryService;
+    private final MapNoticeQueryService mapNoticeQueryService;
 
     @Operation(summary = "현재 화면 핀 조회",
                 description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. ")
@@ -56,6 +59,16 @@ public class MapController {
                 successCode,
                 mapPinQueryService.getPinsInBoundingBox(swLng, swLat, neLng, neLat, pinTypeFilter)
         );
+    }
+
+    @Operation(summary = "지도 공지사항 조회", description = "공지 시작·종료 시각 사이의 공지만 반환합니다. 페이징 없음.")
+    @GetMapping("/notices")
+    public ApiResponse<MapNoticeListResDTO> getMapNotices() {
+        MapNoticeListResDTO body = mapNoticeQueryService.getActiveNotices();
+        if (body.notices().isEmpty()) {
+            return ApiResponse.onSuccess(MapSuccessCode.MAP_NOTICE_204, null);
+        }
+        return ApiResponse.onSuccess(MapSuccessCode.MAP_NOTICE_200, body);
     }
 
     @Operation(
