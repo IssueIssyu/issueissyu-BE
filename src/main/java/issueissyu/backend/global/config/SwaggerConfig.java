@@ -36,7 +36,7 @@ public class SwaggerConfig {
                 .description("IssueIssyu Local Server");
 
         Server httpServer = new Server()
-                .url("http://issueissyu-backend-dev-env.eba-uim2fupp.ap-northeast-2.elasticbeanstalk.com")
+                .url("http://issueissyu-backend-dev-env-2.eba-uim2fupp.ap-northeast-2.elasticbeanstalk.com")
                 .description("IssueIssyu Develop Server");
 
 
