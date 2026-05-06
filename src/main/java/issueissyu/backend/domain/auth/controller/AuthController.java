@@ -152,7 +152,8 @@ public class AuthController {
 
     @Operation(summary = "로컬 회원가입",
             description = """
-                    이메일과 비밀번호로 새 로컬 계정을 생성합니다.
+                    아이디(userName)와 비밀번호로 새 로컬 계정을 생성합니다.
+                    userName은 user.user_name에 그대로 저장되며, 로그인 시 동일 값으로 인증합니다.
                     비밀번호는 서버에서 BCrypt 단방향 암호화 처리 후 저장됩니다.
                     가입 성공 후 /auth/login/local 을 호출하여 인증을 수행하세요.
                     """)
@@ -166,7 +167,7 @@ public class AuthController {
 
     @Operation(summary = "로컬 로그인",
             description = """
-                    이메일·비밀번호를 검증하고 JWT를 발급합니다.
+                    아이디(userName)·비밀번호를 검증하고 JWT를 발급합니다.
                     isNew=true이면 신규 회원(온보딩 필요), false이면 기존 회원입니다.
                     """)
     @PostMapping("/auth/login/local")

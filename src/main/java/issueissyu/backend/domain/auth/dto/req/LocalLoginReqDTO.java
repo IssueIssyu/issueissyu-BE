@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LocalLoginReqDTO {
 
-    @JsonProperty("email")
+    @JsonProperty("userName")
     @NotBlank
-    private String email;
+    private String userName;
 
     @JsonProperty("password")
     @NotBlank
