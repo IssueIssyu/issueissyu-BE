@@ -13,13 +13,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "community")
@@ -51,4 +56,9 @@ public class Community extends BaseEntity {
 
     @Column(name = "view_count", nullable = false)
     private int viewCount;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
 }
