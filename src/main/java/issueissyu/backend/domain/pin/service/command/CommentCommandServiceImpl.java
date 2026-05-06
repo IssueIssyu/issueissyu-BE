@@ -54,6 +54,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
         }
 
         comment.updateContent(request.getCommentContent());
+        commentRepository.flush();
         communicationPinActivityMarker.markReactionOrComment(comment.getPin().getPinId());
         return CommentConverter.toCommentResDTO(comment, uid);
     }
