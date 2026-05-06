@@ -19,7 +19,10 @@ public enum PinErrorCode implements BaseErrorCode {
 
     // 핀 댓글
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND_404_3", "존재하지 않는 댓글입니다."),
-    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "COMMENT_FORBIDDEN_403_2", "댓글 수정/삭제 권한이 없습니다.");
+    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "COMMENT_FORBIDDEN_403_2", "댓글 수정/삭제 권한이 없습니다."),
+
+    // 핀 공감
+    PIN_LIKE_ALREADY(HttpStatus.BAD_REQUEST, "PIN_LIKE_400_1", "이미 공감된 핀입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -87,7 +87,7 @@ jobs:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: 'issueissyu-backend-dev'
-          environment_name: 'issueissyu-backend-dev-env'
+          environment_name: 'issueissyu-backend-dev-env-2'
           region: ap-northeast-2
           version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
           version_description: ${{ github.ref_name }}@${{ github.sha }}

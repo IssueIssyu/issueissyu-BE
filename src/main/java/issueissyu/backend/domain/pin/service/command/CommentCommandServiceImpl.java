@@ -9,7 +9,6 @@ import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.CommentRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
-import issueissyu.backend.domain.pin.service.command.CommunicationPinActivityMarker;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -46,8 +45,8 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     }
 
     @Override
-    public CommentResDTO updateComment(Long pinId, Long commentId, String uid, CommentReqDTO request) {
-        Comment comment = commentRepository.findByCommentIdAndPinPinId(commentId, pinId)
+    public CommentResDTO updateComment(Long commentId, String uid, CommentReqDTO request) {
+        Comment comment = commentRepository.findByIdWithUserAndPin(commentId)
                 .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {
@@ -55,13 +54,14 @@ public class CommentCommandServiceImpl implements CommentCommandService {
         }
 
         comment.updateContent(request.getCommentContent());
-        communicationPinActivityMarker.markReactionOrComment(pinId);
+        commentRepository.flush();
+        communicationPinActivityMarker.markReactionOrComment(comment.getPin().getPinId());
         return CommentConverter.toCommentResDTO(comment, uid);
     }
 
     @Override
-    public void deleteComment(Long pinId, Long commentId, String uid) {
-        Comment comment = commentRepository.findByCommentIdAndPinPinId(commentId, pinId)
+    public void deleteComment(Long commentId, String uid) {
+        Comment comment = commentRepository.findByIdWithUserAndPin(commentId)
                 .orElseThrow(() -> PinException.of(PinErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getUser().getUid().equals(uid)) {

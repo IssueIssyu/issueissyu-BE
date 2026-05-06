@@ -19,7 +19,10 @@ public enum MapSuccessCode implements BaseSuccessCode {
     MAP_CARD_200_1(HttpStatus.OK, "MAP_CARD_200_1", "이슈 핀 카드 조회에 성공했습니다."),
     MAP_CARD_200_2(HttpStatus.OK, "MAP_CARD_200_2", "소통 핀 카드 조회에 성공했습니다."),
     MAP_CARD_200_3(HttpStatus.OK, "MAP_CARD_200_3", "가게 핀 카드 조회에 성공했습니다."),
-    MAP_CARD_200_4(HttpStatus.OK, "MAP_CARD_200_4", "축제 핀 카드 조회에 성공했습니다.");
+    MAP_CARD_200_4(HttpStatus.OK, "MAP_CARD_200_4", "축제 핀 카드 조회에 성공했습니다."),
+
+    MAP_NOTICE_200(HttpStatus.OK, "MAP_NOTICE_200", "공지사항 조회에 성공했습니다."),
+    MAP_NOTICE_204(HttpStatus.OK, "MAP_NOTICE_204", "등록된 공지가 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
