@@ -18,7 +18,7 @@ public class ApiResponse<T> { // API 응답
     private final Boolean isSuccess; // 성공 여부
     private final String code; // 응답 코드
     private final String message; // 메세지
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     private final T result; // 응답 데이터
 
     // HTTP 상태 코드는 바디에는 포함하지 않고, 성공 핸들러에서만 사용

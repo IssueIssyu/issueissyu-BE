@@ -21,20 +21,26 @@ public class NaverMapTestController {
 
     @GetMapping("/sigungu-match")
     public ApiResponse<SigunguMatchResDTO> isSameSigungu(
-            @RequestParam double x1,
-            @RequestParam double y1,
-            @RequestParam double x2,
-            @RequestParam double y2
+            @RequestParam double lat1,
+            @RequestParam double lng1,
+            @RequestParam double lat2,
+            @RequestParam double lng2
     ) {
-        PGpoint first = new PGpoint(x1, y1);
-        PGpoint second = new PGpoint(x2, y2);
+        PGpoint first = toPointFromLatLng(lat1, lng1);
+        PGpoint second = toPointFromLatLng(lat2, lng2);
         boolean same = naverMapService.isSameSigungu(first, second);
         String firstAddress = naverMapService.resolveRoadAddressOf(first);
         String secondAddress = naverMapService.resolveRoadAddressOf(second);
 
         return ApiResponse.onSuccess(
                 LocationSuccessCode.LOCATION_SIGUNGU_MATCH_SUCCESS,
-                new SigunguMatchResDTO(first, second, firstAddress, secondAddress, same)
+                new SigunguMatchResDTO(
+                        new PointResDTO(first.y, first.x),
+                        new PointResDTO(second.y, second.x),
+                        firstAddress,
+                        secondAddress,
+                        same
+                )
         );
     }
 
@@ -43,13 +49,23 @@ public class NaverMapTestController {
         PGpoint point = naverMapService.geocodeToPoint(address);
         return ApiResponse.onSuccess(
                 LocationSuccessCode.LOCATION_GEOCODE_SUCCESS,
-                new GeocodeResDTO(address, point.x, point.y)
+                new GeocodeResDTO(address, point.y, point.x)
         );
     }
 
+    private PGpoint toPointFromLatLng(double lat, double lng) {
+        return new PGpoint(lng, lat);
+    }
+
+    public record PointResDTO(
+            double lat,
+            double lng
+    ) {
+    }
+
     public record SigunguMatchResDTO(
-            PGpoint firstPoint,
-            PGpoint secondPoint,
+            PointResDTO firstPoint,
+            PointResDTO secondPoint,
             String firstAddress,
             String secondAddress,
             boolean sameSigungu
@@ -58,8 +74,8 @@ public class NaverMapTestController {
 
     public record GeocodeResDTO(
             String address,
-            double x,
-            double y
+            double lat,
+            double lng
     ) {
     }
 }

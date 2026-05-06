@@ -8,5 +8,5 @@ public interface MapPinView {
     Double getLat();      // ST_Y(pin_point) → 위도
     Double getLng();      // ST_X(pin_point) → 경도
     String getDetailAddress();
-    String getRegion();   // location.location 컬럼 (RegionCode enum 문자열)
+    String getRegion();   // location.location 컬럼 (법정동코드 10자리 문자열)
 }

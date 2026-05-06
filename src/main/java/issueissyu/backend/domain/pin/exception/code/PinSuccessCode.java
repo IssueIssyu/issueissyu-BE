@@ -19,7 +19,10 @@ public enum PinSuccessCode implements BaseSuccessCode {
     PIN_COMMENTS_200(HttpStatus.OK, "PIN_COMMENTS_200", "핀 댓글 목록 조회에 성공했습니다."),
     CREATE_COMMENT_200(HttpStatus.OK, "CREATE_COMMENT_200", "핀 댓글 작성에 성공했습니다."),
     UPDATE_COMMENT_200(HttpStatus.OK, "UPDATE_COMMENT_200", "핀 댓글 수정에 성공했습니다."),
-    DELETE_COMMENT_200(HttpStatus.OK, "DELETE_COMMENT_200", "핀 댓글 삭제에 성공했습니다.");
+    DELETE_COMMENT_200(HttpStatus.OK, "DELETE_COMMENT_200", "핀 댓글 삭제에 성공했습니다."),
+
+    // 핀 공감
+    PIN_LIKE_200(HttpStatus.OK, "PIN_LIKE_200", "핀 공감에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
