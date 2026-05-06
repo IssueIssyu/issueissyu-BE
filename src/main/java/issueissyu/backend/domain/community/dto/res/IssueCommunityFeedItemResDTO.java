@@ -12,7 +12,6 @@ public record IssueCommunityFeedItemResDTO(
         String authorProfileUrl,
         String address,
         int viewCount,
-        long likeCount,
-        String issuePinState
+        long likeCount
 ) implements CommunityFeedItemResDTO {
 }

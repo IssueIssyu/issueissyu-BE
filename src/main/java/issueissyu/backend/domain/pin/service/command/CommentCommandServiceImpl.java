@@ -9,7 +9,6 @@ import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.CommentRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
-import issueissyu.backend.domain.pin.service.command.CommunicationPinActivityMarker;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;

@@ -11,8 +11,18 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface CommunityRepository extends JpaRepository<Community, Long> {
+
+    @Query("""
+            select c
+            from Community c
+            join fetch c.pin p
+            join fetch p.user
+            where c.communityId = :id
+            """)
+    Optional<Community> findDetailById(@Param("id") Long communityId);
 
     @Query("""
             select c

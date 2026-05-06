@@ -2,6 +2,7 @@ package issueissyu.backend.domain.community.service.query;
 
 import issueissyu.backend.domain.community.dto.res.CommunicationCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityCursorPageResDTO;
+import issueissyu.backend.domain.community.dto.res.CommunityDetailResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.FestivalCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.IssueCommunityFeedItemResDTO;
@@ -65,6 +66,20 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         String nextCursor = hasNext ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode() : null;
         return new CommunityCursorPageResDTO(items, nextCursor, hasNext);
+    }
+
+    @Override
+    @Transactional(readOnly = false)
+    public CommunityDetailResDTO getCommunityDetail(Long communityId) {
+        Community community = communityRepository.findDetailById(communityId)
+                .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
+        community.incrementViewCount();
+        CommunityFeedItemResDTO item = toFeedItem(community);
+        return new CommunityDetailResDTO(
+                item,
+                community.getContent(),
+                community.getCreatedAt(),
+                community.getUpdatedAt());
     }
 
     // 탭 규칙에 맞는 community 목록을 조회한다.

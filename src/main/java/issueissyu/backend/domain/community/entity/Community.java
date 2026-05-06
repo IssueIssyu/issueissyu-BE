@@ -51,4 +51,8 @@ public class Community extends BaseEntity {
 
     @Column(name = "view_count", nullable = false)
     private int viewCount;
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 }

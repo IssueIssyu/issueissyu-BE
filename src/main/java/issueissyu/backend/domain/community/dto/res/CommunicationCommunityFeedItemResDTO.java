@@ -12,7 +12,6 @@ public record CommunicationCommunityFeedItemResDTO(
         String authorProfileUrl,
         String address,
         int viewCount,
-        long likeCount,
-        int commentCount
+        long likeCount
 ) implements CommunityFeedItemResDTO {
 }
