@@ -36,7 +36,6 @@ public class LocalLoginResDTO {
         @JsonProperty("temp_uuid")
         private String tempUuid;
 
-        @JsonProperty("user_name")
         private String userName;
     }
 }

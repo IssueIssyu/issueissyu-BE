@@ -76,4 +76,9 @@ public class User extends BaseEntity {
         this.hotAlarmActive = active;
         this.storeAlarmActive = active;
     }
+
+    // isNew 판별
+    public boolean needsLoginOnboarding() {
+        return phone == null || nickname == null;
+    }
 }

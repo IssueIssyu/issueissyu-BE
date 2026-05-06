@@ -50,7 +50,7 @@ public class NaverAppLoginService {
         NaverUserResult result = authService.findOrCreateNaverAppUser(profile);
         String uid      = result.user().getUid();
         String userName = result.user().getUserName();
-        boolean isNew   = result.isNew();
+        boolean isNew   = result.isNew() || result.user().needsLoginOnboarding();
 
         // 자체 JWT 발급 + Redis에 refresh token 저장
         String accessToken  = jwtTokenProvider.createAccessToken(uid);

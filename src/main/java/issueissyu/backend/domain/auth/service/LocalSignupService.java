@@ -27,32 +27,30 @@ public class LocalSignupService {
 
     @Transactional
     public LocalSignupResDTO signup(LocalSignupReqDTO req) {
-        String email = req.getEmail().trim().toLowerCase();
+        String loginId = req.getUserName().trim();
         String password = req.getPassword();
 
-        // 이메일 중복 확인 (providerId = email, socialType = LOCAL)
-        if (oAuthRepository.existsByProviderIdAndSocialType(email, SocialType.LOCAL)) {
+        // 로그인 아이디 중복 확인 (providerId = loginId, socialType = LOCAL)
+        if (oAuthRepository.existsByProviderIdAndSocialType(loginId, SocialType.LOCAL)) {
             throw AuthException.of(AuthErrorCode.LOCAL_SIGNUP_409_1);
         }
 
-        // 사용자 생성 (userName 초기값 고정: localDefault)
         String uid = AppUuid.newUid();
-        String userName = "localDefault";
 
         User user = userRepository.save(User.builder()
                 .uid(uid)
-                .userName(userName)
+                .userName(loginId)
                 .build());
 
-        // 로컬 OAuth 레코드 생성 (providerId = email, password = BCrypt 해시)
+        // 로컬 OAuth 레코드 생성 (providerId = loginId, password = BCrypt 해시)
         oAuthRepository.save(OAuth.builder()
                 .user(user)
-                .providerId(email)
+                .providerId(loginId)
                 .socialType(SocialType.LOCAL)
                 .password(passwordEncoder.encode(password))
                 .build());
 
-        log.debug("로컬 회원가입 완료: uid={}, email={}", uid, email);
-        return LocalSignupResDTO.builder().email(email).build();
+        log.debug("로컬 회원가입 완료: uid={}, userName={}", uid, loginId);
+        return LocalSignupResDTO.builder().userName(loginId).build();
     }
 }
