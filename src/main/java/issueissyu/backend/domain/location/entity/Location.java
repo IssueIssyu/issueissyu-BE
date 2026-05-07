@@ -30,4 +30,12 @@ public class Location {
 
     @Column(name = "adm_code", nullable = false, length = 50)
     private String admCode;
+
+    @Builder.Default
+    @Column(name = "target_community", nullable = false)
+    private int targetCommunity = 10;
+
+    @Builder.Default
+    @Column(name = "target_petition", nullable = false)
+    private int targetPetition = 10;
 }

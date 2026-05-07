@@ -33,4 +33,5 @@ public class CustomCollection {
 
     @Column(name = "custom_collection_s3_url", nullable = false, length = 255)
     private String customCollectionS3Url;
+
 }
