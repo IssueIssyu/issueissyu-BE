@@ -16,6 +16,6 @@ public interface UserCustomCollectionRepository extends JpaRepository<UserCustom
     @Query(
             """
             select ucc from UserCustomCollection ucc
-            where ucc.user.uid = :uid and ucc.profileCollection = true""")
+            where ucc.user.uid = :uid and ucc.isProfile = true""")
     Optional<UserCustomCollection> fetchProfileMarkedForUser(@Param("uid") String uid);
 }
