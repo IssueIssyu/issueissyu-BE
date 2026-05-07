@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.pin.entity;
 
+import issueissyu.backend.domain.pin.entity.mapping.PinLike;
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.enums.ToneType;
 import issueissyu.backend.domain.user.entity.User;
@@ -30,7 +31,7 @@ public class Pin extends BaseEntity {
 
     @Builder.Default
     @Column(name = "like_count", nullable = false)
-    private long likeCount = 0L;
+    private int likeCount = 0;
 
     @Column(name = "pin_title", nullable = false, length = 100)
     private String pinTitle;
@@ -48,6 +49,11 @@ public class Pin extends BaseEntity {
     @ToString.Exclude
     private List<PinImage> pinImages = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "pin", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<PinLike> pinLikes = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uid", nullable = false)
     @ToString.Exclude
@@ -60,5 +66,9 @@ public class Pin extends BaseEntity {
 
     public void assignUser(User user) {
         this.user = user;
+    }
+
+    public void incrementLikeCount() {
+        this.likeCount++;
     }
 }

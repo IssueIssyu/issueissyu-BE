@@ -9,18 +9,17 @@ import issueissyu.backend.domain.map.exception.code.MapErrorCode;
 import issueissyu.backend.domain.pin.entity.EventPin;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.PinImage;
-import issueissyu.backend.domain.pin.entity.StoreImage;
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
-import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
-import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -32,8 +31,6 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
     private final PinLocationRepository pinLocationRepository;
     private final IssuePinRepository issuePinRepository;
     private final EventPinRepository eventPinRepository;
-    private final StoreImageRepository storeImageRepository;
-    private final PinImageRepository pinImageRepository;
     private final PinLikeRepository pinLikeRepository;
     private final UserCustomCollectionRepository userCustomCollectionRepository;
 
@@ -53,7 +50,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .map(pl -> pl.getDetailAddress())
                         .orElse(null);
 
-        Optional<String> mainImageUrlOpt = resolveMainImageUrl(pinId);
+        Optional<String> mainImageUrlOpt = resolveMainImageUrl(pin);
 
         long likeCountLong = pin.getLikeCount();
 
@@ -98,10 +95,12 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .pinUserProfile(null)
                         .pinUserNickname(null);
 
-                Optional<EventPin> ep = eventPinRepository.findByPin_PinId(pinId);
-                Optional<StoreImage> si = storeImageRepository.findByEventPin_Pin_PinId(pinId);
+                Optional<EventPin> ep = eventPinRepository.findWithStoreImageByPinPinId(pinId);
                 b.discount(ep.map(EventPin::getDiscount).orElse(null))
-                        .storeImageUrl(si.map(StoreImage::getImageS3Url).orElse(null));
+                        .storeImageUrl(
+                                ep.map(EventPin::getStoreImage)
+                                        .map(si -> si.getImageS3Url())
+                                        .orElse(null));
             }
             case FESTIVAL -> b.pinUserId(null)
                     .pinUserProfile(null)
@@ -119,17 +118,18 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                 .map(ucc -> ucc.getCustomCollection().getCustomCollectionS3Url());
     }
 
-    /** 대표 이미지 우선, 없으면 첫 장. */
-    private Optional<String> resolveMainImageUrl(Long pinId) {
-        Optional<String> explicitMain =
-                pinImageRepository
-                        .findFirstByPin_PinIdAndMainImageTrue(pinId)
-                        .map(PinImage::getPinS3Url);
-
-        return explicitMain.isPresent()
-                ? explicitMain
-                : pinImageRepository
-                        .findFirstByPin_PinIdOrderByPinImageIdAsc(pinId)
-                        .map(PinImage::getPinS3Url);
+    private Optional<String> resolveMainImageUrl(Pin pin) {
+        List<PinImage> images = pin.getPinImages();
+        if (images == null || images.isEmpty()) {
+            return Optional.empty();
+        }
+        return images.stream()
+                .filter(PinImage::isMainImage)
+                .findFirst()
+                .map(PinImage::getPinS3Url)
+                .or(
+                        () -> images.stream()
+                                .min(Comparator.comparing(PinImage::getPinImageId))
+                                .map(PinImage::getPinS3Url));
     }
 }

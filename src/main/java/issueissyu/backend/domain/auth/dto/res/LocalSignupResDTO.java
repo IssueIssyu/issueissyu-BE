@@ -7,5 +7,5 @@ import lombok.Getter;
 @Builder
 public class LocalSignupResDTO {
 
-    private String email;
+    private String userName;
 }
