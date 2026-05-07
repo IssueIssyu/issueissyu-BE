@@ -1,14 +1,23 @@
 package issueissyu.backend.domain.issue.service.command;
 
+import issueissyu.backend.domain.issue.dto.res.GoNowResDTO;
 import issueissyu.backend.domain.issue.dto.res.ProblemSolverCheckResDTO;
 import issueissyu.backend.domain.issue.dto.res.ProblemSolverPhotoResDTO;
+import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.entity.ProblemSolver;
 import issueissyu.backend.domain.issue.entity.ProblemSolverImage;
 import issueissyu.backend.domain.issue.enums.ProblemSolveState;
 import issueissyu.backend.domain.issue.exception.ProblemSolverException;
 import issueissyu.backend.domain.issue.exception.code.IssueErrorCode;
+import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
+import issueissyu.backend.domain.pin.entity.Pin;
+import issueissyu.backend.domain.pin.enums.PinType;
+import issueissyu.backend.domain.pin.repository.PinRepository;
+import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.global.api.code.GeneralErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.utils.Image.ImageUtil;
 import issueissyu.backend.utils.S3.S3Dto;
 import issueissyu.backend.utils.S3.S3Utils;
@@ -16,6 +25,7 @@ import issueissyu.backend.utils.exception.UtilException;
 import issueissyu.backend.utils.exception.UtilException.Reason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +40,65 @@ public class ProblemSolverCommandServiceImpl implements ProblemSolverCommandServ
 
     private final ProblemSolverRepository problemSolverRepository;
     private final ProblemSolverImageRepository problemSolverImageRepository;
+    private final IssuePinRepository issuePinRepository;
+    private final PinRepository pinRepository;
+    private final UserRepository userRepository;
     private final S3Utils s3Utils;
     private final ImageUtil imageUtil;
+
+    @Override
+    @Transactional
+    public GoNowResDTO participateGoNow(Long pinId, String uid) {
+        var user =
+                userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        IssuePin issuePin =
+                issuePinRepository
+                        .findWithPessimisticWriteByPinId(pinId)
+                        .orElseThrow(
+                                () -> {
+                                    Pin pin =
+                                            pinRepository
+                                                    .findById(pinId)
+                                                    .orElseThrow(
+                                                            () ->
+                                                                    ProblemSolverException.of(
+                                                                            IssueErrorCode.PETITION_404));
+                                    return (pin.getPinType() != PinType.ISSUE)
+                                            ? ProblemSolverException.of(IssueErrorCode.PETITION_400_2)
+                                            : ProblemSolverException.of(IssueErrorCode.PETITION_404);
+                                });
+
+        if (issuePin.getPin().getPinType() != PinType.ISSUE) {
+            throw ProblemSolverException.of(IssueErrorCode.PETITION_400_2);
+        }
+
+        if (issuePin.getPin().getUser().getUid().equals(uid)) {
+            throw ProblemSolverException.of(IssueErrorCode.PETITION_400_3);
+        }
+
+        if (problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)) {
+            throw ProblemSolverException.of(IssueErrorCode.GO_NOW_400_1);
+        }
+
+        ProblemSolver saved;
+        try {
+            saved =
+                    problemSolverRepository.saveAndFlush(
+                            ProblemSolver.builder()
+                                    .user(user)
+                                    .issuePin(issuePin)
+                                    .build());
+        } catch (DataIntegrityViolationException e) {
+            throw ProblemSolverException.of(IssueErrorCode.GO_NOW_400_1);
+        }
+
+        return GoNowResDTO.builder()
+                .pinId(pinId)
+                .problemSolverId(saved.getProblemSolverId())
+                .problemSolveState(saved.getProblemSolveState().name())
+                .build();
+    }
 
     @Override
     @Transactional
@@ -119,12 +186,13 @@ public class ProblemSolverCommandServiceImpl implements ProblemSolverCommandServ
                         .fetchWithPinOwnerAndSolver(problemSolverId)
                         .orElseThrow(() -> ProblemSolverException.of(IssueErrorCode.PROBLEM_SOLVER_CHECK_404));
 
-        if (!solver.getIssuePin().getPin().getUser().getUid().equals(uid)) {
-            throw ProblemSolverException.of(IssueErrorCode.PROBLEM_SOLVER_CHECK_400);
+        ProblemSolveState state = solver.getProblemSolveState();
+        if (state == ProblemSolveState.EN_ROUTE || state == ProblemSolveState.RESOLVED) {
+            throw ProblemSolverException.of(IssueErrorCode.PROBLEM_SOLVER_CHECK_400_1);
         }
 
-        if (solver.getProblemSolveState() != ProblemSolveState.VERIFIED) {
-            throw ProblemSolverException.of(IssueErrorCode.PROBLEM_SOLVER_CHECK_400);
+        if (!solver.getIssuePin().getPin().getUser().getUid().equals(uid)) {
+            throw ProblemSolverException.of(IssueErrorCode.PROBLEM_SOLVER_CHECK_400_2);
         }
 
         solver.markResolved();

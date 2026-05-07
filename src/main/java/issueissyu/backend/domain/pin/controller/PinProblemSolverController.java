@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.issue.dto.res.GoNowResDTO;
 import issueissyu.backend.domain.issue.dto.res.ProblemSolverCheckResDTO;
 import issueissyu.backend.domain.issue.dto.res.ProblemSolverListResDTO;
 import issueissyu.backend.domain.issue.dto.res.ProblemSolverPhotoResDTO;
@@ -29,6 +30,16 @@ public class PinProblemSolverController {
 
     private final ProblemSolverQueryService problemSolverQueryService;
     private final ProblemSolverCommandService problemSolverCommandService;
+
+    @Operation(
+            summary = "시민해결사 참여(지금가요)",
+            description = "problem_solver 를 EN_ROUTE 로 등록합니다. 본인 핀은 불가합니다.")
+    @PostMapping("/{pinId}/go-now")
+    public ApiResponse<GoNowResDTO> goNow(
+            @PathVariable Long pinId, @AuthenticationPrincipal String uid) {
+        return ApiResponse.onSuccess(
+                IssueSuccessCode.GO_NOW_200, problemSolverCommandService.participateGoNow(pinId, uid));
+    }
 
     @Operation(
             summary = "시민해결사 목록 조회",

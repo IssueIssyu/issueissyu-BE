@@ -10,7 +10,6 @@ import issueissyu.backend.domain.issue.exception.ProblemSolverException;
 import issueissyu.backend.domain.issue.exception.code.IssueErrorCode;
 import issueissyu.backend.domain.issue.exception.code.IssueSuccessCode;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
-import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.enums.PinType;
@@ -19,6 +18,7 @@ import issueissyu.backend.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,6 @@ public class ProblemSolverQueryServiceImpl implements ProblemSolverQueryService 
     private final PinRepository pinRepository;
     private final IssuePinRepository issuePinRepository;
     private final UserRepository userRepository;
-    private final IssuePetitionRepository issuePetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
     private final UserCustomCollectionRepository userCustomCollectionRepository;
 
@@ -69,10 +68,16 @@ public class ProblemSolverQueryServiceImpl implements ProblemSolverQueryService 
         Boolean isGoNow =
                 myPinContext
                         ? null
-                        : issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, authUid);
+                        : problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, authUid);
 
-        List<ProblemSolver> solvers =
-                problemSolverRepository.findAllForPinSorted(pinId, ProblemSolveState.RESOLVED);
+        List<ProblemSolver> solvers = problemSolverRepository.findAllForPinWithAssociations(pinId);
+        solvers.sort(
+                Comparator.comparing(
+                                (ProblemSolver ps) ->
+                                        ps.getProblemSolveState() == ProblemSolveState.RESOLVED ? 0 : 1)
+                        .thenComparing(
+                                ProblemSolver::getCreatedAt,
+                                Comparator.nullsLast(Comparator.naturalOrder())));
 
         if (solvers.isEmpty()) {
             return new ProblemSolverListQueryEnvelope(

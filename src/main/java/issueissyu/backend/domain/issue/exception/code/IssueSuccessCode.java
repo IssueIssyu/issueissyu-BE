@@ -12,6 +12,8 @@ public enum IssueSuccessCode implements BaseSuccessCode {
     PETITION_200(HttpStatus.OK, "PETITION_200", "청원에 성공했습니다."),
     PETITION_STATUS_200(HttpStatus.OK, "PETITION_STATUS_200", "청원 현황 조회에 성공했습니다."),
 
+    GO_NOW_200(HttpStatus.OK, "GO_NOW_200", "시민해결사 참여에 성공했습니다."),
+
     PROBLEM_SOLVER_200_1(HttpStatus.OK, "PROBLEM_SOLVER_200_1", "시민해결사 목록 조회에 성공했습니다."),
     PROBLEM_SOLVER_200_2(HttpStatus.OK, "PROBLEM_SOLVER_200_2", "내 핀 시민해결사 목록 조회에 성공했습니다."),
     PROBLEM_SOLVER_PHOTO_200(HttpStatus.OK, "PROBLEM_SOLVER_PHOTO_200", "시민해결사 인증 사진이 성공적으로 등록되었습니다."),

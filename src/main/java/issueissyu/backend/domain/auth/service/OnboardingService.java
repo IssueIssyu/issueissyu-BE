@@ -78,6 +78,7 @@ public class OnboardingService {
                 .userCustomCollectionId(savedProfile.getUserCustomCollectionId())
                 .customCollectionId(defaultProfile.getCustomCollectionId())
                 .customCollectionName(defaultProfile.getCustomCollectionName())
+                .customCollectionUrl(defaultProfile.getCustomCollectionS3Url())
                 .build();
     }
 }

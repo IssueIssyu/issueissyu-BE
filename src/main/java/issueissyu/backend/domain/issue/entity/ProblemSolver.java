@@ -17,6 +17,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -45,9 +46,10 @@ public class ProblemSolver extends BaseEntity {
     @ToString.Exclude
     private IssuePin issuePin;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "problem_solve_state", nullable = false)
-    private ProblemSolveState problemSolveState;
+    private ProblemSolveState problemSolveState = ProblemSolveState.EN_ROUTE;
 
     @OneToOne(mappedBy = "problemSolver", fetch = FetchType.LAZY)
     @ToString.Exclude

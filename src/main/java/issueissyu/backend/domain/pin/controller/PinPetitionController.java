@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Pin Petition", description = "이슈 핀 청원 API")
+@Tag(name = "Issue Petition", description = "이슈 청원 API")
 @RestController
 @RequestMapping("/api/pins")
 @RequiredArgsConstructor
@@ -28,14 +28,6 @@ public class PinPetitionController {
     @Operation(summary = "청원하기", description = "이슈 핀에 청원합니다. 동일 핀·사용자에 대해 한 번만 가능합니다.")
     @PostMapping("/{pinId}/petitions")
     public ApiResponse<PetitionSubmitResDTO> submitPetition(
-            @PathVariable Long pinId, @AuthenticationPrincipal String uid) {
-        return ApiResponse.onSuccess(
-                IssueSuccessCode.PETITION_200, issuePetitionCommandService.submitPetition(pinId, uid));
-    }
-
-    @Operation(summary = "시민해결사 참여(지금가요)", description = "이슈 핀에 청원합니다. 본인이 등록한 이슈는 불가합니다.")
-    @PostMapping("/{pinId}/go-now")
-    public ApiResponse<PetitionSubmitResDTO> goNow(
             @PathVariable Long pinId, @AuthenticationPrincipal String uid) {
         return ApiResponse.onSuccess(
                 IssueSuccessCode.PETITION_200, issuePetitionCommandService.submitPetition(pinId, uid));
