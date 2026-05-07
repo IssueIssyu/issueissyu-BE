@@ -13,18 +13,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "problem_solver")
@@ -53,8 +49,7 @@ public class ProblemSolver extends BaseEntity {
     @Column(name = "problem_solve_state", nullable = false)
     private ProblemSolveState problemSolveState;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "problemSolver", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "problemSolver", fetch = FetchType.LAZY)
     @ToString.Exclude
-    private List<ProblemSolverImage> problemSolverImages = new ArrayList<>();
+    private ProblemSolverImage problemSolverImage;
 }
