@@ -48,10 +48,6 @@ public class IssuePin extends BaseEntity {
     @Column(name = "petition_count", nullable = false)
     private int petitionCount = 0;
 
-    @Builder.Default
-    @Column(name = "declaration_count", nullable = false)
-    private int declarationCount = 0;
-
     public void incrementPetitionCount() {
         this.petitionCount++;
     }
