@@ -45,4 +45,8 @@ public class EventPin extends BaseEntity {
 
     @Column(length = 255)
     private String discount;
+
+    @OneToOne(mappedBy = "eventPin", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private StoreImage storeImage;
 }

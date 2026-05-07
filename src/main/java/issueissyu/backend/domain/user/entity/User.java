@@ -14,6 +14,9 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Type;
 import org.postgresql.geometric.PGpoint;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity(name = "AppUser")
 @Table(name = "\"user\"")
 @Getter
@@ -60,6 +63,11 @@ public class User extends BaseEntity {
     @Builder.Default
     @Column(name = "store_alarm_active", nullable = false)
     private boolean storeAlarmActive = false;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<OAuth> oauths = new ArrayList<>();
 
 
     public void setUserLocation(Location location, PGpoint point) {
