@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.user.entity;
 
-import issueissyu.backend.domain.location.entity.Location;import issueissyu.backend.global.entity.BaseEntity;
+import issueissyu.backend.domain.location.entity.Location;
+import issueissyu.backend.global.entity.BaseEntity;
 import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
