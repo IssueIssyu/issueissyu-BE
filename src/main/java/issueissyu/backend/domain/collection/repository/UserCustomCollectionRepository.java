@@ -1,6 +1,8 @@
 package issueissyu.backend.domain.collection.repository;
 
 import issueissyu.backend.domain.collection.entity.mapping.UserCustomCollection;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,10 @@ public interface UserCustomCollectionRepository extends JpaRepository<UserCustom
 
     Optional<UserCustomCollection> findByUser_UidAndCustomCollection_CustomCollectionName(
             String uid, String customCollectionName);
+
+    @EntityGraph(attributePaths = {"customCollection", "user"})
+    @Query("select ucc from UserCustomCollection ucc where ucc.isProfile = true and ucc.user.uid in :uids")
+    List<UserCustomCollection> findProfilesByUserUidIn(@Param("uids") Collection<String> uids);
 
     @EntityGraph(attributePaths = "customCollection")
     @Query(

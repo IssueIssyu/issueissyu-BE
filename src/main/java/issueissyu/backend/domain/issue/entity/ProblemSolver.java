@@ -52,4 +52,12 @@ public class ProblemSolver extends BaseEntity {
     @OneToOne(mappedBy = "problemSolver", fetch = FetchType.LAZY)
     @ToString.Exclude
     private ProblemSolverImage problemSolverImage;
+
+    public void markVerified() {
+        this.problemSolveState = ProblemSolveState.VERIFIED;
+    }
+
+    public void markResolved() {
+        this.problemSolveState = ProblemSolveState.RESOLVED;
+    }
 }

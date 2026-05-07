@@ -33,6 +33,14 @@ public class PinPetitionController {
                 IssueSuccessCode.PETITION_200, issuePetitionCommandService.submitPetition(pinId, uid));
     }
 
+    @Operation(summary = "시민해결사 참여(지금가요)", description = "이슈 핀에 청원합니다. 본인이 등록한 이슈는 불가합니다.")
+    @PostMapping("/{pinId}/go-now")
+    public ApiResponse<PetitionSubmitResDTO> goNow(
+            @PathVariable Long pinId, @AuthenticationPrincipal String uid) {
+        return ApiResponse.onSuccess(
+                IssueSuccessCode.PETITION_200, issuePetitionCommandService.submitPetition(pinId, uid));
+    }
+
     @Operation(summary = "청원 현황 조회", description = "청원 수·내 청원 여부·목표 청원 수(현재 30 고정)를 반환합니다.")
     @GetMapping("/{pinId}/petitions/status")
     public ApiResponse<PetitionStatusResDTO> getPetitionStatus(

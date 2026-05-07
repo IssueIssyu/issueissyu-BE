@@ -39,4 +39,9 @@ public class ProblemSolverImage {
 
     @Column(name = "problem_solver_image_s3_url", nullable = false, length = 500)
     private String problemSolverImageS3Url;
+
+    public void updateStorage(String s3Url, String s3Key) {
+        this.problemSolverImageS3Url = s3Url;
+        this.problemSolverImageS3Key = s3Key;
+    }
 }
