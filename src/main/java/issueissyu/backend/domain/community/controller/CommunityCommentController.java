@@ -30,7 +30,6 @@ import java.util.List;
 @RequestMapping("/api/communities")
 @RequiredArgsConstructor
 public class CommunityCommentController {
-    private static final Long TODO_PIN_ID_PLACEHOLDER = -1L;
 
     private final CommunityRepository communityRepository;
     private final CommentQueryService commentQueryService;
@@ -65,10 +64,9 @@ public class CommunityCommentController {
             @PathVariable Long commentId,
             @AuthenticationPrincipal String uid,
             @Valid @RequestBody CommentReqDTO request) {
-        // TODO: CommentCommandService가 commentId 전용 API를 제공하면 이 더미 pinId 전달을 제거한다.
         return ApiResponse.onSuccess(
                 CommunitySuccessCode.COMMUNITY_UPDATE_COMMENT_200,
-                commentCommandService.updateComment(TODO_PIN_ID_PLACEHOLDER, commentId, uid, request));
+                commentCommandService.updateComment(commentId, uid, request));
     }
 
     @Operation(summary = "커뮤니티 댓글 삭제", description = "댓글 ID만으로 삭제합니다.")
@@ -76,8 +74,7 @@ public class CommunityCommentController {
     public ApiResponse<Void> deleteComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal String uid) {
-        // TODO: CommentCommandService가 commentId 전용 API를 제공하면 이 더미 pinId 전달을 제거한다.
-        commentCommandService.deleteComment(TODO_PIN_ID_PLACEHOLDER, commentId, uid);
+        commentCommandService.deleteComment( commentId, uid);
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DELETE_COMMENT_200, null);
     }
 
