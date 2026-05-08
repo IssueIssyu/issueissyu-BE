@@ -53,6 +53,15 @@ public class OnboardingService {
                 userCustomCollectionRepository
                         .findByUser_UidAndCustomCollection_CustomCollectionName(
                                 uid, DEFAULT_PROFILE_NAME)
+                        .map(
+                                existing -> {
+                                    if (!existing.isProfile()) {
+                                        existing.markAsProfile();
+                                        return userCustomCollectionRepository.save(
+                                                existing);
+                                    }
+                                    return existing;
+                                })
                         .orElseGet(
                                 () ->
                                         userCustomCollectionRepository.save(
@@ -60,6 +69,7 @@ public class OnboardingService {
                                                         .user(user)
                                                         .customCollection(
                                                                 defaultProfile)
+                                                        .isProfile(true)
                                                         .build()));
 
         return OnboardingResDTO.builder()
@@ -68,6 +78,7 @@ public class OnboardingService {
                 .userCustomCollectionId(savedProfile.getUserCustomCollectionId())
                 .customCollectionId(defaultProfile.getCustomCollectionId())
                 .customCollectionName(defaultProfile.getCustomCollectionName())
+                .customCollectionUrl(defaultProfile.getCustomCollectionS3Url())
                 .build();
     }
 }

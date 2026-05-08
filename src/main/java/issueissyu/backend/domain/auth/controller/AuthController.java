@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 
-@Tag(name = "Auth", description = "인증·소셜 로그인")
+@Tag(name = "Auth", description = "인증·소셜 로그인·온보딩")
 @RestController
 @RequiredArgsConstructor
 public class AuthController {

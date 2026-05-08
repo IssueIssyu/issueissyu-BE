@@ -49,7 +49,35 @@ public class S3Utils {
         }
 
         String key = generateFileKey(originalFilename);
+        return uploadMultipartUsingKey(file, key);
+    }
 
+    // 디렉터리 prefix 하위 경로(UUID 파일명+확장자)로 업로드합니다.
+    public S3Dto uploadMultipartUnderDirectory(MultipartFile file, String directoryPrefix) {
+
+        if (file == null || file.isEmpty() || file.getSize() <= 0) {
+            throw new UtilException(FILE_EMPTY);
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
+            throw new UtilException(FILE_EMPTY);
+        }
+
+        String ext =
+                originalFilename.contains(".")
+                        ? originalFilename.substring(originalFilename.lastIndexOf('.'))
+                        : "";
+
+        String prefix =
+                directoryPrefix.endsWith("/")
+                        ? directoryPrefix
+                        : directoryPrefix + "/";
+        String key = prefix + UUID.randomUUID() + ext.toLowerCase();
+        return uploadMultipartUsingKey(file, key);
+    }
+
+    private S3Dto uploadMultipartUsingKey(MultipartFile file, String key) {
         String contentType = (file.getContentType() != null)
                 ? file.getContentType()
                 : "application/octet-stream";
@@ -62,11 +90,10 @@ public class S3Utils {
 
         try (InputStream is = file.getInputStream()) {
             s3Client.putObject(req, RequestBody.fromInputStream(is, file.getSize()));
-            return new S3Dto(getUrl(key), key);   // (url, key) 순서 통일
+            return new S3Dto(getUrl(key), key);
         } catch (SdkClientException e) {
             throw new UtilException(S3_UPLOAD_FAILED, e);
         } catch (Exception e) {
-            // IOException 포함
             throw new UtilException(S3_UPLOAD_FAILED, e);
         }
     }

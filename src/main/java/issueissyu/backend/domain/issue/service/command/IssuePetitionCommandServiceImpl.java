@@ -48,6 +48,10 @@ public class IssuePetitionCommandServiceImpl implements IssuePetitionCommandServ
             throw PetitionException.of(IssueErrorCode.PETITION_400_2);
         }
 
+        if (issuePin.getPin().getUser().getUid().equals(uid)) {
+            throw PetitionException.of(IssueErrorCode.PETITION_400_3);
+        }
+
         IssuePetition petition = IssuePetition.builder().user(user).issuePin(issuePin).build();
         try {
             issuePetitionRepository.saveAndFlush(petition);
