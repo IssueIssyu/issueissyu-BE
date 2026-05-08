@@ -2,7 +2,6 @@ package issueissyu.backend.domain.user.entity;
 
 import issueissyu.backend.domain.location.entity.Location;
 import issueissyu.backend.global.entity.BaseEntity;
-import issueissyu.backend.global.persistence.PGpointUserType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Type;
 import org.postgresql.geometric.PGpoint;
 
 import java.util.ArrayList;
@@ -66,15 +64,12 @@ public class User extends BaseEntity {
     @ToString.Exclude
     private List<OAuth> oauths = new ArrayList<>();
 
-
     public void setUserLocation(Location location, PGpoint point) {
         this.userLocation = UserLocation.builder()
                 .userPoint(point)
                 .location(location)
                 .build();
     }
-
-
 
     public void onboard(String nickname, String email, String phone) {
         this.nickname = nickname;

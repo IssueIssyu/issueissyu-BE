@@ -1,6 +1,5 @@
 package issueissyu.backend.domain.map.service.query;
 
-import issueissyu.backend.domain.collection.repository.UserCustomCollectionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
@@ -14,6 +13,7 @@ import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.user.entity.User;
+import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
     private final IssuePinRepository issuePinRepository;
     private final EventPinRepository eventPinRepository;
     private final PinLikeRepository pinLikeRepository;
-    private final UserCustomCollectionRepository userCustomCollectionRepository;
+    private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
     public MapPinCardResDTO findPinCard(Long pinId, String currentUserUid) {
@@ -66,7 +66,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
 
         Optional<String> profileImgOpt =
                 type == PinType.ISSUE
-                        ? getProfileImageUrl(author.getUid())
+                        ? userProfileImageQueryService.findUrlByUserUid(author.getUid())
                         : Optional.empty();
 
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
@@ -110,12 +110,6 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         }
 
         return b.build();
-    }
-
-    private Optional<String> getProfileImageUrl(String uid) {
-        return userCustomCollectionRepository
-                .fetchProfileMarkedForUser(uid)
-                .map(ucc -> ucc.getCustomCollection().getCustomCollectionS3Url());
     }
 
     private Optional<String> resolveMainImageUrl(Pin pin) {
