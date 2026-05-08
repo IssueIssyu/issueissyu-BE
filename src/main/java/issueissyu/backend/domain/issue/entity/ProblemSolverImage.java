@@ -7,7 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,17 +29,19 @@ public class ProblemSolverImage {
     @Column(name = "problem_solver_image_id")
     private Long problemSolverImageId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "problem_solver_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "problem_solver_id", nullable = false, unique = true)
     @ToString.Exclude
     private ProblemSolver problemSolver;
-
-    @Column(name = "problem_solver_image_url", nullable = false, length = 500)
-    private String problemSolverImageUrl;
 
     @Column(name = "problem_solver_image_s3_key", nullable = false, length = 500)
     private String problemSolverImageS3Key;
 
     @Column(name = "problem_solver_image_s3_url", nullable = false, length = 500)
     private String problemSolverImageS3Url;
+
+    public void updateStorage(String s3Url, String s3Key) {
+        this.problemSolverImageS3Url = s3Url;
+        this.problemSolverImageS3Key = s3Key;
+    }
 }
