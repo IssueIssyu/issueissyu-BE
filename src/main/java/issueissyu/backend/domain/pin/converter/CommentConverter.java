@@ -7,11 +7,11 @@ public class CommentConverter {
     private CommentConverter() {
     }
 
-    public static CommentResDTO toCommentResDTO(Comment comment, String uid) {
+    public static CommentResDTO toCommentResDTO(Comment comment, String uid, String profileImageUrl) {
         return CommentResDTO.builder()
                 .commentId(comment.getCommentId())
                 .nickname(comment.getUser().getNickname())
-                .profileImageUrl(comment.getUser().getProfileImageUrl())
+                .profileImageUrl(profileImageUrl)
                 .commentContent(comment.getCommentContent())
                 .isMine(comment.getUser().getUid().equals(uid))
                 .edited(comment.isEdited())

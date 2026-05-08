@@ -17,7 +17,8 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
             join fetch ps.user su
             join fetch ps.issuePin ip
             join fetch ip.pin p
-            where p.pinId = :pinId""")
+            where p.pinId = :pinId
+            order by case when ps.problemSolveState = 'RESOLVED' then 0 else 1 end, ps.createdAt asc""")
     List<ProblemSolver> findAllForPinWithAssociations(@Param("pinId") Long pinId);
 
     @Query(
