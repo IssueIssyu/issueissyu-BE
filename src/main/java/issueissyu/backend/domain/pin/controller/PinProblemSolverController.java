@@ -44,7 +44,7 @@ public class PinProblemSolverController {
     @Operation(
             summary = "시민해결사 목록 조회",
             description = "path의 userId는 회원 UID(문자열)입니다. 명세 예시 숫자 ID와 무관하게 DB uid와 동일해야 합니다.")
-    @GetMapping("/{pinId}/{userUid}")
+    @GetMapping("/{pinId}/problem-solver/{userUid}")
     public ApiResponse<ProblemSolverListResDTO> listProblemSolvers(
             @PathVariable Long pinId,
             @PathVariable String userUid,
