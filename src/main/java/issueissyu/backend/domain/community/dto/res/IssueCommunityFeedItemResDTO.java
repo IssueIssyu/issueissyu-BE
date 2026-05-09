@@ -7,10 +7,10 @@ public record IssueCommunityFeedItemResDTO(
         Long communityId,
         Long pinId,
         String title,
-        String thumbnailUrl,
-        String authorNickname,
-        String authorProfileUrl,
-        String address,
+        String pinImageUrl,
+        String pinUserNickname,
+        String pinUserProfile,
+        String pinDetailAddress,
         int viewCount,
         long likeCount
 ) implements CommunityFeedItemResDTO {

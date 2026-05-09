@@ -2,8 +2,8 @@ package issueissyu.backend.domain.community.dto.res;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
-@JsonTypeName("COMMUNICATION")
-public record CommunicationCommunityFeedItemResDTO(
+@JsonTypeName("ISSUE")
+public record IssueCommunityDetailItemResDTO(
         Long communityId,
         Long pinId,
         String title,
@@ -12,6 +12,7 @@ public record CommunicationCommunityFeedItemResDTO(
         String pinUserProfile,
         String pinDetailAddress,
         int viewCount,
-        long likeCount
-) implements CommunityFeedItemResDTO, CommunityDetailItemResDTO {
+        long likeCount,
+        String issuePinState
+) implements CommunityDetailItemResDTO {
 }

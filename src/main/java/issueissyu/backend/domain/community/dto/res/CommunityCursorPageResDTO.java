@@ -1,7 +1,10 @@
 package issueissyu.backend.domain.community.dto.res;
 
+import java.util.List;
+
 public record CommunityCursorPageResDTO(
-        java.util.List<CommunityFeedItemResDTO> content,
+        String region,
+        List<CommunityFeedItemResDTO> content,
         String nextCursor,
         boolean hasNext
 ) {

@@ -2,9 +2,10 @@ package issueissyu.backend.domain.community.service.query;
 
 import issueissyu.backend.domain.community.dto.res.CommunicationCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityCursorPageResDTO;
+import issueissyu.backend.domain.community.dto.res.CommunityDetailItemResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityDetailResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityFeedItemResDTO;
-import issueissyu.backend.domain.community.dto.res.FestivalCommunityFeedItemResDTO;
+import issueissyu.backend.domain.community.dto.res.IssueCommunityDetailItemResDTO;
 import issueissyu.backend.domain.community.dto.res.IssueCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.StoreCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.entity.Community;
@@ -13,7 +14,10 @@ import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.exception.CommunityException;
 import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
+import issueissyu.backend.domain.issue.entity.IssuePin;
+import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.enums.RegionCode;
+import issueissyu.backend.domain.location.entity.PinLocation;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.pin.entity.EventPin;
 import issueissyu.backend.domain.pin.entity.Pin;
@@ -22,6 +26,7 @@ import issueissyu.backend.domain.pin.entity.StoreImage;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
+import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +46,6 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private static final List<CommunityType> IMPLEMENTED_FEED_TYPES = List.of(
             CommunityType.ISSUE,
             CommunityType.STORE,
-            CommunityType.FESTIVAL,
             CommunityType.COMMUNICATION
     );
 
@@ -50,11 +54,14 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
     private final PinImageRepository pinImageRepository;
+    private final IssuePinRepository issuePinRepository;
+    private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
     // 탭/지역/커서 기준으로 피드 한 페이지를 만든다.
     public CommunityCursorPageResDTO getCommunityFeed(
             CommunityTab tab, RegionCode region, String cursor, int size) {
+                
         CursorKey cursorKey = CursorKey.parse(cursor, size);
         List<Community> communities = fetchCommunities(tab, region, cursorKey);
         boolean hasNext = communities.size() > size;
@@ -65,7 +72,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
 
         String nextCursor = hasNext ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode() : null;
-        return new CommunityCursorPageResDTO(items, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(region.name(), items, nextCursor, hasNext);
     }
 
     @Override
@@ -74,28 +81,70 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Community community = communityRepository.findDetailById(communityId)
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
         community.incrementViewCount();
-        CommunityFeedItemResDTO item = toFeedItem(community);
+
+        CommunityDetailItemResDTO item = toDetailItem(community);
+        List<String> pinImageUrls = pinImageRepository
+                .findByPin_PinIdOrderByPinImageIdAsc(community.getPin().getPinId())
+                .stream()
+                .map(PinImage::getPinS3Url)
+                .toList();
+
+        // STORE는 content가 피드 item 안에 포함되므로 래퍼의 content는 null
+        String detailContent = community.getCommunityType() == CommunityType.STORE
+                ? null
+                : community.getContent();
+
         return new CommunityDetailResDTO(
                 item,
-                community.getContent(),
+                detailContent,
+                pinImageUrls,
                 community.getCreatedAt(),
                 community.getUpdatedAt());
+    }
+
+    // 상세 조회용 DTO 분기 (ISSUE는 추가 데이터 포함, 나머지는 피드 DTO 재사용)
+    private CommunityDetailItemResDTO toDetailItem(Community community) {
+        return switch (community.getCommunityType()) {
+            case ISSUE -> toIssueDetailItem(community);
+            case STORE -> toStoreFeedItem(community);
+            case COMMUNICATION -> toCommunicationFeedItem(community);
+            default -> null;
+        };
+    }
+
+    // ISSUE 상세 DTO 매핑 (issuePinState, petitionCount 포함)
+    private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community) {
+        Pin pin = community.getPin();
+        IssuePin issuePin = issuePinRepository.findByPin_PinId(pin.getPinId()).orElse(null);
+
+        return new IssueCommunityDetailItemResDTO(
+                community.getCommunityId(),
+                pin.getPinId(),
+                community.getTitle(),
+                resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
+                pin.getUser().getNickname(),
+                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
+                resolveAddress(pin.getPinId()),
+                community.getViewCount(),
+                pin.getLikeCount(),
+                issuePin != null ? issuePin.getIssuePinState().name() : null);
     }
 
     // 탭 규칙에 맞는 community 목록을 조회한다.
     private List<Community> fetchCommunities(CommunityTab tab, RegionCode region, CursorKey cursorKey) {
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
+        String regionCode = region.name();
         return switch (tab) {
             case ISSUE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.ISSUE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.ISSUE, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case STORE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.STORE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            case FESTIVAL -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.FESTIVAL, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.STORE, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.COMMUNICATION, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.COMMUNICATION, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case ALL -> communityRepository.findFeedByTypesAndRegion(
-                    IMPLEMENTED_FEED_TYPES, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    IMPLEMENTED_FEED_TYPES, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
+            // 축제·카드뉴스 등 미노출 탭: 피드는 빈 목록
+            case FESTIVAL -> List.of();
             case HOT, POLICY, CONTEST, CARDNEWS -> List.of();
         };
     }
@@ -105,11 +154,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return switch (community.getCommunityType()) {
             case ISSUE -> toIssueFeedItem(community);
             case STORE -> toStoreFeedItem(community);
-            case FESTIVAL -> toFestivalFeedItem(community);
             case COMMUNICATION -> toCommunicationFeedItem(community);
-            case POLICY, CONTEST, CARDNEWS -> throw new IllegalStateException("Unsupported feed type");
+            default -> null;
         };
     }
+
 
     // ISSUE 카드 DTO 매핑.
     private IssueCommunityFeedItemResDTO toIssueFeedItem(Community community) {
@@ -120,7 +169,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 community.getTitle(),
                 resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
                 pin.getUser().getNickname(),
-                pin.getUser().getProfileImageUrl(),
+                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
                 community.getViewCount(),
                 pin.getLikeCount());
@@ -133,34 +182,17 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Optional<EventPin> eventPin = eventPinRepository.findByPin_PinId(pin.getPinId());
         return new StoreCommunityFeedItemResDTO(
                 community.getCommunityId(),
-                pin.getPinId(),
                 pin.getPinTitle(),
                 storeImage.map(StoreImage::getImageS3Url)
                         .or(() -> resolvePinThumbnailUrl(pin.getPinId()))
                         .orElse(null),
-                pin.getUser().getNickname(),
-                pin.getUser().getProfileImageUrl(),
+                community.getContent(),
                 eventPin.map(EventPin::getDiscount).orElse(null),
                 resolveAddress(pin.getPinId()),
+                eventPin.map(EventPin::getEventStartTime).orElse(null),
+                eventPin.map(EventPin::getEventEndTime).orElse(null),
                 community.getViewCount(),
                 pin.getLikeCount());
-    }
-
-    // FESTIVAL 카드 DTO 매핑.
-    private FestivalCommunityFeedItemResDTO toFestivalFeedItem(Community community) {
-        Pin pin = community.getPin();
-        Optional<EventPin> eventPin = eventPinRepository.findByPin_PinId(pin.getPinId());
-        return new FestivalCommunityFeedItemResDTO(
-                community.getCommunityId(),
-                pin.getPinId(),
-                community.getTitle(),
-                resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
-                resolveAddress(pin.getPinId()),
-                community.getViewCount(),
-                pin.getLikeCount(),
-                eventPin.map(EventPin::getEventStartTime).orElse(null),
-                eventPin.map(EventPin::getEventEndTime).orElse(null)
-        );
     }
 
     // COMMUNICATION 카드 DTO 매핑.
@@ -172,16 +204,16 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 community.getTitle(),
                 resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
                 pin.getUser().getNickname(),
-                pin.getUser().getProfileImageUrl(),
+                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
                 community.getViewCount(),
                 pin.getLikeCount());
     }
 
-    // 핀의 대표 주소(최초 위치 1건) 조회.
+    // 핀의 주소 조회.
     private String resolveAddress(Long pinId) {
-        return pinLocationRepository.findFirstByPin_PinIdOrderByPinLocationIdAsc(pinId)
-                .map(pl -> pl.getDetailAddress())
+        return pinLocationRepository.findByPin_PinId(pinId)
+                .map(PinLocation::getDetailAddress)
                 .orElse(null);
     }
 

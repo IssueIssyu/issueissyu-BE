@@ -47,7 +47,7 @@ public class CommunityController {
         RegionCode parsedRegion = parseRegion(region);
         CommunityCursorPageResDTO result =
                 communityQueryService.getCommunityFeed(parsedTab, parsedRegion, cursor, size);
-        return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_FEED_200, result);
+        return ApiResponse.onSuccess(CommunitySuccessCode.forTab(parsedTab), result);
     }
 
     @Operation(summary = "커뮤니티 게시물 상세 조회", description = "연결된 핀 카드 정보와 본문(content)을 반환합니다. 조회 시 조회수가 증가합니다.")

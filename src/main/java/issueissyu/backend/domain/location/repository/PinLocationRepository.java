@@ -13,6 +13,8 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
 
     Optional<PinLocation> findFirstByPin_PinIdOrderByPinLocationIdAsc(Long pinId);
 
+    Optional<PinLocation> findByPin_PinId(Long pinId);
+
     // 화면 BBox(Bounding Box) 안에 있는 핀을 조회합니다.
     // PostGIS ST_MakeEnvelope 인자 순서: (Xmin, Ymin, Xmax, Ymax) = (swLng, swLat, neLng, neLat)
 

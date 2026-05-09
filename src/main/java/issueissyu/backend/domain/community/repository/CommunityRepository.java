@@ -2,7 +2,6 @@ package issueissyu.backend.domain.community.repository;
 
 import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.enums.CommunityType;
-import issueissyu.backend.domain.location.enums.RegionCode;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -34,10 +33,10 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                     select 1
                     from PinLocation pl
                     where pl.pin = p
-                      and pl.location.region = :region
+                      and pl.location.region = :regionCode
               )
               and (
-                    :cursorCreatedAt is null
+                    cast(:cursorCreatedAt as LocalDateTime) is null
                     or c.createdAt < :cursorCreatedAt
                     or (c.createdAt = :cursorCreatedAt and c.communityId < :cursorId)
               )
@@ -45,7 +44,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypeAndRegion(
             @Param("type") CommunityType type,
-            @Param("region") RegionCode region,
+            @Param("regionCode") String regionCode,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
@@ -61,10 +60,10 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                     select 1
                     from PinLocation pl
                     where pl.pin = p
-                      and pl.location.region = :region
+                      and pl.location.region = :regionCode
               )
               and (
-                    :cursorCreatedAt is null
+                    cast(:cursorCreatedAt as LocalDateTime) is null
                     or c.createdAt < :cursorCreatedAt
                     or (c.createdAt = :cursorCreatedAt and c.communityId < :cursorId)
               )
@@ -72,7 +71,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypesAndRegion(
             @Param("types") Collection<CommunityType> types,
-            @Param("region") RegionCode region,
+            @Param("regionCode") String regionCode,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
