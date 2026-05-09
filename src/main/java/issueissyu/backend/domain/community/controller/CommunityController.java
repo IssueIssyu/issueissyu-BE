@@ -11,7 +11,10 @@ import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 import issueissyu.backend.domain.community.service.command.CommunityCommandService;
 import issueissyu.backend.domain.community.service.query.CommunityQueryService;
 import issueissyu.backend.domain.location.enums.RegionCode;
+import issueissyu.backend.domain.pin.dto.req.DeclarationReqDTO;
+import issueissyu.backend.domain.pin.service.command.DeclarationCommandService;
 import issueissyu.backend.global.api.ApiResponse;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +40,7 @@ public class CommunityController {
 
     private final CommunityQueryService communityQueryService;
     private final CommunityCommandService communityCommandService;
+    private final DeclarationCommandService declarationCommandService;
 
     @Operation(summary = "커뮤니티 피드 조회", description = "탭+지역구+커서 기준으로 피드를 조회합니다.")
     @GetMapping
@@ -64,6 +70,16 @@ public class CommunityController {
             @AuthenticationPrincipal String uid) {
         communityCommandService.deleteCommunity(communityId, uid);
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DELETE_200, null);
+    }
+
+    @Operation(summary = "커뮤니티 게시물 신고", description = "신고 사유 인덱스(1~5)를 받아 핀 단위로 신고를 접수합니다. 동일 게시물 중복 신고 불가.")
+    @PostMapping("/{communityId}/declaration")
+    public ApiResponse<Void> declareCommunity(
+            @PathVariable Long communityId,
+            @AuthenticationPrincipal String uid,
+            @RequestBody @Valid DeclarationReqDTO request) {
+        declarationCommandService.declareCommunity(communityId, uid, request.reasonIndex());
+        return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DECLARATION_200, null);
     }
 
     private static RegionCode parseRegion(String raw) {

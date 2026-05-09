@@ -18,7 +18,8 @@ public enum CommunitySuccessCode implements BaseSuccessCode {
     COMMUNITY_COMMENTS_200(HttpStatus.OK, "COMMUNITY_COMMENTS_200", "커뮤니티 댓글 목록 조회에 성공했습니다."),
     COMMUNITY_CREATE_COMMENT_200(HttpStatus.OK, "COMMUNITY_CREATE_COMMENT_200", "커뮤니티 댓글 작성에 성공했습니다."),
     COMMUNITY_UPDATE_COMMENT_200(HttpStatus.OK, "COMMUNITY_UPDATE_COMMENT_200", "커뮤니티 댓글 수정에 성공했습니다."),
-    COMMUNITY_DELETE_COMMENT_200(HttpStatus.OK, "COMMUNITY_DELETE_COMMENT_200", "커뮤니티 댓글 삭제에 성공했습니다.");
+    COMMUNITY_DELETE_COMMENT_200(HttpStatus.OK, "COMMUNITY_DELETE_COMMENT_200", "커뮤니티 댓글 삭제에 성공했습니다."),
+    COMMUNITY_DECLARATION_200(HttpStatus.OK, "COMMUNITY_DECLARATION_200", "신고가 접수되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
