@@ -43,5 +43,13 @@ public class UserCustomCollection {
 
     @Builder.Default
     @Column(name = "is_profile", nullable = false)
-    private boolean profileCollection = false;
+    private boolean isProfile = false;
+
+    @Builder.Default
+    @Column(name = "is_bookmark", nullable = false)
+    private boolean isBookmark = false;
+
+    public void markAsProfile() {
+        this.isProfile = true;
+    }
 }

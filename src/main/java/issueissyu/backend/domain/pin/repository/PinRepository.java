@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface PinRepository extends JpaRepository<Pin, Long> {
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "pinImages"})
     @Query("select p from Pin p where p.pinId = :id")
     Optional<Pin> fetchDetailWithAuthor(@Param("id") Long pinId);
 

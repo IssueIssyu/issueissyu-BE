@@ -24,7 +24,7 @@ public class CookieUtils {
 
     public CookieUtils(
             ObjectMapper objectMapper,
-            @Value("${app.cookie.secure:true}") boolean cookieSecure,
+            @Value("${app.cookie.secure:false}") boolean cookieSecure,
             @Value("${app.cookie.same-site:Lax}") String cookieSameSite
     ) {
         this.objectMapper = objectMapper;

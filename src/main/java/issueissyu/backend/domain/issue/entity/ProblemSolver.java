@@ -13,9 +13,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -44,7 +46,20 @@ public class ProblemSolver extends BaseEntity {
     @ToString.Exclude
     private IssuePin issuePin;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "problem_solve_state", nullable = false)
-    private ProblemSolveState problemSolveState;
+    private ProblemSolveState problemSolveState = ProblemSolveState.EN_ROUTE;
+
+    @OneToOne(mappedBy = "problemSolver", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private ProblemSolverImage problemSolverImage;
+
+    public void markVerified() {
+        this.problemSolveState = ProblemSolveState.VERIFIED;
+    }
+
+    public void markResolved() {
+        this.problemSolveState = ProblemSolveState.RESOLVED;
+    }
 }
