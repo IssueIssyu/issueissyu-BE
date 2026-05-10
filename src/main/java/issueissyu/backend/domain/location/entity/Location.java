@@ -25,9 +25,9 @@ public class Location {
     @Column(name = "location_id")
     private Long locationId;
 
-    @Column(name = "location", nullable = false, length = 10)
-    private String region;
-
-    @Column(name = "adm_code", nullable = false, length = 50)
+    @Column(name = "adm_code", nullable = false, unique = true, length = 10)
     private String admCode;
+
+    @Column(name = "location", nullable = false, length = 50)
+    private String region;
 }
