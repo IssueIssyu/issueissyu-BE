@@ -93,3 +93,17 @@ jobs:
           version_description: ${{ github.ref_name }}@${{ github.sha }}
           deployment_package: deploy/deploy.zip
           wait_for_deployment: false
+      
+      - name: Smoke test
+        run: |
+          for i in {1..30}; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' http://issueissyu-backend-dev-env-2.eba-uim2fupp.ap-northeast-2.elasticbeanstalk.com/health || true)"
+            echo "health check $i: $code"
+            if [ "$code" = "200" ]; then
+              echo "health OK"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "health check failed"
+          exit 1
