@@ -84,7 +84,7 @@ public class PinController {
         return ApiResponse.onSuccess(r.successCode(), r.data());
     }
 
-    @Operation(summary = "핀 상세 포스트 카드")
+    @Operation(summary = "핀 상세 포스트")
     @GetMapping("/{pinId}/post")
     public ApiResponse<PinPostResDTO> getPinPost(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         PinDetailQueryService.PinPostResult r = pinDetailQueryService.getPinPost(pinId, uid);
