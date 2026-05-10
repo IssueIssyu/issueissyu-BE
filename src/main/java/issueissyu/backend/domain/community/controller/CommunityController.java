@@ -63,13 +63,22 @@ public class CommunityController {
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DETAIL_200, result);
     }
 
-    @Operation(summary = "커뮤니티 게시물 삭제", description = "연결된 핀(pin)은 삭제하지 않으며, 게시물을 등록한 사용자만 삭제할 수 있습니다.")
+    @Operation(summary = "커뮤니티 게시물 삭제", description = "소통(COMMUNICATION) 타입만 허용. 작성자만 가능하며 연결된 핀과 모든 하위 데이터(댓글·공감·이모지 등)가 함께 삭제됩니다.")
     @DeleteMapping("/{communityId}")
     public ApiResponse<Void> deleteCommunity(
             @PathVariable Long communityId,
             @AuthenticationPrincipal String uid) {
         communityCommandService.deleteCommunity(communityId, uid);
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DELETE_200, null);
+    }
+
+    @Operation(summary = "커뮤니티 게시물 글 내리기", description = "이슈·소통 모두 허용. 작성자만 가능하며 커뮤니티 게시물만 삭제됩니다(핀은 유지).")
+    @DeleteMapping("/{communityId}/takedown")
+    public ApiResponse<Void> takedownCommunity(
+            @PathVariable Long communityId,
+            @AuthenticationPrincipal String uid) {
+        communityCommandService.takedownCommunity(communityId, uid);
+        return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_TAKEDOWN_200, null);
     }
 
     @Operation(summary = "커뮤니티 게시물 신고", description = "신고 사유 인덱스(1~5)를 받아 핀 단위로 신고를 접수합니다. 동일 게시물 중복 신고 불가.")

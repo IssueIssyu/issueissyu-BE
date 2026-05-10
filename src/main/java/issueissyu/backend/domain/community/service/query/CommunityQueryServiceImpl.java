@@ -61,7 +61,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     // 탭/지역/커서 기준으로 피드 한 페이지를 만든다.
     public CommunityCursorPageResDTO getCommunityFeed(
             CommunityTab tab, RegionCode region, String cursor, int size) {
-                
+
         CursorKey cursorKey = CursorKey.parse(cursor, size);
         List<Community> communities = fetchCommunities(tab, region, cursorKey);
         boolean hasNext = communities.size() > size;
@@ -112,7 +112,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         };
     }
 
-    // ISSUE 상세 DTO 매핑 (issuePinState, petitionCount 포함)
+    // ISSUE 상세 DTO 매핑 (issuePinState 포함)
     private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community) {
         Pin pin = community.getPin();
         IssuePin issuePin = issuePinRepository.findByPin_PinId(pin.getPinId()).orElse(null);
@@ -158,7 +158,6 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             default -> null;
         };
     }
-
 
     // ISSUE 카드 DTO 매핑.
     private IssueCommunityFeedItemResDTO toIssueFeedItem(Community community) {
