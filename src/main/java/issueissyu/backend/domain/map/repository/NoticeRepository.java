@@ -15,4 +15,6 @@ public interface NoticeRepository extends JpaRepository<Notice, Long> {
             where :now >= n.noticeStartTime and :now <= n.noticeEndTime
             order by n.noticeId asc""")
     List<Notice> findActiveAt(@Param("now") LocalDateTime now);
+
+    void deleteByPin_PinId(Long pinId);
 }

@@ -12,4 +12,6 @@ public interface PinLikeRepository extends JpaRepository<PinLike, Long> {
 
     @EntityGraph(attributePaths = "user")
     List<PinLike> findByPin_PinId(Long pinId);
+
+    void deleteByPin_PinId(Long pinId);
 }

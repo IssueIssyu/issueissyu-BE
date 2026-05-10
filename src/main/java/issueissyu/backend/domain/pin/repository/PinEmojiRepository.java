@@ -44,4 +44,6 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
         String getEmojiImageUrl();
         long getCount();
     }
+
+    void deleteByPin_PinId(Long pinId);
 }

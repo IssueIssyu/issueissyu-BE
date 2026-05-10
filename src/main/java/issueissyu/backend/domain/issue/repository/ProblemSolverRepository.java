@@ -38,4 +38,6 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
             join fetch ps.user su
             where ps.problemSolverId = :id""")
     Optional<ProblemSolver> fetchWithPinOwnerAndSolver(@Param("id") Long id);
+
+    List<ProblemSolver> findAllByIssuePin_IssuePinId(Long issuePinId);
 }

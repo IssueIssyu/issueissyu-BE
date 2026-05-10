@@ -15,4 +15,6 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
     Optional<Location> findByAdmCode(String sigunguCode);
 
     boolean existsByRegion(String region);
+
+    Optional<Location> findByRegion(String region);
 }

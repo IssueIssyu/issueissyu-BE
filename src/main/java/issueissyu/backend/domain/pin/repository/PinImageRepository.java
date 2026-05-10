@@ -16,4 +16,8 @@ public interface PinImageRepository extends JpaRepository<PinImage, Long> {
 
     List<PinImage> findByPin_PinIdInOrderByPin_PinIdAscMainImageDescPinImageIdAsc(
             Collection<Long> pinIds);
+
+    Optional<PinImage> findByPin_PinIdAndPinS3Url(Long pinId, String pinS3Url);
+
+    void deleteByPin_PinId(Long pinId);
 }

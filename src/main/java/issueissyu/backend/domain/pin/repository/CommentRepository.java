@@ -24,4 +24,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             where c.commentId = :commentId
             """)
     Optional<Comment> findByIdWithUserAndPin(@Param("commentId") Long commentId);
+
+    void deleteByPin_PinId(Long pinId);
 }
