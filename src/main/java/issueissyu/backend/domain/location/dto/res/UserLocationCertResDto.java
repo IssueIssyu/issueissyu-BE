@@ -13,7 +13,7 @@ public class UserLocationCertResDto {
 
     public static UserLocationCertResDto from(Location location) {
         return new UserLocationCertResDto(
-                location.getAdmCode()
+                location.getRegion()
         );
     }
 

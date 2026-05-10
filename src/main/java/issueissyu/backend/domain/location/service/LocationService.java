@@ -51,6 +51,12 @@ public class LocationService {
     }
 
     @Transactional(readOnly = true)
+    public UserLocationResDTO getRoadAddress(PGpoint point) {
+        String address = naverMapService.resolveRoadAddressOf(point);
+        return new UserLocationResDTO(address);
+    }
+
+    @Transactional(readOnly = true)
     public UserLocationResDTO isUserCanPostPin(String userId, PGpoint userPoint, PGpoint pinPoint){
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
@@ -62,7 +68,7 @@ public class LocationService {
         double distanceInMeters = calDist(userPoint.y, userPoint.x, pinPoint.y, pinPoint.x);
         NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(pinPoint);
         String pinSigunguPrefix = extractSigunguPrefix(resolved.legalDistrictCode());
-        String userSigunguPrefix = extractSigunguPrefix(user.getUserLocation().getLocation().getRegion());
+        String userSigunguPrefix = extractSigunguPrefix(user.getUserLocation().getLocation().getAdmCode());
 
         if(distanceInMeters <= 100){
             return new UserLocationResDTO(resolved.address());
@@ -83,9 +89,8 @@ public class LocationService {
     }
 
     private Location findLocationByLegalDistrictCode(String legalDistrictCode) {
-        String sigunguPrefix = extractSigunguPrefix(legalDistrictCode);
-        return locationRepository.findAllByRegionStartingWith(sigunguPrefix).stream()
-                .findFirst()
+        String sigunguCode = buildSigunguCode(legalDistrictCode);
+        return locationRepository.findByAdmCode(sigunguCode)
                 .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND));
     }
 
@@ -94,5 +99,9 @@ public class LocationService {
             throw LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND);
         }
         return legalDistrictCode.substring(0, 5);
+    }
+
+    private String buildSigunguCode(String legalDistrictCode) {
+        return extractSigunguPrefix(legalDistrictCode) + "00000";
     }
 }
