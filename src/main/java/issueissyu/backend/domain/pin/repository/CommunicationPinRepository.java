@@ -17,4 +17,5 @@ public interface CommunicationPinRepository extends JpaRepository<CommunicationP
             WHERE c.pin.pinId = :pinId
             """)
     int bumpUpdatedAt(@Param("pinId") Long pinId, @Param("ts") LocalDateTime ts);
+
 }

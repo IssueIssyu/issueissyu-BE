@@ -19,7 +19,10 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "declaration")
+@Table(
+        name = "declaration",
+        uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"pin_id", "uid"})
+)
 @Getter
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -40,4 +43,7 @@ public class Declaration extends BaseEntity {
     @JoinColumn(name = "pin_id", nullable = false)
     @ToString.Exclude
     private Pin pin;
+
+    @Column(name = "declaration_reason", nullable = false)
+    private int declarationReason;
 }

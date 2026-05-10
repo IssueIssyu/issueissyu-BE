@@ -16,8 +16,8 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
 
     Optional<PinEmoji> findByPinPinIdAndUserUidAndActiveTrue(Long pinId, String uid);
 
-    // 같은 pin/uid 처리 경쟁 시 현재 선택 row를 잠가 active 중복을 방지한다.
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    // 같은 pin/uid 처리 경쟁 시 현재 선택 row를 잠가 active 중복 방지
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // 비관적 락 사용
     @Query("""
             SELECT pe
             FROM PinEmoji pe
