@@ -16,8 +16,8 @@ import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
-import issueissyu.backend.domain.location.enums.RegionCode;
 import issueissyu.backend.domain.location.entity.PinLocation;
+import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.pin.entity.EventPin;
 import issueissyu.backend.domain.pin.entity.Pin;
@@ -50,6 +50,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     );
 
     private final CommunityRepository communityRepository;
+    private final LocationRepository locationRepository;
     private final PinLocationRepository pinLocationRepository;
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
@@ -60,7 +61,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     @Override
     // 탭/지역/커서 기준으로 피드 한 페이지를 만든다.
     public CommunityCursorPageResDTO getCommunityFeed(
-            CommunityTab tab, RegionCode region, String cursor, int size) {
+            CommunityTab tab, String region, String cursor, int size) {
+
+        if (!locationRepository.existsByRegion(region)) {
+            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        }
 
         CursorKey cursorKey = CursorKey.parse(cursor, size);
         List<Community> communities = fetchCommunities(tab, region, cursorKey);
@@ -72,7 +77,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
 
         String nextCursor = hasNext ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode() : null;
-        return new CommunityCursorPageResDTO(region.name(), items, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(region, items, nextCursor, hasNext);
     }
 
     @Override
@@ -131,18 +136,17 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     }
 
     // 탭 규칙에 맞는 community 목록을 조회한다.
-    private List<Community> fetchCommunities(CommunityTab tab, RegionCode region, CursorKey cursorKey) {
+    private List<Community> fetchCommunities(CommunityTab tab, String region, CursorKey cursorKey) {
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
-        String regionCode = region.name();
         return switch (tab) {
             case ISSUE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.ISSUE, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.ISSUE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case STORE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.STORE, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.STORE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.COMMUNICATION, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    CommunityType.COMMUNICATION, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case ALL -> communityRepository.findFeedByTypesAndRegion(
-                    IMPLEMENTED_FEED_TYPES, regionCode, cursorKey.createdAt(), cursorKey.communityId(), limit);
+                    IMPLEMENTED_FEED_TYPES, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             // 축제·카드뉴스 등 미노출 탭: 피드는 빈 목록
             case FESTIVAL -> List.of();
             case HOT, POLICY, CONTEST, CARDNEWS -> List.of();

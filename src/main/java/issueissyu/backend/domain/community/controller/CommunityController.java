@@ -5,12 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.community.dto.res.CommunityCursorPageResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityDetailResDTO;
 import issueissyu.backend.domain.community.enums.CommunityTab;
-import issueissyu.backend.domain.community.exception.CommunityException;
-import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 import issueissyu.backend.domain.community.service.command.CommunityCommandService;
 import issueissyu.backend.domain.community.service.query.CommunityQueryService;
-import issueissyu.backend.domain.location.enums.RegionCode;
 import issueissyu.backend.domain.pin.dto.req.DeclarationReqDTO;
 import issueissyu.backend.domain.pin.service.command.DeclarationCommandService;
 import issueissyu.backend.global.api.ApiResponse;
@@ -28,8 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Locale;
 
 @Tag(name = "Community", description = "커뮤니티 피드·상세·삭제 API")
 @RestController
@@ -50,9 +45,8 @@ public class CommunityController {
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         CommunityTab parsedTab = CommunityTab.parse(tab);
-        RegionCode parsedRegion = parseRegion(region);
         CommunityCursorPageResDTO result =
-                communityQueryService.getCommunityFeed(parsedTab, parsedRegion, cursor, size);
+                communityQueryService.getCommunityFeed(parsedTab, region, cursor, size);
         return ApiResponse.onSuccess(CommunitySuccessCode.forTab(parsedTab), result);
     }
 
@@ -91,11 +85,4 @@ public class CommunityController {
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DECLARATION_200, null);
     }
 
-    private static RegionCode parseRegion(String raw) {
-        try {
-            return RegionCode.valueOf(raw.trim().toUpperCase(Locale.ROOT));
-        } catch (Exception e) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
-        }
-    }
 }
