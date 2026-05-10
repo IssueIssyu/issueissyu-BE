@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - develop
-      - main
   pull_request:
     branches:
       - develop
@@ -107,8 +106,6 @@ jobs:
         run: ./gradlew clean bootJar -x test
 
       # 실제 JAR 기동 후 헬스체크 — RootController GET /health
-      # 빈 CI Postgres 기준: ddl-auto 는 CLI로 create-drop 고정(CI_ENV에 validate 등이 있어도 덮어씀). 실패 시 로그 tail.
-      # OS env 로 DB/Redis 주입 — .env import 타이밍/경로와 무관하게 LOCAL_* 플레이스홀더가 풀리도록 함
       - name: Start app and verify /health
         env:
           LOCAL_DB_URL: jdbc:postgresql://127.0.0.1:5432/app
