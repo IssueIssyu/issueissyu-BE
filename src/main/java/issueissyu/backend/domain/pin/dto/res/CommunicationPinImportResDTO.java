@@ -9,6 +9,7 @@ import java.util.List;
 public record CommunicationPinImportResDTO(
         Long pinId,
         String pinType,
+        String region,
         String pinDetailAddress,
         List<PinImageWithIdResDTO> pinImageUrls,
         @JsonProperty("tone_type") String toneType,

@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
+import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.entity.Location;
 import issueissyu.backend.domain.location.entity.PinLocation;
 import issueissyu.backend.domain.location.repository.LocationRepository;
@@ -35,7 +36,6 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +72,11 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                             .findById(resolved.locationId())
                             .orElseThrow(() -> PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_2));
 
-            if (!normalizeRegion(location.getRegion()).equals(normalizeRegion(req.region()))) {
+            // GET /api/location/address 와 동일: 도로명 주소 문자열을 pin_location.detail_address 로 저장합니다.
+            UserLocationResDTO roadAddr = locationService.getRoadAddress(pgp);
+            String detailAddress =
+                    roadAddr.address() == null ? "" : roadAddr.address().trim();
+            if (detailAddress.isBlank()) {
                 throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_2);
             }
 
@@ -106,12 +110,12 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                             .pin(pin)
                             .location(location)
                             .pinPoint(pinPoint)
-                            .detailAddress(resolved.address())
+                            .detailAddress(detailAddress)
                             .build());
 
             communicationPinRepository.save(CommunicationPin.builder().pin(pin).build());
 
-            return toImportRes(pin, resolved.address());
+            return toImportRes(pin, location.getRegion(), detailAddress);
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
@@ -203,7 +207,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         toRemove.forEach(pin.getPinImages()::remove);
     }
 
-    private CommunicationPinImportResDTO toImportRes(Pin pin, String pinDetailAddress) {
+    private CommunicationPinImportResDTO toImportRes(Pin pin, String region, String pinDetailAddress) {
         List<PinImageWithIdResDTO> imgs =
                 pin.getPinImages().stream()
                         .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
@@ -218,6 +222,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         return new CommunicationPinImportResDTO(
                 pin.getPinId(),
                 pin.getPinType().name(),
+                region,
                 pinDetailAddress,
                 imgs,
                 pin.getToneType().name(),
@@ -241,13 +246,6 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
     private static Point createPoint(double lng, double lat) {
         return GEOMETRY_FACTORY.createPoint(new Coordinate(lng, lat));
-    }
-
-    private static String normalizeRegion(String region) {
-        if (!StringUtils.hasText(region)) {
-            return "";
-        }
-        return trimCompact(region);
     }
 
     private static String trimCompact(String s) {

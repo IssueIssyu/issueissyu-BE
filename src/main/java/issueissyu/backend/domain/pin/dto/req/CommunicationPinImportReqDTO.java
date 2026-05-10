@@ -11,6 +11,5 @@ public record CommunicationPinImportReqDTO(
         @NotNull Double lat,
         @NotNull Double lng,
         @NotNull @Valid @Size(max = 5) List<PinImageItemReqDTO> pinImageUrls,
-        @NotBlank String region,
         @NotBlank String pinTitle,
         @NotBlank String pinContent) {}
