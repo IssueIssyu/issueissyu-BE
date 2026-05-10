@@ -43,6 +43,16 @@ public class LocationController {
         return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_USER_CERT_SUCCESS, result);
     }
 
+    @Operation(summary = "좌표 → 도로명 주소 조회")
+    @GetMapping("/address")
+    public ApiResponse<UserLocationResDTO> getRoadAddress(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng
+    ) {
+        UserLocationResDTO result = locationService.getRoadAddress(toPoint(lat, lng));
+        return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_ROAD_ADDRESS_SUCCESS, result);
+    }
+
     @Operation(summary = "핀 생성 가능 여부 확인")
     @GetMapping("/pin/available")
     public ApiResponse<UserLocationResDTO> isUserCanPostPin(
