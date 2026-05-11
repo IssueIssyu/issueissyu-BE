@@ -2,6 +2,7 @@ package issueissyu.backend.domain.location.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
 import issueissyu.backend.domain.location.dto.res.UserLocationCertResDto;
 import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
@@ -41,6 +42,29 @@ public class LocationController {
     ) {
         UserLocationCertResDto result = locationService.userLocationCert(uid, toPoint(lat, lng));
         return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_USER_CERT_SUCCESS, result);
+    }
+
+    @Operation(summary = "좌표 → 도로명 주소 조회")
+    @GetMapping("/address")
+    public ApiResponse<UserLocationResDTO> getRoadAddress(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng
+    ) {
+        UserLocationResDTO result = locationService.getRoadAddress(toPoint(lat, lng));
+        return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_ROAD_ADDRESS_SUCCESS, result);
+    }
+
+    @Operation(
+            summary = "EPSG:4326 좌표 → 도로명 주소 및 location_id",
+            description = "WGS84 위도(lat)·경도(lng). 네이버 역지오코딩의 roadaddr만 사용하며, 도로명이 없으면 오류를 반환합니다."
+    )
+    @GetMapping("/resolve")
+    public ApiResponse<CoordinateLocationResolveResDTO> resolveAddressAndLocationId(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng
+    ) {
+        CoordinateLocationResolveResDTO result = locationService.resolveAddressAndLocationId(toPoint(lat, lng));
+        return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_COORDINATE_RESOLVE_SUCCESS, result);
     }
 
     @Operation(summary = "핀 생성 가능 여부 확인")

@@ -61,4 +61,8 @@ public class Community extends BaseEntity {
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
+
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
 }

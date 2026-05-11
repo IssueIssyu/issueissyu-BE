@@ -11,6 +11,7 @@ import issueissyu.backend.domain.pin.repository.CommentRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class CommentCommandServiceImpl implements CommentCommandService {
     private final PinRepository pinRepository;
     private final UserRepository userRepository;
     private final CommunicationPinActivityMarker communicationPinActivityMarker;
+    private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
     public CommentResDTO createComment(Long pinId, String uid, CommentReqDTO request) {
@@ -41,7 +43,9 @@ public class CommentCommandServiceImpl implements CommentCommandService {
 
         communicationPinActivityMarker.markReactionOrComment(pinId);
 
-        return CommentConverter.toCommentResDTO(saved, uid);
+        String profileImageUrl =
+                userProfileImageQueryService.findUrlByUserUid(saved.getUser().getUid()).orElse(null);
+        return CommentConverter.toCommentResDTO(saved, uid, profileImageUrl);
     }
 
     @Override
@@ -56,7 +60,9 @@ public class CommentCommandServiceImpl implements CommentCommandService {
         comment.updateContent(request.getCommentContent());
         commentRepository.flush();
         communicationPinActivityMarker.markReactionOrComment(comment.getPin().getPinId());
-        return CommentConverter.toCommentResDTO(comment, uid);
+        String profileImageUrl =
+                userProfileImageQueryService.findUrlByUserUid(comment.getUser().getUid()).orElse(null);
+        return CommentConverter.toCommentResDTO(comment, uid, profileImageUrl);
     }
 
     @Override

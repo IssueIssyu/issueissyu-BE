@@ -1,8 +1,15 @@
 package issueissyu.backend.domain.community.exception;
 
-public class CommunityException extends RuntimeException {
+import issueissyu.backend.global.api.code.BaseErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 
-    public CommunityException(String message) {
-        super(message);
+public class CommunityException extends GeneralException {
+
+    public CommunityException(BaseErrorCode code) {
+        super(code);
+    }
+
+    public static CommunityException of(BaseErrorCode code) {
+        return new CommunityException(code);
     }
 }

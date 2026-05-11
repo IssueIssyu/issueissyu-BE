@@ -54,6 +54,17 @@ public class NaverMapService {
         return new NaverReverseGeocodeCodeAddressResDTO(legalDistrictCode, address);
     }
 
+    /**
+     * 한 번의 역지오코딩으로 법정동 코드와 도로명 주소만 반환합니다. {@code roadaddr} 결과가 없으면 예외입니다.
+     */
+    public NaverReverseGeocodeCodeAddressResDTO resolveLegalDistrictCodeAndRoadAddressOnly(PGpoint point) {
+        NaverReverseGeocodeResDTO result = naverMapReverseGeocodeService.reverseGeocode(point);
+        String legalDistrictCode = result.legalDistrictCode()
+                .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND));
+        String roadAddress = resolveRoadAddressOnlyFromResult(result);
+        return new NaverReverseGeocodeCodeAddressResDTO(legalDistrictCode, roadAddress);
+    }
+
     private String resolveRoadAddress(PGpoint point) {
         NaverReverseGeocodeResDTO result = naverMapReverseGeocodeService.reverseGeocode(point);
         return resolveRoadAddressFromResult(result);
@@ -67,6 +78,15 @@ public class NaverMapService {
                 .findFirst()
                 .or(() -> resolveJibunAddress(result))
                 .or(() -> resolveRegionAddress(result))
+                .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_ADDRESS_NOT_FOUND));
+    }
+
+    private String resolveRoadAddressOnlyFromResult(NaverReverseGeocodeResDTO result) {
+        return result.results().stream()
+                .filter(item -> "roadaddr".equalsIgnoreCase(item.name()))
+                .map(this::buildRoadAddress)
+                .filter(address -> address != null && !address.isBlank())
+                .findFirst()
                 .orElseThrow(() -> LocationException.of(LocationErrorCode.LOCATION_ADDRESS_NOT_FOUND));
     }
 
