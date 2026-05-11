@@ -6,7 +6,10 @@ import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.pin.entity.Declaration;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.enums.DeclarationReason;
+import issueissyu.backend.domain.pin.exception.PinException;
+import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
+import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeclarationCommandServiceImpl implements DeclarationCommandService {
 
     private final CommunityRepository communityRepository;
+    private final PinRepository pinRepository;
     private final DeclarationRepository declarationRepository;
     private final UserRepository userRepository;
 
@@ -44,5 +48,31 @@ public class DeclarationCommandServiceImpl implements DeclarationCommandService 
                 .user(user)
                 .declarationReason(reasonIndex)
                 .build());
+    }
+
+    @Override
+    public void declarePin(Long pinId, String uid, int reasonIndex) {
+        Pin pin =
+                pinRepository
+                        .findById(pinId)
+                        .orElseThrow(() -> PinException.of(PinErrorCode.PIN_DECLARATION_404_1));
+
+        if (declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid)) {
+            throw PinException.of(PinErrorCode.PIN_DECLARATION_409_1);
+        }
+
+        DeclarationReason.fromIndex(reasonIndex);
+
+        User user =
+                userRepository
+                        .findById(uid)
+                        .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        declarationRepository.save(
+                Declaration.builder()
+                        .pin(pin)
+                        .user(user)
+                        .declarationReason(reasonIndex)
+                        .build());
     }
 }

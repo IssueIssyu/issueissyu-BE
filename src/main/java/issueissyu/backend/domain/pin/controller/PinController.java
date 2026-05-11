@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportReqDTO;
+import issueissyu.backend.domain.pin.dto.req.DeclarationReqDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinEditResDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinImportResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinHomeResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinImageUploadUrlsResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinPostResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
+import issueissyu.backend.domain.pin.service.command.DeclarationCommandService;
 import issueissyu.backend.domain.pin.service.command.PinCommunicationCommandService;
 import issueissyu.backend.domain.pin.service.command.PinDeleteCommandService;
 import issueissyu.backend.domain.pin.service.command.PinImageUploadCommandService;
@@ -39,6 +41,7 @@ public class PinController {
 
     private final PinImageUploadCommandService pinImageUploadCommandService;
     private final PinCommunicationCommandService pinCommunicationCommandService;
+    private final DeclarationCommandService declarationCommandService;
     private final PinDeleteCommandService pinDeleteCommandService;
     private final PinDetailQueryService pinDetailQueryService;
 
@@ -75,6 +78,16 @@ public class PinController {
     public ApiResponse<Void> deletePin(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         pinDeleteCommandService.deletePin(uid, pinId);
         return ApiResponse.onSuccess(PinSuccessCode.PIN_DELETE_200, null);
+    }
+
+    @Operation(summary = "핀 신고", description = "신고 사유 인덱스 1~5. 동일 핀에 대한 사용자별 중복 신고 불가. declaration_reason에 인덱스가 저장됩니다.")
+    @PostMapping("/{pinId}/declarations")
+    public ApiResponse<Void> declarePin(
+            @AuthenticationPrincipal String uid,
+            @PathVariable Long pinId,
+            @Valid @RequestBody DeclarationReqDTO request) {
+        declarationCommandService.declarePin(pinId, uid, request.reasonIndex());
+        return ApiResponse.onSuccess(PinSuccessCode.PIN_DECLARATION_200, null);
     }
 
     @Operation(summary = "핀 상세 홈")
