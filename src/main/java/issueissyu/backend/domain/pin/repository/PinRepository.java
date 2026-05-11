@@ -24,7 +24,7 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     @Query("update Pin p set p.likeCount = p.likeCount + 1 where p.pinId = :pinId")
     int incrementLikeCountByPinId(@Param("pinId") Long pinId);
 
-    @Modifying(flushAutomatically = true, clearAutomatically = false)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Pin p set p.viewCount = p.viewCount + 1 where p.pinId = :pinId")
     int incrementViewCountByPinId(@Param("pinId") Long pinId);
 
