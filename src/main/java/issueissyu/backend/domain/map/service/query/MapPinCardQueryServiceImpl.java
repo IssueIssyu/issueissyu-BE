@@ -36,11 +36,14 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
+    @Transactional(readOnly = false)
     public MapPinCardResDTO findPinCard(Long pinId, String currentUserUid) {
         Pin pin =
                 pinRepository
                         .fetchDetailWithAuthor(pinId)
                         .orElseThrow(() -> MapException.of(MapErrorCode.MAP_CARD_404));
+
+        pinRepository.incrementViewCountByPinId(pinId);
 
         PinType type = pin.getPinType();
         User author = pin.getUser();

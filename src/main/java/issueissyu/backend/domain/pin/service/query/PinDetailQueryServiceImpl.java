@@ -41,14 +41,13 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
-    @Transactional(readOnly = false)
     public PinHomeResult getPinHome(Long pinId, String uid) {
         try {
             Pin pin =
                     pinRepository
                             .fetchDetailWithAuthor(pinId)
                             .orElseThrow(() -> PinException.of(PinErrorCode.PIN_HOME_404));
-            int viewCount = pinRepository.incrementViewCountAndGetCount(pinId);
+            int viewCount = pin.getViewCount();
             PinType type = pin.getPinType();
             PinSuccessCode success =
                     switch (type) {
