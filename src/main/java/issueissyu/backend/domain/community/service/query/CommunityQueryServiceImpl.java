@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -128,6 +129,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
                 : null;
 
+        boolean isMine = Objects.equals(pin.getUser().getUid(), uid);
+
         return new CommunityDetailResDTO(
                 item,
                 detailContent,
@@ -136,7 +139,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 community.getUpdatedAt(),
                 isReported,
                 isPetitioned,
-                isProblemSolver);
+                isProblemSolver,
+                isMine);
     }
 
     // 상세 조회용 DTO 분기 (ISSUE는 추가 데이터 포함, 나머지는 피드 DTO 재사용)

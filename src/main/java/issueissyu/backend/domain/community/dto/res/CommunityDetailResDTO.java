@@ -11,6 +11,7 @@ public record CommunityDetailResDTO(
         LocalDateTime updatedAt,
         Boolean isReported,
         Boolean isPetitioned,
-        Boolean isProblemSolver
+        Boolean isProblemSolver,
+        boolean isMine
 ) {
 }
