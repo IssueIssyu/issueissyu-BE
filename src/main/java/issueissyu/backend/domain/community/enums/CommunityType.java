@@ -5,5 +5,7 @@ public enum CommunityType {
     STORE,
     POLICY,
     FESTIVAL,
-    CONTEST
+    CONTEST,
+    COMMUNICATION,
+    CARDNEWS;
 }

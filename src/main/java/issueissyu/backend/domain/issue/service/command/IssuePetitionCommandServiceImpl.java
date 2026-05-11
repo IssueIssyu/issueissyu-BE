@@ -64,7 +64,7 @@ public class IssuePetitionCommandServiceImpl implements IssuePetitionCommandServ
         return PetitionSubmitResDTO.builder()
                 .pinId(pinId)
                 .petitionCount(issuePin.getPetitionCount())
-                .isPetition(true)
+                .isPetitioned(true)
                 .build();
     }
 }

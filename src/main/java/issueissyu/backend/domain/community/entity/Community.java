@@ -54,9 +54,6 @@ public class Community extends BaseEntity {
     @Column(length = 255)
     private String content;
 
-    @Column(name = "view_count", nullable = false)
-    private int viewCount;
-
     @Builder.Default
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude

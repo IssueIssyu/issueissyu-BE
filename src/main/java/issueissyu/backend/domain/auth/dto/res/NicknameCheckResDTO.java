@@ -16,7 +16,7 @@ public class NicknameCheckResDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String nickname;
 
-    @JsonProperty("is_available_nickname")
+    @JsonProperty("isAvailableNickname")
     public boolean isAvailableNickname() {
         return isAvailableNickname;
     }

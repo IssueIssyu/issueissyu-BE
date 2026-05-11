@@ -13,4 +13,8 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
      * @param sigunguCode 법정동코드 앞 5자리 + "00000" (예: "1168000000")
      */
     Optional<Location> findByAdmCode(String sigunguCode);
+
+    boolean existsByRegion(String region);
+
+    Optional<Location> findByRegion(String region);
 }

@@ -4,6 +4,7 @@ import issueissyu.backend.domain.pin.entity.mapping.PinEmoji;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,8 +17,8 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
 
     Optional<PinEmoji> findByPinPinIdAndUserUidAndActiveTrue(Long pinId, String uid);
 
-    // 같은 pin/uid 처리 경쟁 시 현재 선택 row를 잠가 active 중복을 방지한다.
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    // 같은 pin/uid 처리 경쟁 시 현재 선택 row를 잠가 active 중복 방지
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // 비관적 락 사용
     @Query("""
             SELECT pe
             FROM PinEmoji pe
@@ -44,4 +45,8 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
         String getEmojiImageUrl();
         long getCount();
     }
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PinEmoji pe WHERE pe.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 }

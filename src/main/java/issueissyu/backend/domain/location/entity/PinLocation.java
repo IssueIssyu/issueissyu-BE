@@ -50,4 +50,8 @@ public class PinLocation extends BaseEntity {
 
     @Column(name = "detail_address", nullable = false, length = 150)
     private String detailAddress;
+
+    public void changeAdministrativeLocation(Location location) {
+        this.location = location;
+    }
 }

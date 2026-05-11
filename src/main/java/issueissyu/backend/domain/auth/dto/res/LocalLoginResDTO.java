@@ -2,6 +2,7 @@ package issueissyu.backend.domain.auth.dto.res;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,10 +20,16 @@ public class LocalLoginResDTO {
     private long expiresIn;
 
     // 첫 로그인 여부 (true: 신규 회원 → 온보딩, false: 기존 회원)
-    @JsonProperty("isNew")
-    private boolean isNew;
+    // 필드명을 isNew로 두면 Lombok isNew() + Jackson이 "new"까지 중복 직렬화하므로 newUser로 보관
+    @Getter(AccessLevel.NONE)
+    private boolean newUser;
 
-    @JsonProperty("social_type")
+    @JsonProperty("isNew")
+    public boolean isNew() {
+        return newUser;
+    }
+
+    @JsonProperty("socialType")
     private String socialType;
 
     private UserInfo user;
@@ -33,7 +40,7 @@ public class LocalLoginResDTO {
     public static class UserInfo {
         private String uuid;
 
-        @JsonProperty("temp_uuid")
+        @JsonProperty("tempUuid")
         private String tempUuid;
 
         private String userName;

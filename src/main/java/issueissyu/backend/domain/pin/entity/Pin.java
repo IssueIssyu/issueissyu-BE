@@ -33,6 +33,10 @@ public class Pin extends BaseEntity {
     @Column(name = "like_count", nullable = false)
     private int likeCount = 0;
 
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
+
     @Column(name = "pin_title", nullable = false, length = 100)
     private String pinTitle;
 
@@ -70,5 +74,14 @@ public class Pin extends BaseEntity {
 
     public void incrementLikeCount() {
         this.likeCount++;
+    }
+
+    public void updatePinDetails(String pinTitle, String pinContent) {
+        this.pinTitle = pinTitle;
+        this.pinContent = pinContent;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 }

@@ -18,6 +18,8 @@ public enum IssueErrorCode implements BaseErrorCode {
     PETITION_STATUS_500(HttpStatus.INTERNAL_SERVER_ERROR, "PETITION_STATUS_500", "청원 현황 조회 중 서버 오류가 발생했습니다."),
 
     GO_NOW_400_1(HttpStatus.BAD_REQUEST, "GO_NOW_400_1", "이미 시민해결사로 참여한 핀입니다."),
+    GO_NOW_400_2(HttpStatus.BAD_REQUEST, "GO_NOW_400_2", "시민해결사 참여가 가능한 핀 종류가 아닙니다."),
+    GO_NOW_404(HttpStatus.NOT_FOUND, "GO_NOW_404", "존재하지 않는 핀 입니다."),
 
     PROBLEM_SOLVER_404_1(HttpStatus.NOT_FOUND, "PROBLEM_SOLVER_404_1", "존재하지 않는 핀 입니다."),
     PROBLEM_SOLVER_404_2(HttpStatus.NOT_FOUND, "PROBLEM_SOLVER_404_2", "존재하지 않는 유저 입니다."),
