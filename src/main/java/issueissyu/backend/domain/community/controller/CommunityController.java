@@ -52,8 +52,10 @@ public class CommunityController {
 
     @Operation(summary = "커뮤니티 게시물 상세 조회", description = "연결된 핀 카드 정보와 본문(content)을 반환합니다. 조회 시 조회수가 증가합니다.")
     @GetMapping("/{communityId}")
-    public ApiResponse<CommunityDetailResDTO> getDetail(@PathVariable Long communityId) {
-        CommunityDetailResDTO result = communityQueryService.getCommunityDetail(communityId);
+    public ApiResponse<CommunityDetailResDTO> getDetail(
+            @PathVariable Long communityId,
+            @AuthenticationPrincipal String uid) {
+        CommunityDetailResDTO result = communityQueryService.getCommunityDetail(communityId, uid);
         return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DETAIL_200, result);
     }
 

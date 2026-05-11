@@ -23,7 +23,7 @@ public class Pin extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "pin_id")
-    private Long pinId; 
+    private Long pinId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "pin_type", nullable = false)
@@ -32,6 +32,10 @@ public class Pin extends BaseEntity {
     @Builder.Default
     @Column(name = "like_count", nullable = false)
     private int likeCount = 0;
+
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
 
     @Column(name = "pin_title", nullable = false, length = 100)
     private String pinTitle;
@@ -75,5 +79,9 @@ public class Pin extends BaseEntity {
     public void updatePinDetails(String pinTitle, String pinContent) {
         this.pinTitle = pinTitle;
         this.pinContent = pinContent;
+    }
+
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 }
