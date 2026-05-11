@@ -18,10 +18,7 @@ import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.global.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -92,7 +89,7 @@ public class MapController {
             description = "필수 쿼리 pinId. communityId는 연결된 커뮤니티가 있을 때만 반환.")
     @GetMapping("/card")
     public ApiResponse<MapPinCardResDTO> getPinCard(
-            @AuthenticationPrincipal String uid, @RequestParam Long pinId) {
+            @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
         return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
     }
