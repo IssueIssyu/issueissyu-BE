@@ -1,5 +1,7 @@
 package issueissyu.backend.domain.pin.service.query;
 
+import issueissyu.backend.domain.community.entity.Community;
+import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.pin.dto.res.PinHomeResDTO;
@@ -39,15 +41,17 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
     private final PinLikeRepository pinLikeRepository;
     private final DeclarationRepository declarationRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
+    private final CommunityRepository communityRepository;
 
     @Override
+    @Transactional(readOnly = false)
     public PinHomeResult getPinHome(Long pinId, String uid) {
         try {
             Pin pin =
                     pinRepository
                             .fetchDetailWithAuthor(pinId)
                             .orElseThrow(() -> PinException.of(PinErrorCode.PIN_HOME_404));
-            int viewCount = pin.getViewCount();
+            int viewCount = pinRepository.incrementViewCountAndGetCount(pinId);
             PinType type = pin.getPinType();
             PinSuccessCode success =
                     switch (type) {
@@ -63,10 +67,13 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             .map(pl -> pl.getDetailAddress())
                             .orElse(null);
 
-            boolean isLike = pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
-            boolean isReported = declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
+            boolean isLike =
+                    uid != null && pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
+            boolean isReported =
+                    uid != null
+                            && declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
 
-            List<PinImageWithIdResDTO> pinImages = toImageDtos(pin.getPinImages());
+            List<PinImageWithIdResDTO> pinImages = homePinImagesForType(type, pin.getPinImages());
 
             Optional<EventPin> eventOpt = eventPinRepository.findWithStoreImageByPinPinId(pinId);
 
@@ -124,6 +131,14 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             && pin.getCreatedAt() != null
                             && pin.getUpdatedAt().isAfter(pin.getCreatedAt());
 
+            Long communityId =
+                    type == PinType.ISSUE
+                            ? null
+                            : communityRepository
+                                    .findByPin_PinId(pinId)
+                                    .map(Community::getCommunityId)
+                                    .orElse(null);
+
             PinHomeResDTO dto =
                     new PinHomeResDTO(
                             pin.getPinId(),
@@ -145,7 +160,8 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             pin.getUpdatedAt(),
                             viewCount,
                             isReported,
-                            isMine);
+                            isMine,
+                            communityId);
 
             return new PinHomeResult(success, dto);
         } catch (PinException e) {
@@ -241,11 +257,33 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
         return null;
     }
 
+    private static List<PinImageWithIdResDTO> homePinImagesForType(PinType type, List<PinImage> images) {
+        if (type == PinType.STORE) {
+            return toImageDtosMainOnly(images);
+        }
+        return toImageDtos(images);
+    }
+
     private static List<PinImageWithIdResDTO> toImageDtos(List<PinImage> images) {
         if (images == null || images.isEmpty()) {
             return List.of();
         }
         return images.stream()
+                .sorted(Comparator.comparing(PinImage::getPinImageId))
+                .map(
+                        pi ->
+                                new PinImageWithIdResDTO(
+                                        pi.getPinImageId(), pi.getPinS3Url(), pi.isMainImage()))
+                .toList();
+    }
+
+    /** 가게 핀: 명세상 핀 이미지는 대표(isMain)만 노출 */
+    private static List<PinImageWithIdResDTO> toImageDtosMainOnly(List<PinImage> images) {
+        if (images == null || images.isEmpty()) {
+            return List.of();
+        }
+        return images.stream()
+                .filter(PinImage::isMainImage)
                 .sorted(Comparator.comparing(PinImage::getPinImageId))
                 .map(
                         pi ->

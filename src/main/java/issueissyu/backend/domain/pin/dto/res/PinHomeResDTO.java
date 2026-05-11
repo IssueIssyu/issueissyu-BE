@@ -28,4 +28,5 @@ public record PinHomeResDTO(
         LocalDateTime updatedAt,
         int viewCount,
         @JsonProperty("isReported") boolean isReported,
-        @JsonProperty("isMine") boolean isMine) {}
+        @JsonProperty("isMine") boolean isMine,
+        Long communityId) {}
