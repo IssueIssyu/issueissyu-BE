@@ -13,7 +13,9 @@ public interface CommunicationPinRepository extends JpaRepository<CommunicationP
 
     Optional<CommunicationPin> findByPin_PinId(Long pinId);
 
-    void deleteByPin_PinId(Long pinId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM CommunicationPin c WHERE c.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 
     @Modifying(clearAutomatically = true)
     @Query("""

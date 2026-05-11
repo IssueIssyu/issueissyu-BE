@@ -3,6 +3,7 @@ package issueissyu.backend.domain.pin.repository;
 import issueissyu.backend.domain.pin.entity.Comment;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,5 +26,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             """)
     Optional<Comment> findByIdWithUserAndPin(@Param("commentId") Long commentId);
 
-    void deleteByPin_PinId(Long pinId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Comment c WHERE c.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 }

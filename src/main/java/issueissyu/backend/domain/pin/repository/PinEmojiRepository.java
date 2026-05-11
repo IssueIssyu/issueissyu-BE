@@ -4,6 +4,7 @@ import issueissyu.backend.domain.pin.entity.mapping.PinEmoji;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -45,5 +46,7 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
         long getCount();
     }
 
-    void deleteByPin_PinId(Long pinId);
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PinEmoji pe WHERE pe.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 }
