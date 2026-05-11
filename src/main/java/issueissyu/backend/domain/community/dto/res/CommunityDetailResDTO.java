@@ -8,6 +8,9 @@ public record CommunityDetailResDTO(
         String content,
         List<String> pinImageUrls,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        boolean isReported,
+        Boolean isPetitioned,
+        Boolean isProblemSolver
 ) {
 }
