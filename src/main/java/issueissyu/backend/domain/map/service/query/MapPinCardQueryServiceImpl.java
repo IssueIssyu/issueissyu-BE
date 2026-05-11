@@ -1,5 +1,7 @@
 package issueissyu.backend.domain.map.service.query;
 
+import issueissyu.backend.domain.community.entity.Community;
+import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
@@ -34,6 +36,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
     private final EventPinRepository eventPinRepository;
     private final PinLikeRepository pinLikeRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
+    private final CommunityRepository communityRepository;
+
+    private static final String DEFAULT_PROFILE_IMAGE = "default";
 
     @Override
     @Transactional(readOnly = false)
@@ -59,7 +64,8 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         long likeCountLong = pin.getLikeCount();
 
         boolean isLike =
-                pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
+                currentUserUid != null
+                        && pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
 
         boolean isMine =
                 currentUserUid != null && Objects.equals(author.getUid(), currentUserUid);
@@ -76,6 +82,12 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         ? userProfileImageQueryService.findUrlByUserUid(author.getUid())
                         : Optional.empty();
 
+        Long communityId =
+                communityRepository
+                        .findByPin_PinId(pinId)
+                        .map(Community::getCommunityId)
+                        .orElse(null);
+
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
                 MapPinCardResDTO.builder()
                         .pinId(pin.getPinId())
@@ -87,13 +99,14 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .likeCount(likeCountLong)
                         .likedByMe(isLike)
                         .mine(isMine)
+                        .communityId(communityId)
                         .pinImageUrl(mainImageUrlOpt.orElse(null))
                         .discount(null)
                         .storeImageUrl(null);
 
         switch (type) {
             case ISSUE, COMMUNICATION -> b.pinUserId(author.getUid())
-                    .pinUserProfile(profileImgOpt.orElse(null))
+                    .pinUserProfile(profileImgOpt.orElse(DEFAULT_PROFILE_IMAGE))
                     .pinUserNickname(author.getNickname());
             case STORE -> {
                 b.pinUserId(author.getUid())

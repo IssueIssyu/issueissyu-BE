@@ -19,7 +19,6 @@ import issueissyu.backend.global.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -90,11 +89,10 @@ public class MapController {
 
     @Operation(
             summary = "단일 핀 카드 조회",
-            description = "pin 유형(ISSUE, COMMUNICATION, STORE, FESTIVAL)에 따라 카드 필드를 채워 반환합니다. "
-                    + "이슈는 issuePinState·작성자 프로필(프로필 컬렉션)을, 가게는 discount·storeImageUrl을 제공합니다.")
-    @GetMapping("/{pinId}/card")
+            description = "필수 쿼리 pinId. communityId는 연결된 커뮤니티가 있을 때만 반환.")
+    @GetMapping("/card")
     public ApiResponse<MapPinCardResDTO> getPinCard(
-            @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+            @AuthenticationPrincipal String uid, @RequestParam Long pinId) {
         MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
         return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
     }
