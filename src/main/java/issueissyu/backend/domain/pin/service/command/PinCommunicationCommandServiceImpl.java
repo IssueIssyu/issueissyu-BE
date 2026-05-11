@@ -247,7 +247,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     }
 
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
-        if (items == null || items.isEmpty()) {
+        if (items == null) {
             throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
         }
         validateMainFlags(items, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
