@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NaverAppLoginReqDTO {
 
-    @JsonProperty("access_token")
+    @JsonProperty("accessToken")
     @NotBlank
     private String accessToken;
 
-    @JsonProperty("refresh_token")
+    @JsonProperty("refreshToken")
     @NotBlank
     private String refreshToken;
 }
