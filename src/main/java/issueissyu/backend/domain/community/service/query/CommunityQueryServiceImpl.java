@@ -107,8 +107,12 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         // STORE는 content가 피드 item 안에 포함되므로 래퍼의 content는 null
         String detailContent = type == CommunityType.STORE ? null : community.getContent();
 
-        // 신고 여부 - 모든 타입에 공통
-        boolean isReported = declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
+        // 신고 여부 - ISSUE, COMMUNICATION, STORE 타입만
+        Boolean isReported = (type == CommunityType.ISSUE
+                        || type == CommunityType.COMMUNICATION
+                        || type == CommunityType.STORE)
+                ? declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid)
+                : null;
 
         // 청원·지금가요 여부 - ISSUE 
         Boolean isPetitioned = type == CommunityType.ISSUE
