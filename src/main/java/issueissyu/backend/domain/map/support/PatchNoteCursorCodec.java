@@ -31,7 +31,9 @@ public class PatchNoteCursorCodec {
         try {
             CursorJson json = new CursorJson(state.name(), createdAt.format(CURSOR_TIME), pinId);
             String raw = objectMapper.writeValueAsString(json);
-            return Base64.getEncoder().encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw MapException.of(MapErrorCode.PATCHNOTE_400_5);
         }
@@ -42,7 +44,7 @@ public class PatchNoteCursorCodec {
             throw MapException.of(MapErrorCode.PATCHNOTE_400_3);
         }
         try {
-            byte[] decoded = Base64.getDecoder().decode(cursor.trim());
+            byte[] decoded = Base64.getUrlDecoder().decode(cursor.trim());
             CursorJson json = objectMapper.readValue(decoded, CursorJson.class);
             if (json.s == null || json.c == null || json.i == null) {
                 throw MapException.of(MapErrorCode.PATCHNOTE_400_3);
