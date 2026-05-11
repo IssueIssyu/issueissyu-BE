@@ -49,7 +49,10 @@ public enum PinSuccessCode implements BaseSuccessCode {
     PIN_POST_200_4(HttpStatus.OK, "PIN_POST_200_4", "축제 핀 상세 포스트 조회에 성공했습니다."),
 
     // 핀 신고
-    PIN_DECLARATION_200(HttpStatus.OK, "PIN_DECLARATION_200", "핀 신고가 접수되었습니다.");
+    PIN_DECLARATION_200(HttpStatus.OK, "PIN_DECLARATION_200", "핀 신고가 접수되었습니다."),
+
+    // 핀 상세 해결하기(이슈)
+    PIN_SOLVE_200(HttpStatus.OK, "PIN_SOLVE_200", "이슈 핀 상세 해결하기 조회에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

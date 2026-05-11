@@ -56,7 +56,11 @@ public enum PinErrorCode implements BaseErrorCode {
 
     // 핀 신고
     PIN_DECLARATION_404_1(HttpStatus.NOT_FOUND, "PIN_DECLARATION_404_1", "존재하지 않는 핀 입니다."),
-    PIN_DECLARATION_409_1(HttpStatus.CONFLICT, "PIN_DECLARATION_409_1", "이미 신고한 핀 입니다.");
+    PIN_DECLARATION_409_1(HttpStatus.CONFLICT, "PIN_DECLARATION_409_1", "이미 신고한 핀 입니다."),
+
+    // 핀 상세 해결하기(이슈)
+    PIN_SOLVE_404(HttpStatus.NOT_FOUND, "PIN_SOLVE_404", "존재하지 않는 핀 입니다."),
+    PIN_SOLVE_400(HttpStatus.BAD_REQUEST, "PIN_SOLVE_400", "핀 상세 해결하기 조회 API를 실행 할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

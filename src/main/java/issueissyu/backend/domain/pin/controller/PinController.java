@@ -10,12 +10,14 @@ import issueissyu.backend.domain.pin.dto.res.CommunicationPinImportResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinHomeResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinImageUploadUrlsResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinPostResDTO;
+import issueissyu.backend.domain.pin.dto.res.PinSolveResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
 import issueissyu.backend.domain.pin.service.command.DeclarationCommandService;
 import issueissyu.backend.domain.pin.service.command.PinCommunicationCommandService;
 import issueissyu.backend.domain.pin.service.command.PinDeleteCommandService;
 import issueissyu.backend.domain.pin.service.command.PinImageUploadCommandService;
 import issueissyu.backend.domain.pin.service.query.PinDetailQueryService;
+import issueissyu.backend.domain.pin.service.query.PinSolveQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -44,6 +46,7 @@ public class PinController {
     private final DeclarationCommandService declarationCommandService;
     private final PinDeleteCommandService pinDeleteCommandService;
     private final PinDetailQueryService pinDetailQueryService;
+    private final PinSolveQueryService pinSolveQueryService;
 
     @Operation(summary = "핀 이미지 업로드", description = "multipart photos (최대 5장, 합계 50MB)")
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -102,5 +105,14 @@ public class PinController {
     public ApiResponse<PinPostResDTO> getPinPost(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         PinDetailQueryService.PinPostResult r = pinDetailQueryService.getPinPost(pinId, uid);
         return ApiResponse.onSuccess(r.successCode(), r.data());
+    }
+
+    @Operation(
+            summary = "핀 상세 해결하기 조회",
+            description = "이슈 핀만 허용. isPetition: 청원 여부, isProblemSolver: 지금가요(시민해결사) 참여 여부")
+    @GetMapping("/{pinId}/solve")
+    public ApiResponse<PinSolveResDTO> getPinSolve(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+        PinSolveResDTO data = pinSolveQueryService.getPinSolve(pinId, uid);
+        return ApiResponse.onSuccess(PinSuccessCode.PIN_SOLVE_200, data);
     }
 }
