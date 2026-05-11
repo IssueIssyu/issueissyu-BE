@@ -45,11 +45,14 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
             throw PinException.of(PinErrorCode.PIN_LIKE_ALREADY);
         }
 
-        pin.incrementLikeCount();
+        pinRepository.incrementLikeCountByPinId(pinId);
+
+        int likeCount =
+                pinRepository.findLikeCountByPinId(pinId).orElse(pin.getLikeCount());
 
         return PinLikeResDTO.builder()
                 .pinId(pinId)
-                .pinLikeCount(pin.getLikeCount())
+                .pinLikeCount(likeCount)
                 .isLike(true)
                 .build();
     }

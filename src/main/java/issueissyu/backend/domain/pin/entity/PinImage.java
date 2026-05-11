@@ -47,4 +47,13 @@ public class PinImage {
     public void assignPin(Pin pin) {
         this.pin = pin;
     }
+
+    public void setMainImage(boolean mainImage) {
+        this.mainImage = mainImage;
+    }
+
+    public void replaceStorage(String pinS3Key, String pinS3Url) {
+        this.pinS3Key = pinS3Key;
+        this.pinS3Url = pinS3Url;
+    }
 }

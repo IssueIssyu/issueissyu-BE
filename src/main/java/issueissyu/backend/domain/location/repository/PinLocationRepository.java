@@ -3,6 +3,7 @@ package issueissyu.backend.domain.location.repository;
 import issueissyu.backend.domain.location.entity.PinLocation;
 import issueissyu.backend.domain.map.dto.res.MapPinView;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,10 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
     Optional<PinLocation> findByPin_PinId(Long pinId);
 
     List<PinLocation> findByPin_PinIdIn(Collection<Long> pinIds);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PinLocation pl WHERE pl.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 
     // 화면 BBox(Bounding Box) 안에 있는 핀을 조회합니다.
     // PostGIS ST_MakeEnvelope 인자 순서: (Xmin, Ymin, Xmax, Ymax) = (swLng, swLat, neLng, neLat)

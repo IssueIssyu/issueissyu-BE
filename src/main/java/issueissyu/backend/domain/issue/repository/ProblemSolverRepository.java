@@ -4,6 +4,7 @@ import issueissyu.backend.domain.issue.entity.ProblemSolver;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,4 +39,11 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
             join fetch ps.user su
             where ps.problemSolverId = :id""")
     Optional<ProblemSolver> fetchWithPinOwnerAndSolver(@Param("id") Long id);
+
+    @Query("SELECT ps.problemSolverId FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
+    List<Long> findAllProblemSolverIdsByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
+    void deleteAllByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
 }

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -57,6 +58,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         boolean isLike =
                 pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
 
+        boolean isMine =
+                currentUserUid != null && Objects.equals(author.getUid(), currentUserUid);
+
         Optional<String> issueStateOpt =
                 type == PinType.ISSUE
                         ? issuePinRepository
@@ -65,7 +69,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         : Optional.empty();
 
         Optional<String> profileImgOpt =
-                type == PinType.ISSUE
+                (type == PinType.ISSUE || type == PinType.COMMUNICATION)
                         ? userProfileImageQueryService.findUrlByUserUid(author.getUid())
                         : Optional.empty();
 
@@ -79,17 +83,15 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .pinDetailAddress(detailAddr)
                         .likeCount(likeCountLong)
                         .likedByMe(isLike)
+                        .mine(isMine)
                         .pinImageUrl(mainImageUrlOpt.orElse(null))
                         .discount(null)
                         .storeImageUrl(null);
 
         switch (type) {
-            case ISSUE -> b.pinUserId(author.getUid())
+            case ISSUE, COMMUNICATION -> b.pinUserId(author.getUid())
                     .pinUserProfile(profileImgOpt.orElse(null))
                     .pinUserNickname(author.getNickname());
-            case COMMUNICATION -> b.pinUserId(null)
-                    .pinUserProfile(null)
-                    .pinUserNickname(null);
             case STORE -> {
                 b.pinUserId(author.getUid())
                         .pinUserProfile(null)

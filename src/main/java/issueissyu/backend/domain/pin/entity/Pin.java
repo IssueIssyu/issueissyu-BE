@@ -76,6 +76,11 @@ public class Pin extends BaseEntity {
         this.likeCount++;
     }
 
+    public void updatePinDetails(String pinTitle, String pinContent) {
+        this.pinTitle = pinTitle;
+        this.pinContent = pinContent;
+    }
+
     public void incrementViewCount() {
         this.viewCount++;
     }
