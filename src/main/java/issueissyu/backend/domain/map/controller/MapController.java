@@ -85,11 +85,15 @@ public class MapController {
     }
 
     @Operation(
-            summary = "단일 핀 카드 조회",
-            description = "필수 쿼리 pinId. communityId는 연결된 커뮤니티가 있을 때만 반환.")
-    @GetMapping("/card")
-    public ApiResponse<MapPinCardResDTO> getPinCard(
+            summary = "단일 핀 카드 조회 (경로 변수)",
+            description = "communityId는 연결된 커뮤니티가 있을 때만 반환.")
+    @GetMapping("/{pinId}/card")
+    public ApiResponse<MapPinCardResDTO> getPinCardByPath(
             @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+        return pinCardResponse(uid, pinId);
+    }
+
+    private ApiResponse<MapPinCardResDTO> pinCardResponse(String uid, Long pinId) {
         MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
         return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
     }
