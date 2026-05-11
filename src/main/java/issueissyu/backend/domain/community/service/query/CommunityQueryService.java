@@ -7,5 +7,5 @@ import issueissyu.backend.domain.community.enums.CommunityTab;
 public interface CommunityQueryService {
     CommunityCursorPageResDTO getCommunityFeed(CommunityTab tab, String region, String cursor, int size);
 
-    CommunityDetailResDTO getCommunityDetail(Long communityId);
+    CommunityDetailResDTO getCommunityDetail(Long communityId, String uid);
 }

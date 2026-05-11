@@ -15,7 +15,9 @@ import issueissyu.backend.domain.community.exception.CommunityException;
 import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
+import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
+import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
 import issueissyu.backend.domain.location.entity.PinLocation;
 import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
@@ -23,9 +25,13 @@ import issueissyu.backend.domain.pin.entity.EventPin;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.PinImage;
 import issueissyu.backend.domain.pin.entity.StoreImage;
+import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
+import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.global.api.code.GeneralErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -56,6 +63,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final StoreImageRepository storeImageRepository;
     private final PinImageRepository pinImageRepository;
     private final IssuePinRepository issuePinRepository;
+    private final IssuePetitionRepository issuePetitionRepository;
+    private final ProblemSolverRepository problemSolverRepository;
+    private final DeclarationRepository declarationRepository;
+    private final UserRepository userRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
@@ -82,29 +93,54 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     @Transactional(readOnly = false)
-    public CommunityDetailResDTO getCommunityDetail(Long communityId) {
+    public CommunityDetailResDTO getCommunityDetail(Long communityId, String uid) {
+        userRepository.findById(uid)
+                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
         Community community = communityRepository.findDetailById(communityId)
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
-        community.incrementViewCount();
+        Pin pin = community.getPin();
+        pin.incrementViewCount();
+        Long pinId = pin.getPinId();
+        CommunityType type = community.getCommunityType();
 
         CommunityDetailItemResDTO item = toDetailItem(community);
         List<String> pinImageUrls = pinImageRepository
-                .findByPin_PinIdOrderByPinImageIdAsc(community.getPin().getPinId())
+                .findByPin_PinIdOrderByPinImageIdAsc(pinId)
                 .stream()
                 .map(PinImage::getPinS3Url)
                 .toList();
 
         // STORE는 content가 피드 item 안에 포함되므로 래퍼의 content는 null
-        String detailContent = community.getCommunityType() == CommunityType.STORE
-                ? null
-                : community.getContent();
+        String detailContent = type == CommunityType.STORE ? null : community.getContent();
+
+        // 신고 여부 - ISSUE, COMMUNICATION, STORE 타입만
+        Boolean isReported = (type == CommunityType.ISSUE
+                        || type == CommunityType.COMMUNICATION
+                        || type == CommunityType.STORE)
+                ? declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid)
+                : null;
+
+        // 청원·지금가요 여부 - ISSUE 타입만
+        Boolean isPetitioned = type == CommunityType.ISSUE
+                ? issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
+                : null;
+        Boolean isProblemSolver = type == CommunityType.ISSUE
+                ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
+                : null;
+
+        boolean isMine = Objects.equals(pin.getUser().getUid(), uid);
 
         return new CommunityDetailResDTO(
                 item,
                 detailContent,
                 pinImageUrls,
                 community.getCreatedAt(),
-                community.getUpdatedAt());
+                community.getUpdatedAt(),
+                isReported,
+                isPetitioned,
+                isProblemSolver,
+                isMine);
     }
 
     // 상세 조회용 DTO 분기 (ISSUE는 추가 데이터 포함, 나머지는 피드 DTO 재사용)
@@ -130,7 +166,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
-                community.getViewCount(),
+                pin.getViewCount(),
                 pin.getLikeCount(),
                 issuePin != null ? issuePin.getIssuePinState().name() : null);
     }
@@ -174,7 +210,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
-                community.getViewCount(),
+                pin.getViewCount(),
                 pin.getLikeCount());
     }
 
@@ -194,7 +230,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 resolveAddress(pin.getPinId()),
                 eventPin.map(EventPin::getEventStartTime).orElse(null),
                 eventPin.map(EventPin::getEventEndTime).orElse(null),
-                community.getViewCount(),
+                pin.getViewCount(),
                 pin.getLikeCount());
     }
 
@@ -209,7 +245,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
-                community.getViewCount(),
+                pin.getViewCount(),
                 pin.getLikeCount());
     }
 
