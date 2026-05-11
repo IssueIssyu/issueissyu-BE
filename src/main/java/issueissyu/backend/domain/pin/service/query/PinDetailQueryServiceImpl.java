@@ -32,9 +32,6 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class PinDetailQueryServiceImpl implements PinDetailQueryService {
 
-    // To-do: 커뮤니티 조회수 연동 전까지 핀 상세 홈의 view 필드는 항상 0으로 고정. 추후 삭제!!!!
-    private static final int PIN_HOME_VIEW_PLACEHOLDER = 0;
-
     private final PinRepository pinRepository;
     private final PinLocationRepository pinLocationRepository;
     private final IssuePinRepository issuePinRepository;
@@ -44,12 +41,14 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
+    @Transactional(readOnly = false)
     public PinHomeResult getPinHome(Long pinId, String uid) {
         try {
             Pin pin =
                     pinRepository
                             .fetchDetailWithAuthor(pinId)
                             .orElseThrow(() -> PinException.of(PinErrorCode.PIN_HOME_404));
+            int viewCount = pinRepository.incrementViewCountAndGetCount(pinId);
             PinType type = pin.getPinType();
             PinSuccessCode success =
                     switch (type) {
@@ -145,7 +144,7 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             isUpdated,
                             pin.getCreatedAt(),
                             pin.getUpdatedAt(),
-                            PIN_HOME_VIEW_PLACEHOLDER,
+                            viewCount,
                             isReported,
                             isMine);
 

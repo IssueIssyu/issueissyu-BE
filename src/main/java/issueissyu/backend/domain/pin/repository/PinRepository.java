@@ -24,6 +24,19 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
     @Query("update Pin p set p.likeCount = p.likeCount + 1 where p.pinId = :pinId")
     int incrementLikeCountByPinId(@Param("pinId") Long pinId);
 
+    @Modifying(flushAutomatically = true, clearAutomatically = false)
+    @Query("update Pin p set p.viewCount = p.viewCount + 1 where p.pinId = :pinId")
+    int incrementViewCountByPinId(@Param("pinId") Long pinId);
+
+    @Query("select p.viewCount from Pin p where p.pinId = :pinId")
+    Optional<Integer> findViewCountByPinId(@Param("pinId") Long pinId);
+
+    // DB에서 단일 UPDATE로 증가시켜 동시 요청 시 조회수 유실을 막는다. 커뮤니티, 핀이 공유한다.
+    default int incrementViewCountAndGetCount(Long pinId) {
+        incrementViewCountByPinId(pinId);
+        return findViewCountByPinId(pinId).orElse(0);
+    }
+
     @Query("select p.likeCount from Pin p where p.pinId = :pinId")
     Optional<Integer> findLikeCountByPinId(@Param("pinId") Long pinId);
 }
