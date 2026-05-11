@@ -111,8 +111,8 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                     pinProfile =
                             userProfileImageQueryService
                                     .findUrlByUserUid(author.getUid())
-                                    .orElse("default");
-                    pinNickname = Optional.ofNullable(author.getNickname()).orElse("");
+                                    .orElse(null);
+                    pinNickname = author.getNickname();
                 }
                 case FESTIVAL -> {
                     // 명세: 작성자 노출 필드 null

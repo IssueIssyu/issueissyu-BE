@@ -3,7 +3,6 @@ package issueissyu.backend.domain.pin.service.command;
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
-import issueissyu.backend.domain.issue.entity.ProblemSolver;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
@@ -108,12 +107,10 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         Long issuePinId = issuePin.getIssuePinId();
         issuePetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
 
-        List<ProblemSolver> solvers = problemSolverRepository.findAllByIssuePin_IssuePinId(issuePinId);
-        for (ProblemSolver ps : solvers) {
-            problemSolverImageRepository
-                    .findByProblemSolver_ProblemSolverId(ps.getProblemSolverId())
-                    .ifPresent(problemSolverImageRepository::delete);
-            problemSolverRepository.delete(ps);
+        List<Long> solverIds = problemSolverRepository.findAllProblemSolverIdsByIssuePin_IssuePinId(issuePinId);
+        if (!solverIds.isEmpty()) {
+            problemSolverImageRepository.deleteAllByProblemSolver_ProblemSolverIdIn(solverIds);
         }
+        problemSolverRepository.deleteAllByIssuePin_IssuePinId(issuePinId);
     }
 }

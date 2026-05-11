@@ -89,14 +89,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .storeImageUrl(null);
 
         switch (type) {
-            case ISSUE -> b.pinUserId(author.getUid())
+            case ISSUE, COMMUNICATION -> b.pinUserId(author.getUid())
                     .pinUserProfile(profileImgOpt.orElse(null))
                     .pinUserNickname(author.getNickname());
-            case COMMUNICATION ->
-                    b.pinUserId(author.getUid())
-                            .pinUserProfile(profileImgOpt.orElse("default"))
-                            .pinUserNickname(
-                                    Optional.ofNullable(author.getNickname()).orElse(""));
             case STORE -> {
                 b.pinUserId(author.getUid())
                         .pinUserProfile(null)
