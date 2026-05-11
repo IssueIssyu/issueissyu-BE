@@ -22,6 +22,6 @@ public class PhoneVerifyReqDTO {
     private String code;
 
     @Schema(example = "true")
-    @JsonProperty("is_available_nickname")
+    @JsonProperty("isAvailableNickname")
     private Boolean isAvailableNickname;
 }
