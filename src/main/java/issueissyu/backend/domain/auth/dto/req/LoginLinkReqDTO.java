@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class LoginLinkReqDTO {
 
     @NotNull(message = "소셜 로그인 타입을 입력해주세요.")
-    @JsonProperty("social_type")
+    @JsonProperty("socialType")
     @Schema(example = "LOCAL")
     private SocialType socialType;
 
