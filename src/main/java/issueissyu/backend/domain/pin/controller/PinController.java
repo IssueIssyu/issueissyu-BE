@@ -109,7 +109,7 @@ public class PinController {
 
     @Operation(
             summary = "핀 상세 해결하기 조회",
-            description = "이슈 핀만 허용. isPetition: 청원 여부, isProblemSolver: 지금가요(시민해결사) 참여 여부")
+            description = "이슈 핀만 허용. isPetitioned: 청원 여부, isProblemSolver: 지금가요(시민해결사) 참여 여부")
     @GetMapping("/{pinId}/solve")
     public ApiResponse<PinSolveResDTO> getPinSolve(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         PinSolveResDTO data = pinSolveQueryService.getPinSolve(pinId, uid);

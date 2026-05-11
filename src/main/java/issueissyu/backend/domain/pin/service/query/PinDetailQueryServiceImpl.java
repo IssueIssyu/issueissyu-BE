@@ -66,7 +66,7 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             .orElse(null);
 
             boolean isLike = pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
-            boolean isDeclaration = declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
+            boolean isReported = declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
 
             List<PinImageWithIdResDTO> pinImages = toImageDtos(pin.getPinImages());
 
@@ -146,7 +146,7 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             pin.getCreatedAt(),
                             pin.getUpdatedAt(),
                             PIN_HOME_VIEW_PLACEHOLDER,
-                            isDeclaration,
+                            isReported,
                             isMine);
 
             return new PinHomeResult(success, dto);

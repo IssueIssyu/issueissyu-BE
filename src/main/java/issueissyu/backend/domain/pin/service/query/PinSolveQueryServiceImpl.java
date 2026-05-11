@@ -33,12 +33,12 @@ public class PinSolveQueryServiceImpl implements PinSolveQueryService {
                 throw PinException.of(PinErrorCode.PIN_SOLVE_400);
             }
 
-            boolean isPetition =
+            boolean isPetitioned =
                     issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
             boolean isProblemSolver =
                     problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
 
-            return new PinSolveResDTO(isPetition, isProblemSolver);
+            return new PinSolveResDTO(isPetitioned, isProblemSolver);
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
