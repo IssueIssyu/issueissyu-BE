@@ -22,11 +22,13 @@ public interface PatchNoteRepository extends Repository<Pin, Long> {
                     FROM pin p
                     INNER JOIN issue_pin ip ON ip.pin_id = p.pin_id
                     INNER JOIN (
-                        SELECT DISTINCT ON (pl.pin_id) pl.pin_id, pl.detail_address, pl.location_id
+                        SELECT DISTINCT ON (pl.pin_id) pl.pin_id, pl.detail_address
                         FROM pin_location pl
+                        INNER JOIN location loc_r
+                            ON pl.location_id = loc_r.location_id
+                            AND loc_r.location = :region
                         ORDER BY pl.pin_id, pl.pin_location_id ASC
                     ) pl ON pl.pin_id = p.pin_id
-                    INNER JOIN location loc ON pl.location_id = loc.location_id AND loc.location = :region
                     WHERE p.pin_type = 'ISSUE'
                       AND (
                         NOT CAST(:applyCursor AS boolean)
