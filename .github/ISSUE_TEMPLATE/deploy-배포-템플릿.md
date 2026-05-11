@@ -1,7 +1,7 @@
 ---
 name: Deploy 이슈 템플릿
 about: 배포를 위한 이슈를 생성합니다.
-title: "[DEPLOY]"
+title: "[DEPLOY] production-release(v.0.0.0)"
 labels: ''
 assignees: ''
 
