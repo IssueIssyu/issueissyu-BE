@@ -21,6 +21,7 @@ import issueissyu.backend.domain.pin.enums.ToneType;
 import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.CommunicationPinRepository;
+import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.util.PinS3UrlSupport;
 import issueissyu.backend.domain.user.entity.User;
@@ -37,11 +38,10 @@ import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,6 +53,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     private final PinRepository pinRepository;
     private final CommunicationPinRepository communicationPinRepository;
     private final PinLocationRepository pinLocationRepository;
+    private final PinImageRepository pinImageRepository;
     private final LocationRepository locationRepository;
     private final LocationService locationService;
     private final AmazonConfig amazonConfig;
@@ -138,19 +139,9 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         }
 
         try {
-            validateMainFlags(req.pinImageUrls(), PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
-            Location newLocation =
-                    locationRepository
-                            .findByRegion(trimCompact(req.region()))
-                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_4));
+            validateCommunicationEditPinImages(req.pinImageUrls());
 
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
-
-            PinLocation pl =
-                    pinLocationRepository
-                            .findByPin_PinId(pinId)
-                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_4));
-            pl.changeAdministrativeLocation(newLocation);
 
             syncPinImages(pin, req.pinImageUrls());
 
@@ -172,22 +163,28 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
-            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_4);
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_5);
         }
     }
 
     private void syncPinImages(Pin pin, List<PinImageItemReqDTO> items) {
-        Map<String, PinImage> byUrl =
-                pin.getPinImages().stream()
-                        .collect(Collectors.toMap(PinImage::getPinS3Url, Function.identity(), (a, b) -> a));
+        Set<String> keepUrls = items.stream().map(PinImageItemReqDTO::pinImageUrl).collect(Collectors.toSet());
 
-        Set<String> keepUrls = new HashSet<>();
+        pin.getPinImages().removeIf(pi -> !keepUrls.contains(pi.getPinS3Url()));
 
         for (PinImageItemReqDTO item : items) {
-            keepUrls.add(item.pinImageUrl());
-            PinImage existing = byUrl.get(item.pinImageUrl());
-            if (existing != null) {
-                existing.setMainImage(item.isMain());
+            PinImage row =
+                    pin.getPinImages().stream()
+                            .filter(pi -> Objects.equals(pi.getPinS3Url(), item.pinImageUrl()))
+                            .findFirst()
+                            .orElseGet(
+                                    () ->
+                                            resolveExistingPinImageByUrl(pin.getPinId(), item.pinImageUrl())
+                                                    .orElse(null));
+
+            if (row != null) {
+                attachIfAbsent(pin, row);
+                row.setMainImage(item.isMain());
             } else {
                 String key = PinS3UrlSupport.extractKey(item.pinImageUrl(), amazonConfig);
                 PinImage created =
@@ -199,12 +196,31 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.addPinImage(created);
             }
         }
+    }
 
-        List<PinImage> toRemove =
+    // pin_image 테이블에서 동일 URL이 있으면, 현재 수정 중인 핀에 속한 행이면 해당 pin_image(row)를 그대로 사용합니다.
+    private Optional<PinImage> resolveExistingPinImageByUrl(Long pinId, String pinS3Url) {
+        return pinImageRepository.findAllWithPinByPinS3UrlOrderByPinImageIdAsc(pinS3Url).stream()
+                .filter(pi -> Objects.equals(pi.getPin().getPinId(), pinId))
+                .findFirst();
+    }
+
+    private static void attachIfAbsent(Pin pin, PinImage candidate) {
+        boolean alreadyAttached =
                 pin.getPinImages().stream()
-                        .filter(pi -> !keepUrls.contains(pi.getPinS3Url()))
-                        .toList();
-        toRemove.forEach(pin.getPinImages()::remove);
+                        .anyMatch(pi -> pinImageRefsEqual(pi, candidate));
+        if (!alreadyAttached) {
+            pin.addPinImage(candidate);
+        }
+    }
+
+    private static boolean pinImageRefsEqual(PinImage a, PinImage b) {
+        Long idA = a.getPinImageId();
+        Long idB = b.getPinImageId();
+        if (idA != null && idB != null) {
+            return Objects.equals(idA, idB);
+        }
+        return a == b;
     }
 
     private CommunicationPinImportResDTO toImportRes(Pin pin, String region, String pinDetailAddress) {
@@ -230,6 +246,13 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.getUpdatedAt());
     }
 
+    private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
+        if (items == null || items.isEmpty()) {
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+        }
+        validateMainFlags(items, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+    }
+
     private static void validateMainFlags(List<PinImageItemReqDTO> items, PinErrorCode violation) {
         if (items == null || items.isEmpty()) {
             return;
@@ -246,9 +269,5 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
     private static Point createPoint(double lng, double lat) {
         return GEOMETRY_FACTORY.createPoint(new Coordinate(lng, lat));
-    }
-
-    private static String trimCompact(String s) {
-        return s.trim().replaceAll("\\s+", " ");
     }
 }

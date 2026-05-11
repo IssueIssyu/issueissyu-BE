@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PinImageRepository extends JpaRepository<PinImage, Long> {
 
@@ -18,6 +20,10 @@ public interface PinImageRepository extends JpaRepository<PinImage, Long> {
             Collection<Long> pinIds);
 
     Optional<PinImage> findByPin_PinIdAndPinS3Url(Long pinId, String pinS3Url);
+
+    @Query(
+            "select pi from PinImage pi join fetch pi.pin where pi.pinS3Url = :pinS3Url order by pi.pinImageId asc")
+    List<PinImage> findAllWithPinByPinS3UrlOrderByPinImageIdAsc(@Param("pinS3Url") String pinS3Url);
 
     void deleteByPin_PinId(Long pinId);
 }

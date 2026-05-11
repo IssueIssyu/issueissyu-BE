@@ -9,6 +9,5 @@ import java.util.List;
 
 public record CommunicationPinEditReqDTO(
         @NotNull @Valid @Size(max = 5) List<PinImageItemReqDTO> pinImageUrls,
-        @NotBlank String region,
         @NotBlank String pinTitle,
         @NotBlank String pinContent) {}

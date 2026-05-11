@@ -37,7 +37,8 @@ public enum PinErrorCode implements BaseErrorCode {
     PIN_EDIT_COMMUNICATION_400_1(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_1", "필수 요청 값 누락."),
     PIN_EDIT_COMMUNICATION_400_2(HttpStatus.NOT_FOUND, "PIN_EDIT_COMMUNICATION_400_2", "존재하지 않는 핀 입니다."),
     PIN_EDIT_COMMUNICATION_400_3(HttpStatus.FORBIDDEN, "PIN_EDIT_COMMUNICATION_400_3", "핀 작성자가 아니므로 수정 권한이 없습니다."),
-    PIN_EDIT_COMMUNICATION_400_4(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_4", "핀 수정 API를 실행 할 수 없습니다."),
+    PIN_EDIT_COMMUNICATION_400_4(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_4", "소통(COMMUNICATION) 타입의 핀이 아닙니다."),
+    PIN_EDIT_COMMUNICATION_400_5(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_5", "핀 수정 API를 실행 할 수 없습니다."),
 
     // 핀 삭제
     PIN_DELETE_400_1(HttpStatus.BAD_REQUEST, "PIN_DELETE_400_1", "등업된 이슈 핀은 삭제가 불가능 합니다."),
