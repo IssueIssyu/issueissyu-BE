@@ -132,12 +132,10 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             && pin.getUpdatedAt().isAfter(pin.getCreatedAt());
 
             Long communityId =
-                    type == PinType.ISSUE
-                            ? null
-                            : communityRepository
-                                    .findByPin_PinId(pinId)
-                                    .map(Community::getCommunityId)
-                                    .orElse(null);
+                    communityRepository
+                            .findByPin_PinId(pinId)
+                            .map(Community::getCommunityId)
+                            .orElse(null);
 
             PinHomeResDTO dto =
                     new PinHomeResDTO(
