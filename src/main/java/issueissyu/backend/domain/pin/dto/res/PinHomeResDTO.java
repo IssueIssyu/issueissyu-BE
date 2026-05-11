@@ -27,4 +27,5 @@ public record PinHomeResDTO(
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
         LocalDateTime updatedAt,
         int view,
-        @JsonProperty("isDeclaration") boolean isDeclaration) {}
+        @JsonProperty("isDeclaration") boolean isDeclaration,
+        @JsonProperty("isMine") boolean isMine) {}

@@ -1,6 +1,5 @@
 package issueissyu.backend.domain.pin.service.query;
 
-import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.pin.dto.res.PinHomeResDTO;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -32,13 +32,15 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class PinDetailQueryServiceImpl implements PinDetailQueryService {
 
+    // To-do: 커뮤니티 조회수 연동 전까지 핀 상세 홈의 view 필드는 항상 0으로 고정. 추후 삭제!!!!
+    private static final int PIN_HOME_VIEW_PLACEHOLDER = 0;
+
     private final PinRepository pinRepository;
     private final PinLocationRepository pinLocationRepository;
     private final IssuePinRepository issuePinRepository;
     private final EventPinRepository eventPinRepository;
     private final PinLikeRepository pinLikeRepository;
     private final DeclarationRepository declarationRepository;
-    private final CommunityRepository communityRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
@@ -65,12 +67,6 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
 
             boolean isLike = pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
             boolean isDeclaration = declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
-
-            int view =
-                    communityRepository
-                            .findByPin_PinId(pinId)
-                            .map(c -> c.getViewCount())
-                            .orElse(0);
 
             List<PinImageWithIdResDTO> pinImages = toImageDtos(pin.getPinImages());
 
@@ -115,6 +111,8 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                 }
             }
 
+            boolean isMine = uid != null && Objects.equals(author.getUid(), uid);
+
             boolean isUpdated =
                     pin.getUpdatedAt() != null
                             && pin.getCreatedAt() != null
@@ -139,8 +137,9 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                             isUpdated,
                             pin.getCreatedAt(),
                             pin.getUpdatedAt(),
-                            view,
-                            isDeclaration);
+                            PIN_HOME_VIEW_PLACEHOLDER,
+                            isDeclaration,
+                            isMine);
 
             return new PinHomeResult(success, dto);
         } catch (PinException e) {
