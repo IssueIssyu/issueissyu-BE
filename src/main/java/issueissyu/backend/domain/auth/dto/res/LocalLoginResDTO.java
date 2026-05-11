@@ -29,7 +29,7 @@ public class LocalLoginResDTO {
         return newUser;
     }
 
-    @JsonProperty("social_type")
+    @JsonProperty("socialType")
     private String socialType;
 
     private UserInfo user;
@@ -40,7 +40,7 @@ public class LocalLoginResDTO {
     public static class UserInfo {
         private String uuid;
 
-        @JsonProperty("temp_uuid")
+        @JsonProperty("tempUuid")
         private String tempUuid;
 
         private String userName;

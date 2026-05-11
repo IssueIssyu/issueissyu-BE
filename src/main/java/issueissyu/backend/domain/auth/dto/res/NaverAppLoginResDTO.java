@@ -29,7 +29,7 @@ public class NaverAppLoginResDTO {
         return newUser;
     }
 
-    @JsonProperty("social_type")
+    @JsonProperty("socialType")
     private String socialType;
 
     private UserInfo user;
@@ -43,10 +43,10 @@ public class NaverAppLoginResDTO {
         private String uuid;
 
         // 신규 회원: 온보딩 완료 전 임시 uuid
-        @JsonProperty("temp_uuid")
+        @JsonProperty("tempUuid")
         private String tempUuid;
 
-        @JsonProperty("user_name")
+        @JsonProperty("userName")
         private String userName;
     }
 }

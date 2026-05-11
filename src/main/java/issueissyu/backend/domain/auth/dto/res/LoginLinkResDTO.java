@@ -10,28 +10,28 @@ public class LoginLinkResDTO {
 
     private String uuid;
 
-    @JsonProperty("social_type")
+    @JsonProperty("socialType")
     private String socialType;
 
     private String nickname;
     private String email;
     private String phone;
 
-    @JsonProperty("event_alarm_active")
+    @JsonProperty("eventAlarmActive")
     private boolean eventAlarmActive;
 
-    @JsonProperty("like_alarm_active")
+    @JsonProperty("likeAlarmActive")
     private boolean likeAlarmActive;
 
-    @JsonProperty("hot_alarm_active")
+    @JsonProperty("hotAlarmActive")
     private boolean hotAlarmActive;
 
-    @JsonProperty("store_alarm_active")
+    @JsonProperty("storeAlarmActive")
     private boolean storeAlarmActive;
 
-    @JsonProperty("is_available_nickname")
+    @JsonProperty("isAvailableNickname")
     private boolean isAvailableNickname;
 
-    @JsonProperty("user_phone_verified")
+    @JsonProperty("userPhoneVerified")
     private boolean userPhoneVerified;
 }

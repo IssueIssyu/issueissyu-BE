@@ -12,7 +12,7 @@ public record CommunicationPinImportResDTO(
         String region,
         String pinDetailAddress,
         List<PinImageWithIdResDTO> pinImageUrls,
-        @JsonProperty("tone_type") String toneType,
+        @JsonProperty("toneType") String toneType,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
         LocalDateTime createdAt,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
