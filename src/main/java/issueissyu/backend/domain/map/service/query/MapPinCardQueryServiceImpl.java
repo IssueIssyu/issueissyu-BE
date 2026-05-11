@@ -69,7 +69,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         : Optional.empty();
 
         Optional<String> profileImgOpt =
-                type == PinType.ISSUE
+                (type == PinType.ISSUE || type == PinType.COMMUNICATION)
                         ? userProfileImageQueryService.findUrlByUserUid(author.getUid())
                         : Optional.empty();
 
@@ -92,9 +92,11 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
             case ISSUE -> b.pinUserId(author.getUid())
                     .pinUserProfile(profileImgOpt.orElse(null))
                     .pinUserNickname(author.getNickname());
-            case COMMUNICATION -> b.pinUserId(null)
-                    .pinUserProfile(null)
-                    .pinUserNickname(null);
+            case COMMUNICATION ->
+                    b.pinUserId(author.getUid())
+                            .pinUserProfile(profileImgOpt.orElse("default"))
+                            .pinUserNickname(
+                                    Optional.ofNullable(author.getNickname()).orElse(""));
             case STORE -> {
                 b.pinUserId(author.getUid())
                         .pinUserProfile(null)
