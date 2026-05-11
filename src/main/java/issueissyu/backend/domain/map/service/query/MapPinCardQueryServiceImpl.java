@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -57,6 +58,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         boolean isLike =
                 pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
 
+        boolean isMine =
+                currentUserUid != null && Objects.equals(author.getUid(), currentUserUid);
+
         Optional<String> issueStateOpt =
                 type == PinType.ISSUE
                         ? issuePinRepository
@@ -79,6 +83,7 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .pinDetailAddress(detailAddr)
                         .likeCount(likeCountLong)
                         .likedByMe(isLike)
+                        .mine(isMine)
                         .pinImageUrl(mainImageUrlOpt.orElse(null))
                         .discount(null)
                         .storeImageUrl(null);

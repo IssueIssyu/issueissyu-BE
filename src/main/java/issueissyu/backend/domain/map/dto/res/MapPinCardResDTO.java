@@ -19,6 +19,9 @@ public class MapPinCardResDTO {
     @JsonProperty("isLike")
     private boolean likedByMe;
 
+    @JsonProperty("isMine")
+    private boolean mine;
+
     private String pinUserId;
     private String pinUserProfile;
     private String pinUserNickname;
