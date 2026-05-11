@@ -106,8 +106,16 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                 case STORE -> {
                     pinUserId = author.getUid();
                 }
-                case COMMUNICATION, FESTIVAL -> {
-                    // 명세: 노출 필드 null
+                case COMMUNICATION -> {
+                    pinUserId = author.getUid();
+                    pinProfile =
+                            userProfileImageQueryService
+                                    .findUrlByUserUid(author.getUid())
+                                    .orElse("default");
+                    pinNickname = Optional.ofNullable(author.getNickname()).orElse("");
+                }
+                case FESTIVAL -> {
+                    // 명세: 작성자 노출 필드 null
                 }
             }
 
