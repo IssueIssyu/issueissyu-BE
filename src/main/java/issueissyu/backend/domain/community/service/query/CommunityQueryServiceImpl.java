@@ -28,6 +28,7 @@ import issueissyu.backend.domain.pin.entity.StoreImage;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinImageRepository;
+import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -62,6 +63,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
     private final PinImageRepository pinImageRepository;
+    private final PinRepository pinRepository;
     private final IssuePinRepository issuePinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
@@ -100,11 +102,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Community community = communityRepository.findDetailById(communityId)
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
         Pin pin = community.getPin();
-        pin.incrementViewCount();
+        int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
         Long pinId = pin.getPinId();
         CommunityType type = community.getCommunityType();
 
-        CommunityDetailItemResDTO item = toDetailItem(community);
+        CommunityDetailItemResDTO item = toDetailItem(community, viewCount);
         List<String> pinImageUrls = pinImageRepository
                 .findByPin_PinIdOrderByPinImageIdAsc(pinId)
                 .stream()
@@ -144,17 +146,17 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     }
 
     // 상세 조회용 DTO 분기 (ISSUE는 추가 데이터 포함, 나머지는 피드 DTO 재사용)
-    private CommunityDetailItemResDTO toDetailItem(Community community) {
+    private CommunityDetailItemResDTO toDetailItem(Community community, int viewCount) {
         return switch (community.getCommunityType()) {
-            case ISSUE -> toIssueDetailItem(community);
-            case STORE -> toStoreFeedItem(community);
-            case COMMUNICATION -> toCommunicationFeedItem(community);
+            case ISSUE -> toIssueDetailItem(community, viewCount);
+            case STORE -> toStoreFeedItem(community, viewCount);
+            case COMMUNICATION -> toCommunicationFeedItem(community, viewCount);
             default -> null;
         };
     }
 
     // ISSUE 상세 DTO 매핑 (issuePinState 포함)
-    private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community) {
+    private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community, int viewCount) {
         Pin pin = community.getPin();
         IssuePin issuePin = issuePinRepository.findByPin_PinId(pin.getPinId()).orElse(null);
 
@@ -166,7 +168,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
-                pin.getViewCount(),
+                viewCount,
                 pin.getLikeCount(),
                 issuePin != null ? issuePin.getIssuePinState().name() : null);
     }
@@ -216,6 +218,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     // STORE 카드 DTO 매핑.
     private StoreCommunityFeedItemResDTO toStoreFeedItem(Community community) {
+        return toStoreFeedItem(community, community.getPin().getViewCount());
+    }
+
+    private StoreCommunityFeedItemResDTO toStoreFeedItem(Community community, int viewCount) {
         Pin pin = community.getPin();
         Optional<StoreImage> storeImage = storeImageRepository.findByEventPin_Pin_PinId(pin.getPinId());
         Optional<EventPin> eventPin = eventPinRepository.findByPin_PinId(pin.getPinId());
@@ -230,12 +236,16 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 resolveAddress(pin.getPinId()),
                 eventPin.map(EventPin::getEventStartTime).orElse(null),
                 eventPin.map(EventPin::getEventEndTime).orElse(null),
-                pin.getViewCount(),
+                viewCount,
                 pin.getLikeCount());
     }
 
     // COMMUNICATION 카드 DTO 매핑.
     private CommunicationCommunityFeedItemResDTO toCommunicationFeedItem(Community community) {
+        return toCommunicationFeedItem(community, community.getPin().getViewCount());
+    }
+
+    private CommunicationCommunityFeedItemResDTO toCommunicationFeedItem(Community community, int viewCount) {
         Pin pin = community.getPin();
         return new CommunicationCommunityFeedItemResDTO(
                 community.getCommunityId(),
@@ -245,7 +255,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
                 resolveAddress(pin.getPinId()),
-                pin.getViewCount(),
+                viewCount,
                 pin.getLikeCount());
     }
 

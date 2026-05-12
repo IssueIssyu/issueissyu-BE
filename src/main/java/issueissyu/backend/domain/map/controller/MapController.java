@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.map.dto.res.MapNoticeListResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
+import issueissyu.backend.domain.map.dto.res.PatchNoteResDTO;
 import issueissyu.backend.domain.map.enums.MapPinCategory;
 import issueissyu.backend.domain.map.exception.MapException;
 import issueissyu.backend.domain.map.exception.code.MapErrorCode;
@@ -12,6 +13,7 @@ import issueissyu.backend.domain.map.exception.code.MapSuccessCode;
 import issueissyu.backend.domain.map.service.query.MapNoticeQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinCardQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinQueryService;
+import issueissyu.backend.domain.map.service.query.PatchNoteQueryService;
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.global.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class MapController {
     private final MapPinQueryService mapPinQueryService;
     private final MapPinCardQueryService mapPinCardQueryService;
     private final MapNoticeQueryService mapNoticeQueryService;
+    private final PatchNoteQueryService patchNoteQueryService;
 
     @Operation(summary = "현재 화면 핀 조회",
                 description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. ")
@@ -61,7 +64,7 @@ public class MapController {
         );
     }
 
-    @Operation(summary = "지도 공지사항 조회", description = "공지 시작·종료 시각 사이의 공지만 반환합니다. 페이징 없음.")
+    @Operation(summary = "지도 공지사항 조회", description = "공지 시작 ~ 종료 시각 사이의 공지만 반환합니다.")
     @GetMapping("/notices")
     public ApiResponse<MapNoticeListResDTO> getMapNotices() {
         MapNoticeListResDTO body = mapNoticeQueryService.getActiveNotices();
@@ -72,12 +75,29 @@ public class MapController {
     }
 
     @Operation(
-            summary = "단일 핀 카드 조회",
-            description = "pin 유형(ISSUE, COMMUNICATION, STORE, FESTIVAL)에 따라 카드 필드를 채워 반환합니다. "
-                    + "이슈는 issuePinState·작성자 프로필(프로필 컬렉션)을, 가게는 discount·storeImageUrl을 제공합니다.")
+            summary = "패치노트 조회",
+            description = "이슈 핀만 반환. 정렬은 해결전, 해결중, 해결 완료 순 + 오래된 순. region 생략 시 /api/location/user 과 동일 기준(인증된 시군구 명)을 사용합니다.")
+    @GetMapping("/patch-note")
+    public ApiResponse<PatchNoteResDTO> getPatchNotes(
+            @AuthenticationPrincipal String uid,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String cursor) {
+        return ApiResponse.onSuccess(
+                MapSuccessCode.PATCHNOTE_200,
+                patchNoteQueryService.getPatchNotes(uid, region, size, cursor));
+    }
+
+    @Operation(
+            summary = "단일 핀 카드 조회 (경로 변수)",
+            description = "communityId는 연결된 커뮤니티가 있을 때만 반환.")
     @GetMapping("/{pinId}/card")
-    public ApiResponse<MapPinCardResDTO> getPinCard(
+    public ApiResponse<MapPinCardResDTO> getPinCardByPath(
             @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+        return pinCardResponse(uid, pinId);
+    }
+
+    private ApiResponse<MapPinCardResDTO> pinCardResponse(String uid, Long pinId) {
         MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
         return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
     }
