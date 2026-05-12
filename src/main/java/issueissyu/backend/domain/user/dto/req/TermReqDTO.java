@@ -10,18 +10,18 @@ import lombok.NoArgsConstructor;
 public class TermReqDTO {
 
     @NotNull
-    @JsonProperty("service_term")
+    @JsonProperty("serviceTerm")
     private Boolean serviceTerm;
 
     @NotNull
-    @JsonProperty("privacy_term")
+    @JsonProperty("privacyTerm")
     private Boolean privacyTerm;
 
     @NotNull
-    @JsonProperty("location_term")
+    @JsonProperty("locationTerm")
     private Boolean locationTerm;
 
     @NotNull
-    @JsonProperty("marketing_term")
+    @JsonProperty("marketingTerm")
     private Boolean marketingTerm;
 }

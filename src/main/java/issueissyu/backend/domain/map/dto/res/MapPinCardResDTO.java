@@ -19,10 +19,14 @@ public class MapPinCardResDTO {
     @JsonProperty("isLike")
     private boolean likedByMe;
 
+    @JsonProperty("isMine")
+    private boolean mine;
+
     private String pinUserId;
     private String pinUserProfile;
     private String pinUserNickname;
     private String pinImageUrl;
     private String discount;
     private String storeImageUrl;
+    private Long communityId;
 }

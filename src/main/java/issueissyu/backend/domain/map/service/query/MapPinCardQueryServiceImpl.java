@@ -1,5 +1,7 @@
 package issueissyu.backend.domain.map.service.query;
 
+import issueissyu.backend.domain.community.entity.Community;
+import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -33,13 +36,19 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
     private final EventPinRepository eventPinRepository;
     private final PinLikeRepository pinLikeRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
+    private final CommunityRepository communityRepository;
+
+    private static final String DEFAULT_PROFILE_IMAGE = "default";
 
     @Override
+    @Transactional(readOnly = false)
     public MapPinCardResDTO findPinCard(Long pinId, String currentUserUid) {
         Pin pin =
                 pinRepository
                         .fetchDetailWithAuthor(pinId)
                         .orElseThrow(() -> MapException.of(MapErrorCode.MAP_CARD_404));
+
+        pinRepository.incrementViewCountByPinId(pinId);
 
         PinType type = pin.getPinType();
         User author = pin.getUser();
@@ -55,7 +64,11 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         long likeCountLong = pin.getLikeCount();
 
         boolean isLike =
-                pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
+                currentUserUid != null
+                        && pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, currentUserUid);
+
+        boolean isMine =
+                currentUserUid != null && Objects.equals(author.getUid(), currentUserUid);
 
         Optional<String> issueStateOpt =
                 type == PinType.ISSUE
@@ -65,9 +78,15 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         : Optional.empty();
 
         Optional<String> profileImgOpt =
-                type == PinType.ISSUE
+                (type == PinType.ISSUE || type == PinType.COMMUNICATION)
                         ? userProfileImageQueryService.findUrlByUserUid(author.getUid())
                         : Optional.empty();
+
+        Long communityId =
+                communityRepository
+                        .findByPin_PinId(pinId)
+                        .map(Community::getCommunityId)
+                        .orElse(null);
 
         MapPinCardResDTO.MapPinCardResDTOBuilder b =
                 MapPinCardResDTO.builder()
@@ -79,17 +98,16 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .pinDetailAddress(detailAddr)
                         .likeCount(likeCountLong)
                         .likedByMe(isLike)
+                        .mine(isMine)
+                        .communityId(communityId)
                         .pinImageUrl(mainImageUrlOpt.orElse(null))
                         .discount(null)
                         .storeImageUrl(null);
 
         switch (type) {
-            case ISSUE -> b.pinUserId(author.getUid())
-                    .pinUserProfile(profileImgOpt.orElse(null))
+            case ISSUE, COMMUNICATION -> b.pinUserId(author.getUid())
+                    .pinUserProfile(profileImgOpt.orElse(DEFAULT_PROFILE_IMAGE))
                     .pinUserNickname(author.getNickname());
-            case COMMUNICATION -> b.pinUserId(null)
-                    .pinUserProfile(null)
-                    .pinUserNickname(null);
             case STORE -> {
                 b.pinUserId(author.getUid())
                         .pinUserProfile(null)

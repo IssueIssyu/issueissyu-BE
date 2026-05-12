@@ -63,14 +63,14 @@ public class ProblemSolverCommandServiceImpl implements ProblemSolverCommandServ
                                                     .orElseThrow(
                                                             () ->
                                                                     ProblemSolverException.of(
-                                                                            IssueErrorCode.PETITION_404));
+                                                                            IssueErrorCode.GO_NOW_404));
                                     return (pin.getPinType() != PinType.ISSUE)
-                                            ? ProblemSolverException.of(IssueErrorCode.PETITION_400_2)
-                                            : ProblemSolverException.of(IssueErrorCode.PETITION_404);
+                                            ? ProblemSolverException.of(IssueErrorCode.GO_NOW_400_2)
+                                            : ProblemSolverException.of(IssueErrorCode.GO_NOW_404);
                                 });
 
         if (issuePin.getPin().getPinType() != PinType.ISSUE) {
-            throw ProblemSolverException.of(IssueErrorCode.PETITION_400_2);
+            throw ProblemSolverException.of(IssueErrorCode.GO_NOW_400_2);
         }
 
         if (issuePin.getPin().getUser().getUid().equals(uid)) {

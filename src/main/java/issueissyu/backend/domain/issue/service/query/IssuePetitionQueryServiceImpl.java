@@ -26,11 +26,12 @@ public class IssuePetitionQueryServiceImpl implements IssuePetitionQueryService 
         IssuePin issuePin = issuePinRepository
                 .findByPin_PinId(pinId)
                 .orElseThrow(() -> PetitionException.of(IssueErrorCode.PETITION_STATUS_404));
-        boolean isPetition = issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
+        boolean isPetitioned =
+                issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
         return PetitionStatusResDTO.builder()
                 .pinId(pinId)
                 .petitionCount(issuePin.getPetitionCount())
-                .isPetition(isPetition)
+                .isPetitioned(isPetitioned)
                 .targetPetition(TARGET_PETITION_PLACEHOLDER)
                 .build();
     }

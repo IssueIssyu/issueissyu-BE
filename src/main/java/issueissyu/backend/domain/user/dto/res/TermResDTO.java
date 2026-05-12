@@ -8,15 +8,15 @@ import lombok.Getter;
 @Builder
 public class TermResDTO {
 
-    @JsonProperty("event_alarm_active")
+    @JsonProperty("eventAlarmActive")
     private final boolean eventAlarmActive;
 
-    @JsonProperty("like_alarm_active")
+    @JsonProperty("likeAlarmActive")
     private final boolean likeAlarmActive;
 
-    @JsonProperty("hot_alarm_active")
+    @JsonProperty("hotAlarmActive")
     private final boolean hotAlarmActive;
 
-    @JsonProperty("store_alarm_active")
+    @JsonProperty("storeAlarmActive")
     private final boolean storeAlarmActive;
 }

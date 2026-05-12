@@ -7,8 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface CommunicationPinRepository extends JpaRepository<CommunicationPin, Long> {
+
+    Optional<CommunicationPin> findByPin_PinId(Long pinId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM CommunicationPin c WHERE c.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 
     @Modifying(clearAutomatically = true)
     @Query("""

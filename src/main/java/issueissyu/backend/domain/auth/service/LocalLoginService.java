@@ -71,7 +71,7 @@ public class LocalLoginService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .expiresIn(jwtTokenProvider.getAccessExpMs() / 1000)
-                .isNew(isNew)
+                .newUser(isNew)
                 .socialType(SocialType.LOCAL.name())
                 .user(userInfo)
                 .build();

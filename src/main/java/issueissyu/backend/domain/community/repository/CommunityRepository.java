@@ -14,6 +14,10 @@ import java.util.Optional;
 
 public interface CommunityRepository extends JpaRepository<Community, Long> {
 
+    boolean existsByPin_PinId(Long pinId);
+
+    Optional<Community> findByPin_PinId(Long pinId);
+
     @Query("""
             select c
             from Community c
