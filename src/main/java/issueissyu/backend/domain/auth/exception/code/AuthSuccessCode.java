@@ -18,6 +18,7 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     LOCAL_LOGIN_200_1(HttpStatus.OK, "LOCAL_LOGIN_200_1", "처음으로 로컬 로그인에 성공했습니다."),
     LOCAL_LOGIN_200_2(HttpStatus.OK, "LOCAL_LOGIN_200_2", "로컬 로그인에 성공했습니다."),
     NICKNAME_200(HttpStatus.OK, "NICKNAME_200", "사용 가능한 닉네임입니다."),
+    USERNAME_200(HttpStatus.OK, "USERNAME_200", "사용 가능한 아이디 입니다."),
     TERM_200(HttpStatus.OK, "TERM_200", "약관 동의에 성공했습니다."),
 
     // 전화번호 인증
