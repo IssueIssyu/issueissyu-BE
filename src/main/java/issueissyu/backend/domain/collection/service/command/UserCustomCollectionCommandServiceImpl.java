@@ -38,20 +38,15 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
                         .findById(collectionId)
                         .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
 
-        // 사용자 해금 행 검증
-    
-        UserCustomCollection userUnlockRow =
-                userCustomCollectionRepository
-                        .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
-                        .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
-
-        // 사용자 해금 행 목록 조회
         List<UserCustomCollection> allUserUnlockRows =
                 userCustomCollectionRepository.findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid);
-        // 사용자 해금 행 목록 프로필 해제
+
+        UserCustomCollection userUnlockRow = allUserUnlockRows.stream()
+                .filter(row -> row.getCustomCollection().getCustomCollectionId().equals(collectionId))
+                .findFirst()
+                .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
+
         allUserUnlockRows.forEach(row -> row.setProfile(false));
-        
-        // 사용자 해금 행 프로필 설정
         userUnlockRow.markAsProfile();
 
         return ProfileCollectionUpdateResDTO.builder()
@@ -73,20 +68,20 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
                 .findById(collectionId)
                 .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
 
-        // 사용자 해금 행 검증
-        UserCustomCollection userUnlockRow =
-                userCustomCollectionRepository
-                        .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
-                        .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
-
         if (isBookmarked) {
-            // bookmark 등록하는거면 사용자 해금 행 목록 북마크 해제하고 새로운 북마크 설정
-            userCustomCollectionRepository
-                    .findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid)
-                    .forEach(row -> row.setBookmark(false));
+            List<UserCustomCollection> allUserUnlockRows =
+                    userCustomCollectionRepository.findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid);
+            UserCustomCollection userUnlockRow = allUserUnlockRows.stream()
+                    .filter(row -> row.getCustomCollection().getCustomCollectionId().equals(collectionId))
+                    .findFirst()
+                    .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
+            allUserUnlockRows.forEach(row -> row.setBookmark(false));
             userUnlockRow.setBookmark(true);
         } else {
-            userUnlockRow.setBookmark(false);
+            userCustomCollectionRepository
+                    .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
+                    .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED))
+                    .setBookmark(false);
         }
 
         return CollectionBookmarkUpdateResDTO.builder()
