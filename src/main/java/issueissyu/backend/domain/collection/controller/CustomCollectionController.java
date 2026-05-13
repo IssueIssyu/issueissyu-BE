@@ -32,9 +32,9 @@ public class CustomCollectionController {
     private final UserCustomCollectionCommandService userCustomCollectionCommandService;
 
     @Operation(
-            summary = "내 컬렉션 목록",
+            summary = "마이페이지 프로필, 내 컬렉션 목록",
             description =
-                    "collections 는 custom_collection 마스터 전체(ID 순)에 해금·북마크만 반영한 목록입니다. 내 대표 프로필 컬렉션 요약은 myCollection 에 있습니다.")
+                    " 사용자의 프로필 정보와 컬렉션 목록을 반환 합니다. 마이페이지에서는 collections 중 isLocked == false 만 사용할 수 있습니다. myCollection 은 대표 프로필 컬렉션 요약입니다.")
     @GetMapping
     public ApiResponse<MyCollectionsResDTO> getMyCollections(@AuthenticationPrincipal String uid) {
         MyCollectionsResDTO result = userCustomCollectionQueryService.getMyCollections(uid);
