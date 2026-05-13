@@ -80,6 +80,7 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
                         .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
 
         if (isBookmarked) {
+            // bookmark 등록하는거면 사용자 해금 행 목록 북마크 해제하고 새로운 북마크 설정
             userCustomCollectionRepository
                     .findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid)
                     .forEach(row -> row.setBookmark(false));
