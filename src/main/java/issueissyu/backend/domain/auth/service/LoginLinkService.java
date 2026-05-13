@@ -106,7 +106,7 @@ public class LoginLinkService {
                 .likeAlarmActive(existingUser.isLikeAlarmActive())
                 .hotAlarmActive(existingUser.isHotAlarmActive())
                 .storeAlarmActive(existingUser.isStoreAlarmActive())
-                .isAvailableNickname(true)
+                .nicknameAvailability(true)
                 .userPhoneVerified(true)
                 .build();
     }
