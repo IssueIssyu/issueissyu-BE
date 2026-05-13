@@ -16,6 +16,9 @@ public class UserSignOutCleaner {
                     + PIN_IDS_OWNED_BY_USER
                     + ")";
 
+    private static final String EVENT_PIN_IDS_FOR_OWNED_PINS =
+            "(SELECT event_pin_id FROM event_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER + ")";
+
     private final JdbcTemplate jdbcTemplate;
 
     public void deleteRowsReferencingUser(String uid) {
@@ -59,6 +62,9 @@ public class UserSignOutCleaner {
                         + PIN_IDS_OWNED_BY_USER
                         + " OR uid = ?",
                 uid,
+                uid);
+        jdbcTemplate.update(
+                "DELETE FROM store_image WHERE event_pin_id IN " + EVENT_PIN_IDS_FOR_OWNED_PINS,
                 uid);
         jdbcTemplate.update(
                 "DELETE FROM event_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);

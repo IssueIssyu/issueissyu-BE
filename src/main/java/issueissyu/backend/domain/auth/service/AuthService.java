@@ -15,6 +15,8 @@ import issueissyu.backend.domain.user.util.AppUuid;
 import issueissyu.backend.global.redis.RefreshTokenRedisStore;
 import issueissyu.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -107,11 +110,24 @@ public class AuthService {
     // 회원탈퇴: Redis 토큰 → 사용자 연관 행(PC·알림 등) → OAuth → UserTerm → User 순으로 삭제
     @Transactional
     public void signout(String uid) {
-        refreshTokenRedisStore.deleteAll(uid);
-        userSignOutCleaner.deleteRowsReferencingUser(uid);
-        oAuthRepository.deleteByUserUid(uid);
-        userTermRepository.deleteByUserUid(uid);
-        userRepository.deleteById(uid);
+        try {
+            refreshTokenRedisStore.deleteAll(uid);
+            userSignOutCleaner.deleteRowsReferencingUser(uid);
+            oAuthRepository.deleteByUserUid(uid);
+            userTermRepository.deleteByUserUid(uid);
+            userRepository.deleteById(uid);
+        } catch (Exception e) {
+            Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+            log.error(
+                    "회원탈퇴 실패 uid={}, topType={}, topMessage={}, rootType={}, rootMessage={}",
+                    uid,
+                    e.getClass().getName(),
+                    e.getMessage(),
+                    root.getClass().getName(),
+                    root.getMessage(),
+                    e);
+            throw AuthException.of(AuthErrorCode.SIGNOUT_400);
+        }
     }
 
     // 네이버 앱 로그인
