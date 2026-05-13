@@ -49,6 +49,14 @@ public class UserCustomCollection {
     @Column(name = "is_bookmark", nullable = false)
     private boolean isBookmark = false;
 
+    public void setProfile(boolean profile) {
+        this.isProfile = profile;
+    }
+
+    public void setBookmark(boolean bookmark) {
+        this.isBookmark = bookmark;
+    }
+
     public void markAsProfile() {
         this.isProfile = true;
     }
