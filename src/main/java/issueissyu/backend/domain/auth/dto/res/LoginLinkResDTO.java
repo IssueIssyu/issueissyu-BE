@@ -31,11 +31,12 @@ public class LoginLinkResDTO {
     private boolean storeAlarmActive;
 
     @Getter(AccessLevel.NONE)
-    private boolean nicknameAvailability;
+    @JsonProperty("isAvailableNickname")
+    private boolean isAvailableNickname;
 
     @JsonProperty("isAvailableNickname")
     public boolean isAvailableNickname() {
-        return nicknameAvailability;
+        return isAvailableNickname;
     }
 
     @JsonProperty("userPhoneVerified")
