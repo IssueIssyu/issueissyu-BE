@@ -1,5 +1,5 @@
 # PR / push 시 Spring Boot 백엔드 통합 CI
-# 인프라 스모크(Postgres / Redis / S3) → bootJar → JAR 기동 후 /health 200 확인
+# 서비스 컨테이너(Postgres / Redis) → S3 smoke → bootJar → JAR 기동 후 /health 200 확인
 
 name: IssueIssyu Backend CI
 
@@ -68,7 +68,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # GitHub → Settings → Secrets → CI_ENV (파일 상단 주석의 필수 키 참고)
+      # GitHub → Settings → Secrets → CI_ENV
       - name: Create .env from secret (CI_ENV)
         run: |
           if [ -z "${{ secrets.CI_ENV }}" ]; then
@@ -78,7 +78,7 @@ jobs:
           printf '%s' "${{ secrets.CI_ENV }}" > .env
           chmod 600 .env
 
-      # CI 서비스(Postgres/Redis) 주소로 덮어쓰기 
+      # CI 서비스(Postgres/Redis) 주소로 덮어쓰기
       - name: Override datasource and Redis for CI services
         run: |
           cat >> .env << 'EOF'
@@ -89,16 +89,7 @@ jobs:
           LOCAL_REDIS_PORT=6379
           EOF
 
-      # Postgres / Redis 가 실제로 응답하는지
-      - name: Infra smoke (PostgreSQL / Redis)
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y postgresql-client redis-tools
-          pg_isready -h 127.0.0.1 -p 5432 -U postgres -d app
-          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d app -c 'SELECT 1'
-          redis-cli -h 127.0.0.1 -p 6379 ping
-
-      # S3: 프로젝트의 AWS SDK v2 + dotenv-java 로 동일 스모크 (Python 단계 제거)
+      # S3: 프로젝트의 AWS SDK v2 + dotenv-java 로 동일 스모크
       - name: Infra smoke (S3)
         run: ./gradlew s3Smoke -x test
 

@@ -90,7 +90,6 @@ public class UserSignOutCleaner {
         jdbcTemplate.update("DELETE FROM user_alarm WHERE uid = ?", uid);
 
         jdbcTemplate.update("DELETE FROM user_custom_collection WHERE uid = ?", uid);
-        jdbcTemplate.update("DELETE FROM user_location WHERE uid = ?", uid);
         jdbcTemplate.update("DELETE FROM user_emoji WHERE uid = ?", uid);
     }
 }

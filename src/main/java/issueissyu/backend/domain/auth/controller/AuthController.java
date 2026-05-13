@@ -215,7 +215,7 @@ public class AuthController {
 
     @Operation(
             summary = "아이디 중복 확인")
-    @GetMapping("/api/auth/check/username/{username}")
+    @GetMapping("/auth/check/username/{username}")
     public ApiResponse<UsernameCheckResDTO> checkUsername(@PathVariable String username) {
         UsernameCheckResDTO unavailable =
                 UsernameCheckResDTO.builder().isAvailableUsername(false).build();
