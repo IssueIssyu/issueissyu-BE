@@ -14,6 +14,7 @@ import issueissyu.backend.domain.auth.dto.res.LocalSignupResDTO;
 import issueissyu.backend.domain.auth.dto.res.LoginLinkResDTO;
 import issueissyu.backend.domain.auth.dto.res.NaverAppLoginResDTO;
 import issueissyu.backend.domain.auth.dto.res.NicknameCheckResDTO;
+import issueissyu.backend.domain.auth.dto.res.UsernameCheckResDTO;
 import issueissyu.backend.domain.auth.dto.res.OnboardingResDTO;
 import issueissyu.backend.domain.auth.service.LocalLoginService;
 import issueissyu.backend.domain.auth.service.LocalSignupService;
@@ -188,7 +189,7 @@ public class AuthController {
     }
 
     @Operation(summary = "닉네임 중복 확인", description = "입력한 닉네임의 형식 및 중복 여부를 확인합니다.")
-    @GetMapping("/api/auth/{nickname}/check")
+    @GetMapping("/api/auth/check/nickname/{nickname}")
     public ApiResponse<NicknameCheckResDTO> checkNickname(
             @PathVariable String nickname
     ) {
@@ -210,6 +211,31 @@ public class AuthController {
                 .build();
 
         return ApiResponse.onSuccess(AuthSuccessCode.NICKNAME_200, available);
+    }
+
+    @Operation(
+            summary = "아이디 중복 확인")
+    @GetMapping("/api/auth/check/username/{username}")
+    public ApiResponse<UsernameCheckResDTO> checkUsername(@PathVariable String username) {
+        UsernameCheckResDTO unavailable =
+                UsernameCheckResDTO.builder().isAvailableUsername(false).build();
+
+        if (!authService.isValidUsernameLength(username)) {
+            return ApiResponse.onFailure(AuthErrorCode.USERNAME_400, unavailable);
+        }
+
+        if (authService.isUsernameDuplicated(username)) {
+            return ApiResponse.onFailure(AuthErrorCode.USERNAME_409, unavailable);
+        }
+
+        String trimmed = username.trim();
+        UsernameCheckResDTO available =
+                UsernameCheckResDTO.builder()
+                        .isAvailableUsername(true)
+                        .userName(trimmed)
+                        .build();
+
+        return ApiResponse.onSuccess(AuthSuccessCode.USERNAME_200, available);
     }
 
     @Operation(summary = "회원탈퇴", description = "인증된 사용자의 연관 데이터(pin·댓글·알림 등)를 정리한 뒤 Redis 토큰·OAuth·User 레코드를 삭제합니다.")

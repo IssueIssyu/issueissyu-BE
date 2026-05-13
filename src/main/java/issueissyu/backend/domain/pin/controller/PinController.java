@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -93,9 +94,10 @@ public class PinController {
         return ApiResponse.onSuccess(PinSuccessCode.PIN_DECLARATION_200, null);
     }
 
-    @Operation(summary = "핀 상세 홈")
-    @GetMapping("/{pinId}/home")
-    public ApiResponse<PinHomeResDTO> getPinHome(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+    @Operation(summary = "핀 상세 홈", description = "필수 쿼리 pinId. 조회 시 viewCount(조회수) 중복 집계.")
+    @GetMapping("/home")
+    public ApiResponse<PinHomeResDTO> getPinHome(
+            @AuthenticationPrincipal String uid, @RequestParam Long pinId) {
         PinDetailQueryService.PinHomeResult r = pinDetailQueryService.getPinHome(pinId, uid);
         return ApiResponse.onSuccess(r.successCode(), r.data());
     }

@@ -15,7 +15,13 @@ public enum MapErrorCode implements BaseErrorCode {
     MAP_CARD_404(HttpStatus.NOT_FOUND, "MAP_CARD_404", "존재하지 않는 핀 입니다."),
     MAP_CARD_500(HttpStatus.INTERNAL_SERVER_ERROR, "MAP_CARD_500", "핀 카드 조회 중 서버 오류가 발생했습니다."),
 
-    MAP_NOTICE_500(HttpStatus.INTERNAL_SERVER_ERROR, "MAP_NOTICE_500", "공지 조회 중 서버 오류가 발생했습니다.");
+    MAP_NOTICE_500(HttpStatus.INTERNAL_SERVER_ERROR, "MAP_NOTICE_500", "공지 조회 중 서버 오류가 발생했습니다."),
+
+    PATCHNOTE_400_1(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_1", "존재하지 않는 지역 입니다."),
+    PATCHNOTE_400_2(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_2", "조회 불가능한 사이즈 입니다."),
+    PATCHNOTE_400_3(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_3", "조회 불가능한 cursor 입니다."),
+    PATCHNOTE_400_4(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_4", "사용자의 동네가 등록되지 않아 패치노트 조회가 불가능합니다."),
+    PATCHNOTE_400_5(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_5", "패치노트 조회에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

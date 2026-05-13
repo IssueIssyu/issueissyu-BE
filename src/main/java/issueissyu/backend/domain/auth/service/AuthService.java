@@ -165,4 +165,16 @@ public class AuthService {
     public boolean isNicknameDuplicated(String nickname) {
         return userRepository.existsByNickname(nickname);
     }
+
+    public boolean isValidUsernameLength(String userName) {
+        if (userName == null) {
+            return false;
+        }
+        String t = userName.trim();
+        return !t.isEmpty() && t.length() <= 100;
+    }
+
+    public boolean isUsernameDuplicated(String userName) {
+        return userRepository.existsByUserName(userName.trim());
+    }
 }

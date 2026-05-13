@@ -80,8 +80,4 @@ public class Pin extends BaseEntity {
         this.pinTitle = pinTitle;
         this.pinContent = pinContent;
     }
-
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
 }
