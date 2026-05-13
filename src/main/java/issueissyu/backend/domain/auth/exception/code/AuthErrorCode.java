@@ -20,6 +20,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     LOCAL_LOGIN_401(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401", "아이디 또는 비밀번호가 올바르지 않습니다."),
     NICKNAME_400(HttpStatus.BAD_REQUEST, "NICKNAME_400", "닉네임은 15자 이내의 영문, 숫자, 한글만 사용 가능합니다."),
     NICKNAME_409(HttpStatus.CONFLICT, "NICKNAME_409", "이미 사용 중인 닉네임입니다."),
+    USERNAME_400(HttpStatus.BAD_REQUEST, "USERNAME_400", "아이디는 100자 이내이어야 합니다."),
+    USERNAME_409(HttpStatus.CONFLICT, "USERNAME_409", "이미 사용 중인 아이디 입니다."),
     TERM_400(HttpStatus.BAD_REQUEST, "TERM_400", "필수 약관(SERVICE, PRIVACY)에 모두 동의해야 합니다."),
 
     // 전화번호 인증
