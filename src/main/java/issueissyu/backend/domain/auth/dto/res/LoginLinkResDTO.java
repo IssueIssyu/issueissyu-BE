@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.auth.dto.res;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -29,8 +30,14 @@ public class LoginLinkResDTO {
     @JsonProperty("storeAlarmActive")
     private boolean storeAlarmActive;
 
+    @Getter(AccessLevel.NONE)
     @JsonProperty("isAvailableNickname")
     private boolean isAvailableNickname;
+
+    @JsonProperty("isAvailableNickname")
+    public boolean isAvailableNickname() {
+        return isAvailableNickname;
+    }
 
     @JsonProperty("userPhoneVerified")
     private boolean userPhoneVerified;
