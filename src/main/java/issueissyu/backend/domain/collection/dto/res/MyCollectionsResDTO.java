@@ -12,6 +12,10 @@ import java.util.List;
 public class MyCollectionsResDTO {
 
     private String nickname;
-    private ProfileCollectionSummaryResDTO profileCollection;
+
+    // 대표 프로필 컬렉션 요약 (없으면 null)
+    private ProfileCollectionSummaryResDTO myCollection;
+
+    // 전체 컬렉션 목록(ID 순), 해금·북마크 반영
     private List<UserCollectionItemResDTO> collections;
 }

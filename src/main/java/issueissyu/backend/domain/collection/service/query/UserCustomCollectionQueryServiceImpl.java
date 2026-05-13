@@ -29,78 +29,74 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
     private final CustomCollectionRepository customCollectionRepository;
     private final UserCustomCollectionRepository userCustomCollectionRepository;
 
+    // 마스터 전부 ID 순으로 내려주고, 해금 행 있으면 북마크 반영 / 프로필 요약은 myCollection
     @Override
     public MyCollectionsResDTO getMyCollections(String uid) {
         User user = userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
-        List<CustomCollection> catalog = customCollectionRepository.findAllByOrderByCustomCollectionIdAsc();
-        // user_custom_collection 행이 있으면 해당 컬렉션은 해금된 상태로 본다.
-        Map<Long, UserCustomCollection> unlockedMappingByCollectionId =
+        List<CustomCollection> catalogDefinitions =
+                customCollectionRepository.findAllByOrderByCustomCollectionIdAsc();
+
+        Map<Long, UserCustomCollection> unlockRowByCatalogId =
                 userCustomCollectionRepository
                         .findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid)
                         .stream()
                         .collect(
                                 Collectors.toMap(
-                                        u -> u.getCustomCollection().getCustomCollectionId(),
+                                        row -> row.getCustomCollection().getCustomCollectionId(),
                                         Function.identity()));
 
         ProfileCollectionSummaryResDTO profileSummary =
-                unlockedMappingByCollectionId.values().stream()
+                unlockRowByCatalogId.values().stream()
                         .filter(UserCustomCollection::isProfile)
                         .findFirst()
-                        .map(u -> toProfileSummary(u.getCustomCollection()))
+                        .map(row -> toProfileSummary(row.getCustomCollection()))
                         .orElse(null);
 
         List<UserCollectionItemResDTO> collections =
-                catalog.stream()
+                catalogDefinitions.stream()
                         .map(
                                 definition ->
                                         toCollectionItem(
                                                 definition,
-                                                unlockedMappingByCollectionId.get(
-                                                        definition.getCustomCollectionId())))
+                                                unlockRowByCatalogId.get(definition.getCustomCollectionId())))
                         .toList();
 
         return MyCollectionsResDTO.builder()
                 .nickname(user.getNickname())
-                .profileCollection(profileSummary)
+                .myCollection(profileSummary)
                 .collections(collections)
                 .build();
     }
 
-    private static ProfileCollectionSummaryResDTO toProfileSummary(CustomCollection c) {
+    private static ProfileCollectionSummaryResDTO toProfileSummary(CustomCollection catalogDefinition) {
         return ProfileCollectionSummaryResDTO.builder()
-                .collectionId(c.getCustomCollectionId())
-                .name(c.getCustomCollectionName())
-                .imageUrl(c.getCustomCollectionS3Url())
+                .collectionId(catalogDefinition.getCustomCollectionId())
+                .name(catalogDefinition.getCustomCollectionName())
+                .imageUrl(catalogDefinition.getCustomCollectionS3Url())
                 .build();
     }
 
-    /**
-     * @param definition 마스터 컬렉션(카탈로그)
-     * @param unlockRow 해당 유저의 해금 매핑 행. 없으면(null) 아직 잠금.
-     */
+    // userUnlockRow 없으면 잠금 처리
     private static UserCollectionItemResDTO toCollectionItem(
-            CustomCollection definition, UserCustomCollection unlockRow) {
-        if (unlockRow != null) {
+            CustomCollection catalogDefinition, UserCustomCollection userUnlockRow) {
+        if (userUnlockRow != null) {
             return UserCollectionItemResDTO.builder()
-                    .collectionId(definition.getCustomCollectionId())
-                    .name(definition.getCustomCollectionName())
-                    .imageUrl(definition.getCustomCollectionS3Url())
+                    .collectionId(catalogDefinition.getCustomCollectionId())
+                    .name(catalogDefinition.getCustomCollectionName())
+                    .imageUrl(catalogDefinition.getCustomCollectionS3Url())
                     .isLocked(false)
-                    .isBookmarked(unlockRow.isBookmark())
-                    .isProfile(unlockRow.isProfile())
+                    .isBookmarked(userUnlockRow.isBookmark())
                     .unlockCondition("")
                     .build();
         }
         return UserCollectionItemResDTO.builder()
-                .collectionId(definition.getCustomCollectionId())
-                .name(definition.getCustomCollectionName())
-                .imageUrl(definition.getCustomCollectionS3Url())
+                .collectionId(catalogDefinition.getCustomCollectionId())
+                .name(catalogDefinition.getCustomCollectionName())
+                .imageUrl(catalogDefinition.getCustomCollectionS3Url())
                 .isLocked(true)
                 .isBookmarked(false)
-                .isProfile(false)
-                .unlockCondition(definition.getLockCondition())
+                .unlockCondition(catalogDefinition.getLockCondition())
                 .build();
     }
 }

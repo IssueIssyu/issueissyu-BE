@@ -9,7 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ProfileCollectionUpdateResDTO {
 
-    private String uid;
     private Long profileCollectionId;
     private String profileImageUrl;
 }

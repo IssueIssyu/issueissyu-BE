@@ -25,46 +25,69 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
     private final CustomCollectionRepository customCollectionRepository;
     private final UserCustomCollectionRepository userCustomCollectionRepository;
 
+    // 해금된 컬렉션만 프로필로 설정 가능
     @Override
     @Transactional
     public ProfileCollectionUpdateResDTO setProfileCollection(String uid, Long collectionId) {
+        // 사용자 검증
         userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
-        CustomCollection master =
+
+        // 컬렉션 검증
+        CustomCollection catalogDefinition =
                 customCollectionRepository
                         .findById(collectionId)
                         .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
 
-        UserCustomCollection mapping =
+        // 사용자 해금 행 검증
+    
+        UserCustomCollection userUnlockRow =
                 userCustomCollectionRepository
                         .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
                         .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
 
-        List<UserCustomCollection> owned =
+        // 사용자 해금 행 목록 조회
+        List<UserCustomCollection> allUserUnlockRows =
                 userCustomCollectionRepository.findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid);
-        owned.forEach(o -> o.setProfile(false));
-        mapping.markAsProfile();
+        // 사용자 해금 행 목록 프로필 해제
+        allUserUnlockRows.forEach(row -> row.setProfile(false));
+        
+        // 사용자 해금 행 프로필 설정
+        userUnlockRow.markAsProfile();
 
         return ProfileCollectionUpdateResDTO.builder()
-                .uid(uid)
-                .profileCollectionId(master.getCustomCollectionId())
-                .profileImageUrl(master.getCustomCollectionS3Url())
+                .profileCollectionId(catalogDefinition.getCustomCollectionId())
+                .profileImageUrl(catalogDefinition.getCustomCollectionS3Url())
                 .build();
     }
 
+    // 북마크는 하나만 켜짐, 0 도 가능
     @Override
     @Transactional
     public CollectionBookmarkUpdateResDTO setBookmark(String uid, Long collectionId, boolean isBookmarked) {
+        
+        // 사용자 검증
         userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        // 컬렉션 검증
         customCollectionRepository
                 .findById(collectionId)
                 .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
 
-        UserCustomCollection mapping =
+        // 사용자 해금 행 검증
+        UserCustomCollection userUnlockRow =
                 userCustomCollectionRepository
                         .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
                         .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
 
-        mapping.setBookmark(isBookmarked);
+        if (isBookmarked) {
+            userCustomCollectionRepository
+                    .findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid)
+                    .forEach(row -> row.setBookmark(false));
+            userUnlockRow.setBookmark(true);
+        } else {
+            userUnlockRow.setBookmark(false);
+        }
+
         return CollectionBookmarkUpdateResDTO.builder()
                 .customCollectionId(collectionId)
                 .isBookmarked(isBookmarked)
