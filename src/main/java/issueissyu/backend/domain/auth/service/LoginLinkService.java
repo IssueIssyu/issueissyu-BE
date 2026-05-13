@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.util.Optional;
 
 @Slf4j
@@ -90,13 +89,17 @@ public class LoginLinkService {
         String provider = socialType.name().toLowerCase();
         refreshTokenRedisStore.delete(tempUid, provider);
 
+        String newAccessToken = jwtTokenProvider.createAccessToken(existingUid);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(existingUid, provider);
         refreshTokenRedisStore.save(existingUid, provider, newRefreshToken,
-                Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
+                java.time.Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
         log.info("로그인 연동 완료: tempUid={} → existingUid={}, socialType={}", tempUid, existingUid, socialType);
 
         return LoginLinkResDTO.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .expiresIn(jwtTokenProvider.getAccessExpMs() / 1000)
                 .uuid(existingUid)
                 .socialType(socialType.name())
                 .nickname(existingUser.getNickname())

@@ -9,6 +9,10 @@ import lombok.Getter;
 @Builder
 public class LoginLinkResDTO {
 
+    private String accessToken;
+    private String refreshToken;
+    private long expiresIn;
+
     private String uuid;
 
     @JsonProperty("socialType")
