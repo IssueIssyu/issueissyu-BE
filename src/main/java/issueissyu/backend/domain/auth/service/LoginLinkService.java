@@ -105,7 +105,7 @@ public class LoginLinkService {
         String newAccessToken = jwtTokenProvider.createAccessToken(existingUid);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(existingUid, provider);
         refreshTokenRedisStore.save(existingUid, provider, newRefreshToken,
-                java.time.Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
+                Duration.ofMillis(jwtTokenProvider.getRefreshExpMs()));
 
         log.info("로그인 연동 완료: tempUid={} → existingUid={}, socialType={}", tempUid, existingUid, socialType);
 
