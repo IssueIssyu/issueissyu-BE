@@ -84,6 +84,26 @@ public class User extends BaseEntity {
         this.storeAlarmActive = active;
     }
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void toggleLikeAlarm() {
+        this.likeAlarmActive = !this.likeAlarmActive;
+    }
+
+    public void toggleEventAlarm() {
+        this.eventAlarmActive = !this.eventAlarmActive;
+    }
+
+    public void toggleHotAlarm() {
+        this.hotAlarmActive = !this.hotAlarmActive;
+    }
+
+    public void toggleStoreAlarm() {
+        this.storeAlarmActive = !this.storeAlarmActive;
+    }
+
     // isNew 판별
     public boolean needsLoginOnboarding() {
         return phone == null || nickname == null;
