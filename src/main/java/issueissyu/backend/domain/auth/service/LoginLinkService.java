@@ -109,9 +109,9 @@ public class LoginLinkService {
         log.info("로그인 연동 완료: tempUid={} → existingUid={}, socialType={}", tempUid, existingUid, socialType);
 
         return LoginLinkResDTO.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .expiresIn(jwtTokenProvider.getAccessExpMs() / 1000)
+                //.accessToken(newAccessToken)
+                //.refreshToken(newRefreshToken)
+                //.expiresIn(jwtTokenProvider.getAccessExpMs() / 1000)
                 .uuid(existingUid)
                 .socialType(socialType.name())
                 .nickname(existingUser.getNickname())
