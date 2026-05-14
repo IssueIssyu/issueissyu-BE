@@ -39,7 +39,8 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "REFRESH_401", "토큰 재발급에 실패했습니다."),
     LOGOUT_INVALID(HttpStatus.UNAUTHORIZED, "LOGOUT_401", "유효하지 않은 토큰입니다."),
-    SIGNOUT_INVALID(HttpStatus.UNAUTHORIZED, "SIGNOUT_401", "유효하지 않은 토큰입니다.");
+    SIGNOUT_INVALID(HttpStatus.UNAUTHORIZED, "SIGNOUT_401", "유효하지 않은 토큰입니다."),
+    SIGNOUT_400(HttpStatus.BAD_REQUEST, "SIGNOUT_400", "회원탈퇴가 불가합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
