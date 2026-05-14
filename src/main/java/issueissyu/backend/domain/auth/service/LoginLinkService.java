@@ -36,7 +36,7 @@ public class LoginLinkService {
 
     // 처리 순서:
     // 1. 전화번호로 기존 사용자(existingUser) 조회
-    // 2. LOCAL이면 임시 유저의 providerId(로그인 아이디)·password를 삭제 전에 보존
+    // 2. LOCAL이면 임시 유저의 providerId(로그인 아이디)·password를, NAVER 등은 소셜 측 providerId를 삭제 전에 보존
     // 3. tempUid 사용자의 OAuth 레코드 삭제 + User 레코드 삭제
     // 4. existingUser에 새 socialType OAuth 추가 (이미 있으면 스킵)
     // 5. Redis에서 tempUid:socialType 토큰 삭제 후 existingUid:socialType 토큰 신규 발급
@@ -60,7 +60,7 @@ public class LoginLinkService {
             throw AuthException.of(AuthErrorCode.LOGIN_LINK_400_3);
         }
 
-        // 4. LOCAL 연동: 삭제 전에 로그인 아이디(providerId)와 BCrypt 해시 비밀번호를 보존
+        // 4. 연동할 소셜별로 삭제 전에 OAuth providerId(및 LOCAL일 때 password) 보존
         String oauthProviderId = tempUid;
         String oauthPassword   = null;
         if (socialType == SocialType.LOCAL) {
@@ -70,6 +70,18 @@ public class LoginLinkService {
                 oauthProviderId = tempLocalOAuth.get().getProviderId();
                 oauthPassword   = tempLocalOAuth.get().getPassword();
             }
+        } else {
+            Optional<OAuth> tempSocialOAuth =
+                    oAuthRepository.findByUser_UidAndSocialType(tempUid, socialType);
+            if (tempSocialOAuth.isEmpty()) {
+                log.warn(
+                        "로그인 연동 실패: tempUid={} 에 {} OAuth가 없어 providerId를 복사할 수 없음",
+                        tempUid,
+                        socialType);
+                throw AuthException.of(AuthErrorCode.LOGIN_LINK_400);
+            }
+            oauthProviderId = tempSocialOAuth.get().getProviderId();
+            oauthPassword   = tempSocialOAuth.get().getPassword();
         }
 
         // 5. tempUid 사용자 완전 제거 (OAuth → UserTerm → User 순서)
