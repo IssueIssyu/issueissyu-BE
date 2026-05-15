@@ -19,11 +19,13 @@ public interface UserMyPinRepository extends JpaRepository<Pin, Long> {
                            p.created_at AS createdAt
                     FROM pin p
                     LEFT JOIN issue_pin ip ON ip.pin_id = p.pin_id
-                    LEFT JOIN (
-                        SELECT DISTINCT ON (pl2.pin_id) pl2.pin_id, pl2.detail_address
+                    LEFT JOIN LATERAL (
+                        SELECT pl2.detail_address
                         FROM pin_location pl2
-                        ORDER BY pl2.pin_id, pl2.pin_location_id ASC
-                    ) pl ON pl.pin_id = p.pin_id
+                        WHERE pl2.pin_id = p.pin_id
+                        ORDER BY pl2.pin_location_id ASC
+                        LIMIT 1
+                    ) pl ON TRUE
                     WHERE p.uid = :uid
                       AND (
                           NOT CAST(:applyCursor AS boolean)
