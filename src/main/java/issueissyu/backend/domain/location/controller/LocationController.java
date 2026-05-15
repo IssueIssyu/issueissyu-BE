@@ -72,7 +72,7 @@ public class LocationController {
 
     @Operation(
             summary = "EPSG:4326 좌표 → 도로명 주소 및 location_id",
-            description = "WGS84 위도(lat)·경도(lng). 네이버 역지오코딩의 roadaddr만 사용하며, 도로명이 없으면 오류를 반환합니다."
+            description = "WGS84 위도(lat)·경도(lng). legalcode로 시군구를 판별하고 주소는 roadaddr → addr → region 순으로 반환합니다."
     )
     @GetMapping("/resolve")
     public ApiResponse<CoordinateLocationResolveResDTO> resolveAddressAndLocationId(
