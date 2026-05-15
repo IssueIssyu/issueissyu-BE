@@ -58,11 +58,11 @@ public class LocationService {
     }
 
     /**
-     * EPSG:4326(WGS84) 위·경도 기준. 한 번의 역지오코딩으로 도로명 주소와 시군구(location)를 맞춥니다.
+     * EPSG:4326(WGS84) 위·경도 기준. 한 번의 역지오코딩으로 법정동 기반 시군구(location)와 표시용 주소를 맞춥니다.
      */
     @Transactional(readOnly = true)
     public CoordinateLocationResolveResDTO resolveAddressAndLocationId(PGpoint point) {
-        NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndRoadAddressOnly(point);
+        NaverReverseGeocodeCodeAddressResDTO resolved = naverMapService.resolveLegalDistrictCodeAndAddress(point);
         Location location = findLocationByLegalDistrictCode(resolved.legalDistrictCode());
         return new CoordinateLocationResolveResDTO(location.getLocationId(), resolved.address());
     }
