@@ -37,7 +37,7 @@ public class LocalLoginService {
         // 로컬 OAuth 레코드 조회 (providerId = 회원가입 시 저장한 로그인 아이디)
         OAuth oauth = oAuthRepository
                 .findBySocialTypeAndProviderIdWithUser(SocialType.LOCAL, loginId)
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.LOCAL_LOGIN_401_2));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.LOCAL_LOGIN_401));
 
         // 비밀번호 검증
         if (oauth.getPassword() == null || !passwordEncoder.matches(req.getPassword(), oauth.getPassword())) {
