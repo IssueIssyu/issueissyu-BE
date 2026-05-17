@@ -3,10 +3,12 @@ package issueissyu.backend.domain.location.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
+import issueissyu.backend.domain.location.dto.res.LocationRegionListResDTO;
 import issueissyu.backend.domain.location.dto.res.UserLocationCertResDto;
 import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
 import issueissyu.backend.domain.location.service.LocationService;
+import issueissyu.backend.domain.location.service.query.LocationRegionListQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
@@ -25,6 +27,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class LocationController {
     private final LocationService locationService;
+    private final LocationRegionListQueryService locationRegionListQueryService;
+
+    @Operation(
+            summary = "지역구 목록 조회",
+            description = "상위(비시군구) location 행을 제외한 지역구 목록과, 동네 인증 시 사용자 시군구 표시명을 반환합니다.")
+    @GetMapping("/regions")
+    public ApiResponse<LocationRegionListResDTO> getRegionList(@AuthenticationPrincipal String uid) {
+        LocationRegionListResDTO body = locationRegionListQueryService.getRegionList(uid);
+        LocationSuccessCode code =
+                body.user() == null
+                        ? LocationSuccessCode.LOCATION_LIST_204
+                        : LocationSuccessCode.LOCATION_LIST_200;
+        return ApiResponse.onSuccess(code, body);
+    }
 
     @Operation(summary = "내 위치 조회")
     @GetMapping("/user")
@@ -56,7 +72,7 @@ public class LocationController {
 
     @Operation(
             summary = "EPSG:4326 좌표 → 도로명 주소 및 location_id",
-            description = "WGS84 위도(lat)·경도(lng). 네이버 역지오코딩의 roadaddr만 사용하며, 도로명이 없으면 오류를 반환합니다."
+            description = "WGS84 위도(lat)·경도(lng). legalcode로 시군구를 판별하고 주소는 roadaddr → addr → region 순으로 반환합니다."
     )
     @GetMapping("/resolve")
     public ApiResponse<CoordinateLocationResolveResDTO> resolveAddressAndLocationId(

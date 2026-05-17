@@ -75,7 +75,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         BaseErrorCode errorCode = GeneralErrorCode.BAD_REQUEST;
         if (request instanceof ServletWebRequest servletWebRequest) {
             String uri = servletWebRequest.getRequest().getRequestURI();
-            if ("/auth/signup/local".equals(uri)) {
+            if ("/auth/login/local".equals(uri)) {
+                errorCode = AuthErrorCode.LOCAL_LOGIN_400_1;
+            } else if ("/auth/signup/local".equals(uri)) {
                 errorCode = AuthErrorCode.LOCAL_SIGNUP_400_1;
             } else if ("/api/auth/phone/send".equals(uri)) {
                 errorCode = AuthErrorCode.PHONE_SEND_400_1;

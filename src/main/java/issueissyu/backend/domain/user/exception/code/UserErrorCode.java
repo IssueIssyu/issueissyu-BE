@@ -1,4 +1,21 @@
 package issueissyu.backend.domain.user.exception.code;
 
-public enum UserErrorCode {
+import issueissyu.backend.global.api.code.BaseErrorCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@AllArgsConstructor
+public enum UserErrorCode implements BaseErrorCode {
+
+    USER_PIN_400_1(HttpStatus.BAD_REQUEST, "USER_PIN_400_1", "조회 불가능한 사이즈 입니다."),
+    USER_PIN_400_2(HttpStatus.BAD_REQUEST, "USER_PIN_400_2", "조회 불가능한 cursor 입니다."),
+    USER_NICKNAME_400(HttpStatus.BAD_REQUEST, "USER_NICKNAME_400", "닉네임은 15자 이내의 영문, 숫자, 한글만 사용 가능합니다."),
+    USER_NICKNAME_409(HttpStatus.CONFLICT, "USER_NICKNAME_409", "이미 사용 중인 닉네임입니다."),
+    USER_ALARM_400(HttpStatus.BAD_REQUEST, "USER_ALARM_400", "존재하지 않는 알람 설정입니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
 }
