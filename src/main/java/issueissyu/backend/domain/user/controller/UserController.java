@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.location.dto.res.UserLocationCertResDto;
 import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
+import issueissyu.backend.domain.user.dto.req.NicknameChangeReqDTO;
 import issueissyu.backend.domain.user.dto.res.UserAlarmToggleResDTO;
 import issueissyu.backend.domain.user.dto.res.UserMyPinsResDTO;
 import issueissyu.backend.domain.user.enums.UserAlarmType;
@@ -11,11 +12,13 @@ import issueissyu.backend.domain.user.exception.code.UserSuccessCode;
 import issueissyu.backend.domain.user.service.command.UserCommandService;
 import issueissyu.backend.domain.user.service.query.UserPinQueryService;
 import issueissyu.backend.global.api.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,11 +54,11 @@ public class UserController {
         return ApiResponse.onSuccess(outcome.successCode(), outcome.result());
     }
 
-    @Operation(summary = "닉네임 변경", description = "현재 로그인한 사용자의 닉네임을 변경합니다.")
-    @PatchMapping("/me/nickname/{nickname}")
+    @Operation(summary = "닉네임 변경", description = "현재 로그인한 사용자의 닉네임을 변경합니다. 요청 본문에 nickname을 전달합니다.")
+    @PatchMapping("/me/nickname")
     public ApiResponse<Void> changeNickname(
-            @AuthenticationPrincipal String uid, @PathVariable String nickname) {
-        userCommandService.changeNickname(uid, nickname);
+            @AuthenticationPrincipal String uid, @Valid @RequestBody NicknameChangeReqDTO request) {
+        userCommandService.changeNickname(uid, request.getNickname());
         return ApiResponse.onSuccess(UserSuccessCode.USER_NICKNAME_200, null);
     }
 
