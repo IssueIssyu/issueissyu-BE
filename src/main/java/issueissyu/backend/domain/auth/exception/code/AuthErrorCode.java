@@ -18,7 +18,8 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     // 로컬 로그인
     LOCAL_LOGIN_400_1(HttpStatus.BAD_REQUEST, "LOCAL_LOGIN_400_1", "유효하지 않은 값이 존재합니다."),
-    LOCAL_LOGIN_401(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401", "아이디 또는 비밀번호가 올바르지 않습니다."),
+    LOCAL_LOGIN_401_1(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401_1", "유효하지 않은 값이 존재합니다(만료된 인가코드 등)."),
+    LOCAL_LOGIN_401_2(HttpStatus.UNAUTHORIZED, "LOCAL_LOGIN_401_2", "아이디 또는 비밀번호가 올바르지 않습니다."),
     NICKNAME_400(HttpStatus.BAD_REQUEST, "NICKNAME_400", "닉네임은 15자 이내의 영문, 숫자, 한글만 사용 가능합니다."),
     NICKNAME_409(HttpStatus.CONFLICT, "NICKNAME_409", "이미 사용 중인 닉네임입니다."),
     USERNAME_400(HttpStatus.BAD_REQUEST, "USERNAME_400", "아이디는 100자 이내이어야 합니다."),

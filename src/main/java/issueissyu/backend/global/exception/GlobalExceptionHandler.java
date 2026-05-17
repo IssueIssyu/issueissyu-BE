@@ -76,11 +76,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         if (request instanceof ServletWebRequest servletWebRequest) {
             String uri = servletWebRequest.getRequest().getRequestURI();
             if ("/auth/login/local".equals(uri)) {
-                ApiResponse<Void> body = ApiResponse.onFailure(AuthErrorCode.LOCAL_LOGIN_401_1);
-                return super.handleExceptionInternal(e, body, HttpHeaders.EMPTY,
-                        AuthErrorCode.LOCAL_LOGIN_401_1.getReason().getHttpStatus(), request);
-            }
-            if ("/auth/signup/local".equals(uri)) {
+                errorCode = AuthErrorCode.LOCAL_LOGIN_400_1;
+            } else if ("/auth/signup/local".equals(uri)) {
                 errorCode = AuthErrorCode.LOCAL_SIGNUP_400_1;
             } else if ("/api/auth/phone/send".equals(uri)) {
                 errorCode = AuthErrorCode.PHONE_SEND_400_1;
