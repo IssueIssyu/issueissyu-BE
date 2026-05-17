@@ -41,7 +41,7 @@ public class LocalLoginService {
 
         // 비밀번호 검증
         if (oauth.getPassword() == null || !passwordEncoder.matches(req.getPassword(), oauth.getPassword())) {
-            throw AuthException.of(AuthErrorCode.LOCAL_LOGIN_401_2);
+            throw AuthException.of(AuthErrorCode.LOCAL_LOGIN_401);
         }
 
         User user = oauth.getUser();
