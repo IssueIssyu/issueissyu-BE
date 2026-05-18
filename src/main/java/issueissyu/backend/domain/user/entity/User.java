@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.user.entity;
 
 import issueissyu.backend.domain.location.entity.Location;
+import issueissyu.backend.domain.user.enums.UserRole;
 import issueissyu.backend.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,6 +13,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.postgresql.geometric.PGpoint;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +44,17 @@ public class User extends BaseEntity {
 
     @Column(length = 255)
     private String email;
+
+    @Column(name = "user_point_updated", columnDefinition = "timestamp(6)")
+    private LocalDateTime userPointUpdated;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "role")
+    private UserRole role = UserRole.USER;
+
+    @Column(name = "push_token", length = 255)
+    private String pushToken;
 
     @Builder.Default
     @Column(name = "event_alarm_active", nullable = false)
@@ -102,6 +115,10 @@ public class User extends BaseEntity {
 
     public void toggleStoreAlarm() {
         this.storeAlarmActive = !this.storeAlarmActive;
+    }
+
+    public void markUserPointUpdatedNow() {
+        this.userPointUpdated = LocalDateTime.now();
     }
 
     // isNew 판별
