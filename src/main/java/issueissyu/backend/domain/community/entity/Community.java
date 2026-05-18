@@ -54,8 +54,16 @@ public class Community extends BaseEntity {
     @Column(length = 255)
     private String content;
 
+    /** 배치에서 갱신하는 인기도 (null 이면 미산정) */
+    @Column(name = "popularity")
+    private Double popularity;
+
     @Builder.Default
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
+
+    public void updatePopularity(double popularity) {
+        this.popularity = popularity;
+    }
 }

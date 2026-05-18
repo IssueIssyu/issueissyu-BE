@@ -49,4 +49,13 @@ public interface PinEmojiRepository extends JpaRepository<PinEmoji, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM PinEmoji pe WHERE pe.pin.pinId = :pinId")
     void deleteByPin_PinId(@Param("pinId") Long pinId);
+
+    // 배치에서 핀 하나의 활성 이모지 총 개수를 셀 때 사용
+    @Query("""
+        SELECT COUNT(pe)
+        FROM PinEmoji pe
+        WHERE pe.pin.pinId = :pinId
+          AND pe.active = true
+        """)
+    long countActiveByPinId(@Param("pinId") Long pinId);
 }
