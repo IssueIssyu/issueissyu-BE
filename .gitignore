@@ -39,3 +39,7 @@ out/
 
 ### env ###
 .env
+
+
+### FCM ###
+src/main/resources/google-services.json
