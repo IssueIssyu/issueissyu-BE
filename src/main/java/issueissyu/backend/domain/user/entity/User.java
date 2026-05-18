@@ -121,6 +121,10 @@ public class User extends BaseEntity {
         this.userPointUpdated = LocalDateTime.now();
     }
 
+    public void updatePushToken(String pushToken) {
+        this.pushToken = pushToken;
+    }
+
     // isNew 판별
     public boolean needsLoginOnboarding() {
         return phone == null || nickname == null;
