@@ -1,13 +1,9 @@
 package issueissyu.backend.domain.location.repository;
 
 import issueissyu.backend.domain.location.entity.Location;
-import java.util.Collection;
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LocationRepository extends JpaRepository<Location, Long> {
 
@@ -22,6 +18,5 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
 
     Optional<Location> findByRegion(String region);
 
-    @Query("SELECT l FROM Location l WHERE l.locationId NOT IN :excluded ORDER BY l.locationId ASC")
-    List<Location> findAllExcludingIds(@Param("excluded") Collection<Long> excluded);
+    List<Location> findAllByOrderByLocationIdAsc();
 }

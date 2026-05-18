@@ -5,4 +5,4 @@ import java.util.List;
 
 public record LocationRegionListResDTO(
         @JsonProperty("user") UserRegionSnippetResDTO user,
-        List<LocationRegionItemResDTO> locations) {}
+        List<LocationRegionGroupResDTO> locations) {}

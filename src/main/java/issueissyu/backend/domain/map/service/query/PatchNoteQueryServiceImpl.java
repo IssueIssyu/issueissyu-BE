@@ -73,8 +73,12 @@ public class PatchNoteQueryServiceImpl implements PatchNoteQueryService {
                                             new PatchNotePinItemResDTO(
                                                     r.getPinId(),
                                                     r.getPinType(),
+                                                    r.getPinTitle(),
+                                                    r.getViewCount() == null ? 0 : r.getViewCount(),
                                                     r.getPinDetailAddress(),
                                                     r.getIssuePinState(),
+                                                    r.getPinUserProfile(),
+                                                    r.getPinUserNickname(),
                                                     r.getCreatedAt()))
                             .toList();
 
