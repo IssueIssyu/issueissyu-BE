@@ -1,6 +1,8 @@
 package issueissyu.backend.domain.pin.repository;
 
 import issueissyu.backend.domain.pin.entity.EventPin;
+import issueissyu.backend.domain.pin.enums.PinType;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +21,16 @@ public interface EventPinRepository extends JpaRepository<EventPin, Long> {
 
     @Query("select ep from EventPin ep left join fetch ep.storeImage where ep.pin.pinId in :pinIds")
     List<EventPin> findWithStoreImageByPinIdIn(@Param("pinIds") Collection<Long> pinIds);
+
+    // 알람 스케줄러용: pinType 과 eventStartTime 이 [from, to] 범위인 핀 조회
+    @Query("""
+            select ep from EventPin ep
+            join fetch ep.pin p
+            where p.pinType = :pinType
+              and ep.eventStartTime between :from and :to
+            """)
+    List<EventPin> findAlarmTargetsByPinTypeAndStartTimeBetween(
+            @Param("pinType") PinType pinType,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }
