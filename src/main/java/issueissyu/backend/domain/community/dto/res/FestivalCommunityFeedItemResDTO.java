@@ -8,12 +8,14 @@ import java.time.LocalDateTime;
 public record FestivalCommunityFeedItemResDTO(
         Long communityId,
         Long pinId,
-        String title,
-        String thumbnailUrl,
-        String address,
-        int viewCount,
-        long likeCount,
+        String pinTitle,
+        String festivalImageUrl,
+        String content,
+        String discount,
+        String pinDetailAddress,
         LocalDateTime eventStartTime,
-        LocalDateTime eventEndTime
-) implements CommunityFeedItemResDTO {
+        LocalDateTime eventEndTime,
+        int viewCount,
+        long likeCount
+) implements CommunityFeedItemResDTO, CommunityDetailItemResDTO {
 }
