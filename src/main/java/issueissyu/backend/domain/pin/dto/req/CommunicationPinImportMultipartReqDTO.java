@@ -9,6 +9,6 @@ import java.util.List;
 public record CommunicationPinImportMultipartReqDTO(
         @NotNull Double lat,
         @NotNull Double lng,
-        @NotNull @Valid @Size(max = 5) List<CommunicationPinImportMultipartImageReqDTO> pinImages,
+        @Valid @Size(max = 5) List<CommunicationPinImportMultipartImageReqDTO> pinImages,
         @NotBlank String pinTitle,
         @NotBlank String pinContent) {}

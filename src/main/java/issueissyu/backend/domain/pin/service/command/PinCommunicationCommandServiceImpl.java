@@ -133,9 +133,18 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     @Override
     public CommunicationPinImportResDTO importCommunicationV1(
             String uid, CommunicationPinImportMultipartReqDTO req, List<MultipartFile> photos) {
-        validateMultipartImportRequest(req, photos);
+        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
 
-        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photos);
+        validateMultipartImportRequest(req, photoParts);
+
+        if (photoParts.isEmpty()) {
+            CommunicationPinImportReqDTO mappedReq =
+                    new CommunicationPinImportReqDTO(
+                            req.lat(), req.lng(), List.of(), req.pinTitle(), req.pinContent());
+            return importCommunication(uid, mappedReq);
+        }
+
+        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
         try {
             List<PinImageItemReqDTO> pinImageUrls =
                     buildPinImageItemRequests(uploadedUrls, req.pinImages());
@@ -294,21 +303,32 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
     private static void validateMultipartImportRequest(
             CommunicationPinImportMultipartReqDTO req, List<MultipartFile> photos) {
-        if (req == null || photos == null || photos.isEmpty()) {
+        if (req == null) {
             throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
         }
-        if (req.pinImages() == null || req.pinImages().size() != photos.size()) {
+        List<CommunicationPinImportMultipartImageReqDTO> pinMeta = req.pinImages();
+        if (pinMeta == null) {
+            pinMeta = List.of();
+        }
+        if (photos.isEmpty()) {
+            if (!pinMeta.isEmpty()) {
+                throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
+            }
+            return;
+        }
+        if (pinMeta.size() != photos.size()) {
             throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
         }
     }
 
     private static List<PinImageItemReqDTO> buildPinImageItemRequests(
             List<String> uploadedUrls, List<CommunicationPinImportMultipartImageReqDTO> imageReqs) {
+        List<CommunicationPinImportMultipartImageReqDTO> safe = imageReqs == null ? List.of() : imageReqs;
         return java.util.stream.IntStream.range(0, uploadedUrls.size())
                 .mapToObj(
                         i ->
                                 new PinImageItemReqDTO(
-                                        uploadedUrls.get(i), Boolean.TRUE.equals(imageReqs.get(i).isMain())))
+                                        uploadedUrls.get(i), Boolean.TRUE.equals(safe.get(i).isMain())))
                 .toList();
     }
 
