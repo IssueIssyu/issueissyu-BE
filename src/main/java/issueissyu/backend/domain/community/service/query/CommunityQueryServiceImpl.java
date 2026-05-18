@@ -71,6 +71,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final UserRepository userRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
 
+    private static final int HOT_DAYS = 7;
+
     @Override
     // 탭/지역/커서 기준으로 피드 한 페이지를 만든다.
     public CommunityCursorPageResDTO getCommunityFeed(
@@ -78,6 +80,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         if (!locationRepository.existsByRegion(region)) {
             throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        }
+
+        // 커서 구조 다르므로 분리
+        if (tab == CommunityTab.HOT) {
+            return getHotFeed(region, cursor, size);
         }
 
         CursorKey cursorKey = CursorKey.parse(cursor, size);
@@ -276,6 +283,34 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                         .map(PinImage::getPinS3Url);
     }
 
+    private CommunityCursorPageResDTO getHotFeed(String region, String cursor, int size) {
+        HotCursorKey cursorKey = HotCursorKey.parse(cursor, size);
+        // 현재 시각 기준 7일 전 — 이보다 오래된 글은 HOT 후보에서 제외
+        LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
+        // hasNext 판단을 위해 size+1개 조회
+        Pageable limit = PageRequest.of(0, sizeWithLookahead(size));
+
+        List<Community> communities = communityRepository.findHotFeedByTypesAndRegion(
+                IMPLEMENTED_FEED_TYPES,
+                region,
+                since,
+                cursorKey.popularity(),
+                cursorKey.communityId(),
+                limit);
+
+        boolean hasNext = communities.size() > size;
+        // size+1개 중 실제 페이지 크기만큼만 잘라냄
+        List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
+
+        List<CommunityFeedItemResDTO> items = pageItems.stream()
+                .map(this::toFeedItem)
+                .toList();
+        String nextCursor = hasNext
+                ? HotCursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
+                : null;
+        return new CommunityCursorPageResDTO(region, items, nextCursor, hasNext);
+    }
+
     // hasNext 판단을 위해 요청 개수 + 1만큼 조회한다.
     private int sizeWithLookahead(int requestSize) {
         return Math.max(1, requestSize) + 1;
@@ -307,6 +342,36 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         private String encode() {
             return createdAt + "|" + communityId;
+        }
+    }
+    private record HotCursorKey(Double popularity, Long communityId, int requestSize) {
+
+        private static HotCursorKey parse(String raw, int requestSize) {
+            // cursor가 없으면(첫 페이지) null로 초기화 — 쿼리에서 null이면 전체 대상
+            if (raw == null || raw.isBlank()) {
+                return new HotCursorKey(null, null, requestSize);
+            }
+            // "popularity|communityId" 형태로 인코딩되어 있어서 | 기준으로 분리
+            String[] parts = raw.split("\\|", 2);
+            if (parts.length != 2) {
+                throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
+            }
+            try {
+                Double popularity = Double.parseDouble(parts[0]);
+                Long communityId = Long.parseLong(parts[1]);
+                return new HotCursorKey(popularity, communityId, requestSize);
+            } catch (NumberFormatException e) {
+                throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
+            }
+        }
+        // 페이지 마지막 community에서 다음 커서 생성
+        private static HotCursorKey from(Community community) {
+            return new HotCursorKey(community.getPopularity(), community.getCommunityId(), 0);
+        }
+
+        // "popularity|communityId" 형태로 인코딩해서 클라이언트에 전달
+        private String encode() {
+            return popularity + "|" + communityId;
         }
     }
 }

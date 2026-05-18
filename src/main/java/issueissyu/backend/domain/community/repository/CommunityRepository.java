@@ -80,4 +80,33 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             @Param("cursorId") Long cursorId,
             Pageable pageable
     );
+
+    @Query("""
+        select c
+        from Community c
+        join fetch c.pin p
+        join fetch p.user
+        where c.communityType in :types
+          and exists (
+                select 1
+                from PinLocation pl
+                where pl.pin = p
+                  and pl.location.region = :regionCode
+          )
+          and c.createdAt >= :since
+          and(
+                cast(:cursorPopularity as double) is null
+                or c.popularity < :cursorPopularity
+                or (c.popularity = :cursorPopularity and c.communityId < :cursorId)
+          )
+        order by c.popularity desc nulls last, c.communityId desc
+        """)
+    List<Community> findHotFeedByTypesAndRegion(
+            @Param("types") Collection<CommunityType> types,
+            @Param("regionCode") String regionCode,
+            @Param("since") LocalDateTime since,
+            @Param("cursorPopularity") Double cursorPopularity,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable
+    );
 }

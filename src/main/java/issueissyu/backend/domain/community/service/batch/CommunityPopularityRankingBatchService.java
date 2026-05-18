@@ -1,93 +1,63 @@
 package issueissyu.backend.domain.community.service.batch;
 
-import issueissyu.backend.global.config.properties.CommunityPopularityProperties;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import issueissyu.backend.domain.community.entity.Community;
+import issueissyu.backend.domain.community.repository.CommunityRepository;
+import issueissyu.backend.domain.pin.repository.CommentRepository;
+import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CommunityPopularityRankingBatchService {
 
-    private static final RowMapper<SeedRow> ROW_MAPPER = new SeedRowMapper();
+    // 각 지표에 곱해질 가중치 상수 — 나중에 조정할 때 여기만 바꾸면 돼
+    private static final double VIEW_WEIGHT    = 0.1;   // 조회수는 어뷰징 가능성이 있어서 가중치 낮게
+    private static final double LIKE_WEIGHT    = 0.4;   // 공감은 명시적 반응이라 높게
+    private static final double EMOJI_WEIGHT   = 0.2;   // 이모지는 공감보다 가벼운 반응
+    private static final double COMMENT_WEIGHT = 0.3;   // 댓글은 적극적 참여라 높게
 
-    /**
-     * 피드 후보 타입(ISSUE·STORE·COMMUNICATION) 커뮤니티와 핀 지표·댓글 수만 배치에서 집계합니다.
-     */
-    private static final String SEED_SQL =
-            """
-            WITH eligible AS (
-                SELECT DISTINCT c.community_id, c.pin_id
-                FROM community c
-                WHERE c.community_type IN ('ISSUE', 'STORE', 'COMMUNICATION')
-            )
-            SELECT e.community_id,
-                   p.view_count,
-                   p.like_count,
-                   COALESCE(
-                       (SELECT COUNT(*) FROM "comment" cm WHERE cm.pin_id = e.pin_id),
-                       0) AS comment_cnt
-            FROM eligible e
-            JOIN pin p ON p.pin_id = e.pin_id
-            """;
+    private final CommunityRepository communityRepository;
+    private final PinEmojiRepository pinEmojiRepository;
+    private final CommentRepository commentRepository;
 
-    private final JdbcTemplate jdbcTemplate;
-    private final CommunityPopularityProperties properties;
-
-    /**
-     * 인기도 = (조회수 × wV) + (댓글 수 × wC) + (좋아요 수 × wL) − chartRankSubtract<br>
-     * 외부 차트 순위는 미연동 시 {@code chartRankSubtract=0}.
-     */
+    // 매일 새벽 4시에 실행 — cron 표현식은 "초 분 시 일 월 요일" 순서
+    @Scheduled(cron = "0 0 4 * * *")
     @Transactional
-    public void refreshAllCommunityPopularity() {
-        jdbcTemplate.update(
-                "UPDATE community SET popularity = NULL WHERE community_type IN ('ISSUE', 'STORE', 'COMMUNICATION')");
+    public void updatePopularity() {
+        List<Community> communities = communityRepository.findAll();
+        log.info("[Popularity Batch] 시작 - 대상: {}건", communities.size());
 
-        List<SeedRow> rows = jdbcTemplate.query(SEED_SQL, ROW_MAPPER);
-        double wv = properties.getWeightView();
-        double wc = properties.getWeightComment();
-        double wl = properties.getWeightLike();
-        double penalty = properties.getChartRankSubtract();
+        for (Community community : communities) {
+            Long pinId = community.getPin().getPinId();
 
-        int updated = 0;
-        for (SeedRow row : rows) {
-            double score =
-                    popularity(row.viewCount(), row.commentCount(), row.likeCount(), penalty, wv, wc, wl);
-            jdbcTemplate.update(
-                    "UPDATE community SET popularity = ? WHERE community_id = ?", score, row.communityId());
-            updated++;
+            // Pin에 달린 각 지표 수집
+            int viewCount    = community.getPin().getViewCount();   // Pin 엔티티에 캐싱된 조회수
+            int likeCount    = community.getPin().getLikeCount();   // Pin 엔티티에 캐싱된 공감수
+            // 이모지·댓글은 별도 테이블이라 count 쿼리로 집계
+            long emojiCount   = pinEmojiRepository.countActiveByPinId(pinId);
+            long commentCount = commentRepository.countByPin_PinId(pinId);
+
+            double score = calc(viewCount, likeCount, emojiCount, commentCount);
+
+            community.updatePopularity(score);
         }
-        log.info("커뮤니티 인기도 갱신 완료: rows={}", updated);
+
+        log.info("[Popularity Batch] 완료");
     }
 
-    static double popularity(
-            int viewCount,
-            long commentCount,
-            int likeCount,
-            double chartRankSubtract,
-            double weightView,
-            double weightComment,
-            double weightLike) {
-        return viewCount * weightView + commentCount * weightComment + likeCount * weightLike - chartRankSubtract;
-    }
-
-    private record SeedRow(long communityId, int viewCount, int likeCount, long commentCount) {}
-
-    private static final class SeedRowMapper implements RowMapper<SeedRow> {
-        @Override
-        public SeedRow mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new SeedRow(
-                    rs.getLong("community_id"),
-                    rs.getInt("view_count"),
-                    rs.getInt("like_count"),
-                    rs.getLong("comment_cnt"));
-        }
+    // 인기도 계산 공식
+    // popularity = (조회수 * 0.1) + (공감 * 0.4) + (이모지 * 0.2) + (댓글 * 0.3)
+    private double calc(int viewCount, int likeCount, long emojiCount, long commentCount) {
+        return (viewCount * VIEW_WEIGHT)
+                + (likeCount * LIKE_WEIGHT)
+                + (emojiCount * EMOJI_WEIGHT)
+                + (commentCount * COMMENT_WEIGHT);
     }
 }
