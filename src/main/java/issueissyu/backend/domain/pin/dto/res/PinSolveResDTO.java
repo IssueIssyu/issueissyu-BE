@@ -4,4 +4,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record PinSolveResDTO(
         @JsonProperty("isPetitioned") boolean isPetitioned,
-        @JsonProperty("isProblemSolver") boolean isProblemSolver) {}
+        @JsonProperty("isProblemSolver") boolean isProblemSolver,
+        int reliability) {}

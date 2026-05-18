@@ -31,7 +31,7 @@ public class LocationController {
 
     @Operation(
             summary = "지역구 목록 조회",
-            description = "상위(비시군구) location 행을 제외한 지역구 목록과, 동네 인증 시 사용자 시군구 표시명을 반환합니다.")
+            description ="상위 지역 - 하위 지역을 리스트로 조회합니다. 동네 미인증 시 user는 null, LOCATION_LIST_204 코드를 사용합니다.")
     @GetMapping("/regions")
     public ApiResponse<LocationRegionListResDTO> getRegionList(@AuthenticationPrincipal String uid) {
         LocationRegionListResDTO body = locationRegionListQueryService.getRegionList(uid);
