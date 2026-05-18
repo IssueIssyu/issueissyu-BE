@@ -54,8 +54,25 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private static final List<CommunityType> IMPLEMENTED_FEED_TYPES = List.of(
             CommunityType.ISSUE,
             CommunityType.STORE,
-            CommunityType.COMMUNICATION
+            CommunityType.COMMUNICATION,
+            CommunityType.FESTIVAL,
+            CommunityType.POLICY,
+            CommunityType.CONTEST,
+            CommunityType.CARDNEWS
     );
+
+    private boolean isPinBasedType(CommunityType type) {
+        return type == CommunityType.ISSUE
+                || type == CommunityType.STORE
+                || type == CommunityType.FESTIVAL
+                || type == CommunityType.COMMUNICATION;
+    }
+
+    private boolean isCommunityBasedType(CommunityType type) {
+        return type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS;
+    }
 
     private final CommunityRepository communityRepository;
     private final LocationRepository locationRepository;
@@ -158,7 +175,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             case ISSUE -> toIssueDetailItem(community, viewCount);
             case STORE -> toStoreFeedItem(community, viewCount);
             case COMMUNICATION -> toCommunicationFeedItem(community, viewCount);
-            default -> null;
+            case FESTIVAL -> toFestivalDetailItem(community, viewCount);
+            case POLICY -> toPolicyDetailItem(community, viewCount);
+            case CONTEST -> toContestDetailItem(community, viewCount);
+            case CARDNEWS -> toCardnewsDetailItem(community, viewCount);
         };
     }
 
@@ -190,11 +210,16 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                     CommunityType.STORE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
                     CommunityType.COMMUNICATION, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+            case FESTIVAL -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.FESTIVAL, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+            case POLICY -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.POLICY, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+            case CONTEST -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.CONTEST, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
+            case CARDNEWS -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.CARDNEWS, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
             case ALL -> communityRepository.findFeedByTypesAndRegion(
                     IMPLEMENTED_FEED_TYPES, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            // 축제·카드뉴스 등 미노출 탭: 피드는 빈 목록
-            case FESTIVAL -> List.of();
-            case HOT, POLICY, CONTEST, CARDNEWS -> List.of();
         };
     }
 
@@ -204,11 +229,14 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             case ISSUE -> toIssueFeedItem(community);
             case STORE -> toStoreFeedItem(community);
             case COMMUNICATION -> toCommunicationFeedItem(community);
-            default -> null;
+            case FESTIVAL -> toFestivalFeedItem(community);
+            case POLICY -> toPolicyFeedItem(community);
+            case CONTEST -> toContestFeedItem(community);
+            case CARDNEWS -> toCardnewsFeedItem(community);
         };
     }
 
-    // ISSUE 카드 DTO 매핑.
+    // ISSUE 카드 DTO 매핑.(목록 용)
     private IssueCommunityFeedItemResDTO toIssueFeedItem(Community community) {
         Pin pin = community.getPin();
         return new IssueCommunityFeedItemResDTO(

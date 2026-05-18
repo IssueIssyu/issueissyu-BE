@@ -40,7 +40,7 @@ public class Community extends BaseEntity {
     private Long communityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pin_id", nullable = false)
+    @JoinColumn(name = "pin_id", nullable = true)
     @ToString.Exclude
     private Pin pin;
 
@@ -48,21 +48,56 @@ public class Community extends BaseEntity {
     @Column(name = "community_type", nullable = false)
     private CommunityType communityType;
 
-    @Column(length = 255)
+    @Column(name = "title", length = 255)
     private String title;
 
-    @Column(length = 255)
+    @Column(name = "content", length = 255)
     private String content;
 
-    /** 배치에서 갱신하는 인기도 (null 이면 미산정) */
-    @Column(name = "popularity")
-    private Double popularity;
+    @Builder.Default
+    @Column(name = "view_count", nullable = false)
+    private int viewCount = 0;
+
+    @Builder.Default
+    @Column(name = "like_count", nullable = false)
+    private int likeCount = 0;
+
+    @Builder.Default
+    @Column(name = "popularity", nullable = false)
+    private double popularity = 0.0;
 
     @Builder.Default
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
 
+    // 실제 DB 데이터상 pin이 연결되어 있는지 확인
+    public boolean hasPin() {
+        return this.pin != null;
+    }
+
+    public boolean requiresPin() {
+        return this.communityType == CommunityType.ISSUE
+                || this.communityType == CommunityType.STORE
+                || this.communityType == CommunityType.FESTIVAL
+                || this.communityType == CommunityType.COMMUNICATION;
+    }
+
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
+
+    // HOT 정렬에 사용할 인기도 점수 갱신
     public void updatePopularity(double popularity) {
         this.popularity = popularity;
     }
