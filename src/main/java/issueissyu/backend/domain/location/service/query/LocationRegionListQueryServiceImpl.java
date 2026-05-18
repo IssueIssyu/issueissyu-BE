@@ -11,8 +11,11 @@ import issueissyu.backend.domain.user.entity.UserLocation;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class LocationRegionListQueryServiceImpl implements LocationRegionListQueryService {
 
     private static final Long SEJONG_LOCATION_ID = 83L;
+
+    private static final Collator KOREAN_REGION_COLLATOR = Collator.getInstance(Locale.KOREAN);
+
+    private static final Comparator<LocationRegionItemResDTO> SUB_LOCATION_COLLATOR_ORDER =
+            Comparator.comparing(
+                    LocationRegionItemResDTO::location, Comparator.nullsLast(KOREAN_REGION_COLLATOR::compare));
 
     // location_id가 83인 행 전용 블록. 세종시가 너무 특별하다 젱장.
     private static final LocationRegionGroupResDTO SEJONG_GROUP_RES =
@@ -89,6 +98,7 @@ public class LocationRegionListQueryServiceImpl implements LocationRegionListQue
     private static void flushGroup(
             List<LocationRegionGroupResDTO> groups, String superLocation, List<LocationRegionItemResDTO> subs) {
         if (superLocation != null && !subs.isEmpty()) {
+            subs.sort(SUB_LOCATION_COLLATOR_ORDER);
             groups.add(new LocationRegionGroupResDTO(superLocation, List.copyOf(subs)));
         }
     }
