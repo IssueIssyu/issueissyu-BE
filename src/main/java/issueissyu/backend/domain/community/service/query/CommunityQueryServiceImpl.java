@@ -105,6 +105,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
         Long pinId = pin.getPinId();
         CommunityType type = community.getCommunityType();
+        IssuePin issuePin =
+                type == CommunityType.ISSUE
+                        ? issuePinRepository.findByPin_PinId(pinId).orElse(null)
+                        : null;
 
         CommunityDetailItemResDTO item = toDetailItem(community, viewCount);
         List<String> pinImageUrls = pinImageRepository
@@ -131,6 +135,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
                 : null;
 
+        String issuePinState =
+                issuePin != null ? issuePin.getIssuePinState().name() : null;
+        Integer petitionCount =
+                type == CommunityType.ISSUE
+                        ? (issuePin != null ? issuePin.getPetitionCount() : 0)
+                        : null;
+
         boolean isMine = Objects.equals(pin.getUser().getUid(), uid);
 
         return new CommunityDetailResDTO(
@@ -142,10 +153,12 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 isReported,
                 isPetitioned,
                 isProblemSolver,
+                issuePinState,
+                petitionCount,
                 isMine);
     }
 
-    // 상세 조회용 DTO 분기 (ISSUE는 추가 데이터 포함, 나머지는 피드 DTO 재사용)
+    // 상세 조회용 DTO 분기 (타입별 카드 메타; 이슈 전용 상태는 래퍼 필드 참고)
     private CommunityDetailItemResDTO toDetailItem(Community community, int viewCount) {
         return switch (community.getCommunityType()) {
             case ISSUE -> toIssueDetailItem(community, viewCount);
@@ -155,22 +168,21 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         };
     }
 
-    // ISSUE 상세 DTO 매핑 (issuePinState 포함)
+    // ISSUE 상세 카드 DTO 매핑 (이슈 진행·청원 수는 래퍼 CommunityDetailResDTO에 포함)
     private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community, int viewCount) {
         Pin pin = community.getPin();
-        IssuePin issuePin = issuePinRepository.findByPin_PinId(pin.getPinId()).orElse(null);
+        Long pinId = pin.getPinId();
 
         return new IssueCommunityDetailItemResDTO(
                 community.getCommunityId(),
-                pin.getPinId(),
+                pinId,
                 community.getTitle(),
-                resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
+                resolvePinThumbnailUrl(pinId).orElse(null),
                 pin.getUser().getNickname(),
                 userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
-                resolveAddress(pin.getPinId()),
+                resolveAddress(pinId),
                 viewCount,
-                pin.getLikeCount(),
-                issuePin != null ? issuePin.getIssuePinState().name() : null);
+                pin.getLikeCount());
     }
 
     // 탭 규칙에 맞는 community 목록을 조회한다.
