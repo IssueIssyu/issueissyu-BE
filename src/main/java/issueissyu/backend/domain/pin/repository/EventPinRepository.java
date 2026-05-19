@@ -33,4 +33,19 @@ public interface EventPinRepository extends JpaRepository<EventPin, Long> {
             @Param("pinType") PinType pinType,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    @Query("""
+            select ep from EventPin ep
+            join fetch ep.pin p
+            join PinLocation pl on pl.pin = p
+            where p.pinType = :pinType
+              and pl.location.locationId = :locationId
+              and ep.eventStartTime between :from and :to
+            order by ep.eventStartTime asc
+            """)
+    List<EventPin> findAlarmTargetsByPinTypeAndLocationIdAndStartTimeBetween(
+            @Param("pinType") PinType pinType,
+            @Param("locationId") Long locationId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

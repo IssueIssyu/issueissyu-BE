@@ -7,6 +7,8 @@ import issueissyu.backend.domain.alarm.entity.UserAlarm;
 import issueissyu.backend.domain.alarm.repository.EventAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.StoreAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.UserAlarmRepository;
+import issueissyu.backend.domain.alarm.service.command.EventAlarmPrepared;
+import issueissyu.backend.domain.alarm.service.command.StoreAlarmPrepared;
 import issueissyu.backend.domain.user.entity.User;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,5 +106,45 @@ public class AlarmBatchService {
                             communityId)));
         }
         return payloads;
+    }
+
+    @Transactional
+    public EventAlarmPrepared persistEventAlarm(User recipient, String body, Long pinId, Long communityId) {
+        UserAlarm userAlarm = userAlarmRepository.save(UserAlarm.builder().user(recipient).build());
+
+        EventAlarm eventAlarm = eventAlarmRepository.save(
+                EventAlarm.builder()
+                        .userAlarm(userAlarm)
+                        .eventAlarmTitle(EVENT_ALARM_TITLE)
+                        .eventAlarmBody(body)
+                        .build());
+
+        return new EventAlarmPrepared(
+                eventAlarm.getEventAlarmId(),
+                pinId,
+                communityId,
+                recipient.getPushToken(),
+                EVENT_ALARM_TITLE,
+                body);
+    }
+
+    @Transactional
+    public StoreAlarmPrepared persistStoreAlarm(User recipient, String body, Long pinId, Long communityId) {
+        UserAlarm userAlarm = userAlarmRepository.save(UserAlarm.builder().user(recipient).build());
+
+        StoreAlarm storeAlarm = storeAlarmRepository.save(
+                StoreAlarm.builder()
+                        .userAlarm(userAlarm)
+                        .storeAlarmTitle(STORE_ALARM_TITLE)
+                        .storeAlarmBody(body)
+                        .build());
+
+        return new StoreAlarmPrepared(
+                storeAlarm.getStoreAlarmId(),
+                pinId,
+                communityId,
+                recipient.getPushToken(),
+                STORE_ALARM_TITLE,
+                body);
     }
 }
