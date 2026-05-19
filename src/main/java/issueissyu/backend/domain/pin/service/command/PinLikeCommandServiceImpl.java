@@ -2,9 +2,9 @@ package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.alarm.entity.LikeAlarm;
 import issueissyu.backend.domain.alarm.entity.UserAlarm;
+import issueissyu.backend.domain.alarm.event.LikeAlarmCreatedEvent;
 import issueissyu.backend.domain.alarm.repository.LikeAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.UserAlarmRepository;
-import issueissyu.backend.domain.alarm.service.FcmService;
 import issueissyu.backend.domain.pin.dto.res.PinLikeResDTO;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.mapping.PinLike;
@@ -16,15 +16,13 @@ import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,7 +36,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
     private final UserRepository userRepository;
     private final UserAlarmRepository userAlarmRepository;
     private final LikeAlarmRepository likeAlarmRepository;
-    private final FcmService fcmService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -66,7 +64,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
 
         User pinOwner = pin.getUser();
         if (!pinOwner.getUid().equals(uid)) {
-            tryCreateAndSendLikeAlarm(pinOwner, liker.getNickname(), pin.getPinTitle());
+            publishLikeAlarmEventIfEligible(pinOwner, liker.getNickname(), pin.getPinTitle());
         }
 
         return PinLikeResDTO.builder()
@@ -76,7 +74,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
                 .build();
     }
 
-    private void tryCreateAndSendLikeAlarm(User recipient, String likerNickname, String pinTitle) {
+    private void publishLikeAlarmEventIfEligible(User recipient, String likerNickname, String pinTitle) {
         if (!recipient.isLikeAlarmActive()) {
             return;
         }
@@ -98,14 +96,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
             return;
         }
 
-        try {
-            fcmService.sendNotification(
-                    pushToken,
-                    LIKE_ALARM_TITLE,
-                    body,
-                    Map.of("likeAlarmId", String.valueOf(likeAlarm.getLikeAlarmId())));
-        } catch (Exception e) {
-            log.warn("Like FCM send failed for uid={}: {}", recipient.getUid(), e.getMessage());
-        }
+        eventPublisher.publishEvent(new LikeAlarmCreatedEvent(
+                recipient.getUid(), pushToken, likeAlarm.getLikeAlarmId(), LIKE_ALARM_TITLE, body));
     }
 }
