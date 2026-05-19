@@ -33,6 +33,7 @@ import issueissyu.backend.global.config.AmazonConfig;
 import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.utils.S3.S3Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -48,6 +49,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -337,8 +339,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
             try {
                 String key = PinS3UrlSupport.extractKey(url, amazonConfig);
                 s3Utils.deleteFile(key);
-            } catch (Exception ignored) {
-                // 통합 업로드 실패 롤백 중 일부 삭제 실패는 본 오류를 우선 반환합니다.
+            } catch (Exception e) {
+                log.warn("Failed to rollback (delete) S3 file for url={}: {}", url, e.getMessage());
             }
         }
     }

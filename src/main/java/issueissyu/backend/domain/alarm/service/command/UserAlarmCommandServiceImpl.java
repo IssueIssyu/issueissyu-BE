@@ -13,11 +13,13 @@ import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -50,6 +52,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
                     Map.of("likeAlarmId", String.valueOf(likeAlarmId)));
             return new AlarmMessageResDTO(messageId);
         } catch (Exception e) {
+            log.error("Failed to send like alarm for id={}: {}", likeAlarmId, e.getMessage(), e);
             throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_400);
         }
     }
@@ -67,6 +70,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
                     Map.of("eventAlarmId", String.valueOf(eventAlarmId)));
             return new AlarmMessageResDTO(messageId);
         } catch (Exception e) {
+            log.error("Failed to send event alarm for id={}: {}", eventAlarmId, e.getMessage(), e);
             throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_400);
         }
     }
@@ -84,6 +88,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
                     Map.of("storeAlarmId", String.valueOf(storeAlarmId)));
             return new AlarmMessageResDTO(messageId);
         } catch (Exception e) {
+            log.error("Failed to send store alarm for id={}: {}", storeAlarmId, e.getMessage(), e);
             throw AlarmException.of(AlarmErrorCode.STORE_ALARM_400);
         }
     }
