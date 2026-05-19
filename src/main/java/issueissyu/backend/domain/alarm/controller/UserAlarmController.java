@@ -3,16 +3,17 @@ package issueissyu.backend.domain.alarm.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.alarm.dto.req.EventAlarmReqDTO;
-import issueissyu.backend.domain.alarm.dto.req.LikeAlarmReqDTO;
 import issueissyu.backend.domain.alarm.dto.req.PushTokenReqDTO;
 import issueissyu.backend.domain.alarm.dto.req.StoreAlarmReqDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
+import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
 import issueissyu.backend.domain.alarm.service.command.UserAlarmCommandService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,14 +41,17 @@ public class UserAlarmController {
 
     @Operation(
             summary = "좋아요 푸시 알림 전송",
-            description = "like_alarm_id 에 해당하는 알람을 FCM으로 전송합니다. "
-                    + "user.like_alarm_active 가 false 이면 LIKE_ALARM_403 을 반환합니다.")
-    @PostMapping("/like")
-    public ApiResponse<AlarmMessageResDTO> sendLikeAlarm(
-            @AuthenticationPrincipal String uid,
-            @RequestParam Long likeAlarmId,
-            @Valid @RequestBody LikeAlarmReqDTO request) {
-        AlarmMessageResDTO result = userAlarmCommandService.sendLikeAlarm(likeAlarmId, request);
+            description =
+                    """
+                    내 핀 좋아요에 대한 푸시 알람을 전송합니다.
+                    요청자는 해당 pinId에 좋아요를 누른 사용자여야 하며, 제목·본문은 서버에서 고정값으로 생성합니다.
+                    user.like_alarm_active 가 false 이면 LIKE_ALARM_403 을 반환합니다.
+                    알람 클릭 시 GET /api/pins/{pinId}/home 으로 이동합니다.
+                    """)
+    @PostMapping("/like/{pinId}")
+    public ApiResponse<LikeAlarmSendResDTO> sendLikeAlarm(
+            @AuthenticationPrincipal String uid, @PathVariable Long pinId) {
+        LikeAlarmSendResDTO result = userAlarmCommandService.sendLikeAlarm(uid, pinId);
         return ApiResponse.onSuccess(AlarmSuccessCode.LIKE_ALARM_200, result);
     }
 

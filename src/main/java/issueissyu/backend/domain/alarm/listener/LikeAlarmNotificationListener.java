@@ -31,7 +31,11 @@ public class LikeAlarmNotificationListener {
                         event.pushToken(),
                         event.title(),
                         event.body(),
-                        Map.of("likeAlarmId", String.valueOf(event.likeAlarmId())))
+                        Map.of(
+                                "likeAlarmId",
+                                String.valueOf(event.likeAlarmId()),
+                                "pinId",
+                                String.valueOf(event.pinId())))
                 .whenComplete((messageId, ex) -> {
                     if (ex != null) {
                         log.warn(

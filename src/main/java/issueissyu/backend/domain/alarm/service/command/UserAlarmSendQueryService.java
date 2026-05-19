@@ -1,12 +1,10 @@
 package issueissyu.backend.domain.alarm.service.command;
 
 import issueissyu.backend.domain.alarm.entity.EventAlarm;
-import issueissyu.backend.domain.alarm.entity.LikeAlarm;
 import issueissyu.backend.domain.alarm.entity.StoreAlarm;
 import issueissyu.backend.domain.alarm.exception.AlarmException;
 import issueissyu.backend.domain.alarm.exception.code.AlarmErrorCode;
 import issueissyu.backend.domain.alarm.repository.EventAlarmRepository;
-import issueissyu.backend.domain.alarm.repository.LikeAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.StoreAlarmRepository;
 import issueissyu.backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -19,22 +17,8 @@ import org.springframework.util.StringUtils;
 @Transactional(readOnly = true)
 public class UserAlarmSendQueryService {
 
-    private final LikeAlarmRepository likeAlarmRepository;
     private final EventAlarmRepository eventAlarmRepository;
     private final StoreAlarmRepository storeAlarmRepository;
-
-    public String resolveLikeAlarmPushToken(Long likeAlarmId) {
-        LikeAlarm likeAlarm = likeAlarmRepository.findById(likeAlarmId)
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.LIKE_ALARM_404));
-
-        User recipient = likeAlarm.getUserAlarm().getUser();
-
-        if (!recipient.isLikeAlarmActive()) {
-            throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_403);
-        }
-
-        return requirePushToken(recipient.getPushToken(), AlarmErrorCode.LIKE_ALARM_400);
-    }
 
     public String resolveEventAlarmPushToken(Long eventAlarmId) {
         EventAlarm eventAlarm = eventAlarmRepository.findById(eventAlarmId)
