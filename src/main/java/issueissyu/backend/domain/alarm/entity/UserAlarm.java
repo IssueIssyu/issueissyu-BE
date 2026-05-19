@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -36,6 +37,7 @@ public class UserAlarm extends BaseEntity {
     @ToString.Exclude
     private User user;
 
+    @Builder.Default
     @Column(name = "is_confirmed", nullable = false)
-    private boolean confirmed;
+    private boolean confirmed = false;
 }

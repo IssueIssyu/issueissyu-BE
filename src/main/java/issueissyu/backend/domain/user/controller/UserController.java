@@ -34,7 +34,9 @@ public class UserController {
 
     @Operation(
             summary = "동네 변경",
-            description = "위·경도로 시군구를 재인증합니다. POST /api/location/user/cert 와 동일한 처리이며 성공 시 LOCATION_200_4를 반환합니다.")
+            description =
+                    "위·경도로 시군구를 재인증합니다. POST /api/location/user/cert 와 동일한 처리이며 성공 시 LOCATION_200_4를 반환합니다. "
+                            + "user_point_updated 기준으로 한 달이 지나지 않은 경우 LOCATION_400_2(동네 변경은 한 달에 1회 가능합니다.)를 반환합니다.")
     @PatchMapping("/me/region")
     public ApiResponse<UserLocationCertResDto> changeUserRegion(
             @AuthenticationPrincipal String uid,
