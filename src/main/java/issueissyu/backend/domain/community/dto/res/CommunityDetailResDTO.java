@@ -12,6 +12,8 @@ public record CommunityDetailResDTO(
         Boolean isReported,
         Boolean isPetitioned,
         Boolean isProblemSolver,
+        String issuePinState,
+        Integer petitionCount,
         boolean isMine
 ) {
 }

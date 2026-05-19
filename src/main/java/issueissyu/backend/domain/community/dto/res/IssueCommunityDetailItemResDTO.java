@@ -12,7 +12,6 @@ public record IssueCommunityDetailItemResDTO(
         String pinUserProfile,
         String pinDetailAddress,
         int viewCount,
-        long likeCount,
-        String issuePinState
+        long likeCount
 ) implements CommunityDetailItemResDTO {
 }
