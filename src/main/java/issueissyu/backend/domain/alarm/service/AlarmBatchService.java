@@ -33,9 +33,11 @@ public class AlarmBatchService {
             return List.of();
         }
 
-        List<UserAlarm> userAlarms =
-                recipients.stream().map(u -> UserAlarm.builder().user(u).build()).toList();
-        userAlarms = userAlarmRepository.saveAll(userAlarms);
+        List<UserAlarm> userAlarms = new ArrayList<>(recipients.size());
+        for (User recipient : recipients) {
+            userAlarms.add(UserAlarm.builder().user(recipient).build());
+        }
+        userAlarms = new ArrayList<>(userAlarmRepository.saveAll(userAlarms));
 
         List<EventAlarm> eventAlarms = new ArrayList<>(recipients.size());
         for (int i = 0; i < recipients.size(); i++) {
@@ -71,9 +73,11 @@ public class AlarmBatchService {
             return List.of();
         }
 
-        List<UserAlarm> userAlarms =
-                recipients.stream().map(u -> UserAlarm.builder().user(u).build()).toList();
-        userAlarms = userAlarmRepository.saveAll(userAlarms);
+        List<UserAlarm> userAlarms = new ArrayList<>(recipients.size());
+        for (User recipient : recipients) {
+            userAlarms.add(UserAlarm.builder().user(recipient).build());
+        }
+        userAlarms = new ArrayList<>(userAlarmRepository.saveAll(userAlarms));
 
         List<StoreAlarm> storeAlarms = new ArrayList<>(recipients.size());
         for (int i = 0; i < recipients.size(); i++) {
