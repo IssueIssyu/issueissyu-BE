@@ -1,5 +1,8 @@
 package issueissyu.backend.domain.pin.service.command;
 
+import issueissyu.backend.domain.alarm.event.LikeAlarmCreatedEvent;
+import issueissyu.backend.domain.alarm.service.command.LikeAlarmCommandService;
+import issueissyu.backend.domain.alarm.service.command.LikeAlarmPrepared;
 import issueissyu.backend.domain.pin.dto.res.PinLikeResDTO;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.mapping.PinLike;
@@ -12,9 +15,11 @@ import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +29,13 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
     private final PinRepository pinRepository;
     private final PinLikeRepository pinLikeRepository;
     private final UserRepository userRepository;
+    private final LikeAlarmCommandService likeAlarmCommandService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
     public PinLikeResDTO likePin(Long pinId, String uid) {
-        User user =
+        User liker =
                 userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
         Pin pin = pinRepository
                 .findWithPessimisticWriteByPinId(pinId)
@@ -38,7 +45,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
             throw PinException.of(PinErrorCode.PIN_LIKE_ALREADY);
         }
 
-        PinLike pinLike = PinLike.builder().pin(pin).user(user).build();
+        PinLike pinLike = PinLike.builder().pin(pin).user(liker).build();
         try {
             pinLikeRepository.saveAndFlush(pinLike);
         } catch (DataIntegrityViolationException e) {
@@ -47,13 +54,30 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
 
         pinRepository.incrementLikeCountByPinId(pinId);
 
-        int likeCount =
-                pinRepository.findLikeCountByPinId(pinId).orElse(pin.getLikeCount());
+        int likeCount = pinRepository.findLikeCountByPinId(pinId).orElse(pin.getLikeCount());
+
+        likeAlarmCommandService
+                .createLikeAlarmIfEligible(uid, pinId)
+                .ifPresent(this::publishLikeAlarmEvent);
 
         return PinLikeResDTO.builder()
                 .pinId(pinId)
                 .pinLikeCount(likeCount)
                 .isLike(true)
                 .build();
+    }
+
+    private void publishLikeAlarmEvent(LikeAlarmPrepared prepared) {
+        if (!StringUtils.hasText(prepared.pushToken())) {
+            return;
+        }
+
+        eventPublisher.publishEvent(new LikeAlarmCreatedEvent(
+                prepared.recipientUid(),
+                prepared.pushToken(),
+                prepared.likeAlarmId(),
+                prepared.pinId(),
+                prepared.title(),
+                prepared.body()));
     }
 }

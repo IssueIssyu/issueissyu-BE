@@ -8,6 +8,8 @@ import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.location.service.LocationService;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
+import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartImageReqDTO;
+import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportReqDTO;
 import issueissyu.backend.domain.pin.dto.req.PinImageItemReqDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinEditResDTO;
@@ -29,7 +31,9 @@ import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.config.AmazonConfig;
 import issueissyu.backend.global.exception.GeneralException;
+import issueissyu.backend.utils.S3.S3Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -43,7 +47,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -57,6 +63,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     private final LocationRepository locationRepository;
     private final LocationService locationService;
     private final AmazonConfig amazonConfig;
+    private final PinImageUploadCommandService pinImageUploadCommandService;
+    private final S3Utils s3Utils;
 
     private static final GeometryFactory GEOMETRY_FACTORY =
             new GeometryFactory(new PrecisionModel(), 4326);
@@ -121,6 +129,38 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
             throw e;
         } catch (Exception e) {
             throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_2);
+        }
+    }
+
+    @Override
+    public CommunicationPinImportResDTO importCommunicationV1(
+            String uid, CommunicationPinImportMultipartReqDTO req, List<MultipartFile> photos) {
+        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
+
+        validateMultipartImportRequest(req, photoParts);
+
+        if (photoParts.isEmpty()) {
+            CommunicationPinImportReqDTO mappedReq =
+                    new CommunicationPinImportReqDTO(
+                            req.lat(), req.lng(), List.of(), req.pinTitle(), req.pinContent());
+            return importCommunication(uid, mappedReq);
+        }
+
+        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
+        try {
+            List<PinImageItemReqDTO> pinImageUrls =
+                    buildPinImageItemRequests(uploadedUrls, req.pinImages());
+            CommunicationPinImportReqDTO mappedReq =
+                    new CommunicationPinImportReqDTO(
+                            req.lat(),
+                            req.lng(),
+                            pinImageUrls,
+                            req.pinTitle(),
+                            req.pinContent());
+            return importCommunication(uid, mappedReq);
+        } catch (RuntimeException e) {
+            rollbackUploadedUrls(uploadedUrls);
+            throw e;
         }
     }
 
@@ -260,6 +300,48 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         long mains = items.stream().filter(PinImageItemReqDTO::isMain).count();
         if (mains != 1) {
             throw PinException.of(violation);
+        }
+    }
+
+    private static void validateMultipartImportRequest(
+            CommunicationPinImportMultipartReqDTO req, List<MultipartFile> photos) {
+        if (req == null) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
+        }
+        List<CommunicationPinImportMultipartImageReqDTO> pinMeta = req.pinImages();
+        if (pinMeta == null) {
+            pinMeta = List.of();
+        }
+        if (photos.isEmpty()) {
+            if (!pinMeta.isEmpty()) {
+                throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
+            }
+            return;
+        }
+        if (pinMeta.size() != photos.size()) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
+        }
+    }
+
+    private static List<PinImageItemReqDTO> buildPinImageItemRequests(
+            List<String> uploadedUrls, List<CommunicationPinImportMultipartImageReqDTO> imageReqs) {
+        List<CommunicationPinImportMultipartImageReqDTO> safe = imageReqs == null ? List.of() : imageReqs;
+        return java.util.stream.IntStream.range(0, uploadedUrls.size())
+                .mapToObj(
+                        i ->
+                                new PinImageItemReqDTO(
+                                        uploadedUrls.get(i), Boolean.TRUE.equals(safe.get(i).isMain())))
+                .toList();
+    }
+
+    private void rollbackUploadedUrls(List<String> uploadedUrls) {
+        for (String url : uploadedUrls) {
+            try {
+                String key = PinS3UrlSupport.extractKey(url, amazonConfig);
+                s3Utils.deleteFile(key);
+            } catch (Exception e) {
+                log.warn("Failed to rollback (delete) S3 file for url={}: {}", url, e.getMessage());
+            }
         }
     }
 

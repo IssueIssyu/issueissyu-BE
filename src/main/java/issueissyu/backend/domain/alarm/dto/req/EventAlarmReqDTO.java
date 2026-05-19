@@ -1,4 +1,7 @@
 package issueissyu.backend.domain.alarm.dto.req;
 
-public class EventAlarmReqDTO {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record EventAlarmReqDTO(
+        @NotBlank String eventAlarmTitle,
+        @NotBlank String eventAlarmBody) {}
