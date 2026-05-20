@@ -2,15 +2,12 @@ package issueissyu.backend.domain.pin.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
 import issueissyu.backend.domain.pin.dto.req.DeclarationReqDTO;
-import issueissyu.backend.domain.pin.dto.res.CommunicationPinEditResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinHomeResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinPostResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinSolveResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
 import issueissyu.backend.domain.pin.service.command.DeclarationCommandService;
-import issueissyu.backend.domain.pin.service.command.PinCommunicationCommandService;
 import issueissyu.backend.domain.pin.service.command.PinDeleteCommandService;
 import issueissyu.backend.domain.pin.service.query.PinDetailQueryService;
 import issueissyu.backend.domain.pin.service.query.PinSolveQueryService;
@@ -22,7 +19,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,21 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Pin", description = "핀 등록/수정/삭제/조회")
 public class PinController {
 
-    private final PinCommunicationCommandService pinCommunicationCommandService;
     private final DeclarationCommandService declarationCommandService;
     private final PinDeleteCommandService pinDeleteCommandService;
     private final PinDetailQueryService pinDetailQueryService;
     private final PinSolveQueryService pinSolveQueryService;
-
-    @Operation(summary = "소통 핀 수정")
-    @PutMapping("/{pinId}/edit/communication")
-    public ApiResponse<CommunicationPinEditResDTO> editCommunication(
-            @AuthenticationPrincipal String uid,
-            @PathVariable Long pinId,
-            @Valid @RequestBody CommunicationPinEditReqDTO request) {
-        CommunicationPinEditResDTO res = pinCommunicationCommandService.editCommunication(uid, pinId, request);
-        return ApiResponse.onSuccess(PinSuccessCode.PIN_EDIT_COMMUNICATION_200, res);
-    }
 
     @Operation(summary = "핀 삭제")
     @DeleteMapping("/{pinId}/delete")

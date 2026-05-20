@@ -8,6 +8,7 @@ import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.location.service.LocationService;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
+import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartImageReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportReqDTO;
@@ -165,6 +166,32 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     }
 
     @Override
+    public CommunicationPinEditResDTO editCommunicationV1(
+            String uid, Long pinId, CommunicationPinEditMultipartReqDTO req, List<MultipartFile> photos) {
+        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
+
+        validateMultipartEditRequest(req, photoParts);
+
+        if (photoParts.isEmpty()) {
+            return editCommunication(
+                    uid, pinId, new CommunicationPinEditReqDTO(List.of(), req.pinTitle(), req.pinContent()));
+        }
+
+        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
+        try {
+            List<PinImageItemReqDTO> pinImageUrls =
+                    buildPinImageItemRequests(uploadedUrls, req.pinImages());
+            return editCommunication(
+                    uid,
+                    pinId,
+                    new CommunicationPinEditReqDTO(pinImageUrls, req.pinTitle(), req.pinContent()));
+        } catch (RuntimeException e) {
+            rollbackUploadedUrls(uploadedUrls);
+            throw e;
+        }
+    }
+
+    @Override
     public CommunicationPinEditResDTO editCommunication(String uid, Long pinId, CommunicationPinEditReqDTO req) {
         Pin pin =
                 pinRepository
@@ -187,19 +214,15 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
             pinRepository.save(pin);
 
-            List<PinImageWithIdResDTO> imgs =
-                    pin.getPinImages().stream()
-                            .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
-                            .map(
-                                    pi ->
-                                            new PinImageWithIdResDTO(
-                                                    pi.getPinImageId(),
-                                                    pi.getPinS3Url(),
-                                                    pi.isMainImage()))
-                            .toList();
+            PinLocation pinLocation =
+                    pinLocationRepository
+                            .findByPin_PinId(pinId)
+                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_5));
 
-            return new CommunicationPinEditResDTO(
-                    imgs, pin.getCreatedAt(), pin.getUpdatedAt());
+            return toEditRes(
+                    pin,
+                    pinLocation.getLocation().getRegion(),
+                    pinLocation.getDetailAddress());
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
@@ -286,6 +309,29 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.getUpdatedAt());
     }
 
+    private CommunicationPinEditResDTO toEditRes(Pin pin, String region, String pinDetailAddress) {
+        List<PinImageWithIdResDTO> imgs =
+                pin.getPinImages().stream()
+                        .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
+                        .map(
+                                pi ->
+                                        new PinImageWithIdResDTO(
+                                                pi.getPinImageId(),
+                                                pi.getPinS3Url(),
+                                                pi.isMainImage()))
+                        .toList();
+
+        return new CommunicationPinEditResDTO(
+                pin.getPinId(),
+                pin.getPinType().name(),
+                region,
+                pinDetailAddress,
+                imgs,
+                pin.getToneType().name(),
+                pin.getCreatedAt(),
+                pin.getUpdatedAt());
+    }
+
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
         if (items == null) {
             throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
@@ -300,6 +346,26 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         long mains = items.stream().filter(PinImageItemReqDTO::isMain).count();
         if (mains != 1) {
             throw PinException.of(violation);
+        }
+    }
+
+    private static void validateMultipartEditRequest(
+            CommunicationPinEditMultipartReqDTO req, List<MultipartFile> photos) {
+        if (req == null) {
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+        }
+        List<CommunicationPinImportMultipartImageReqDTO> pinMeta = req.pinImages();
+        if (pinMeta == null) {
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+        }
+        if (photos.isEmpty()) {
+            if (!pinMeta.isEmpty()) {
+                throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+            }
+            return;
+        }
+        if (pinMeta.size() != photos.size()) {
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
         }
     }
 
