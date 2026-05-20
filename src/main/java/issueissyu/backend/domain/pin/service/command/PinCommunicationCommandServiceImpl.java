@@ -8,6 +8,7 @@ import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.location.service.LocationService;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
+import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartImageReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportReqDTO;
@@ -42,6 +43,7 @@ import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -165,6 +167,38 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     }
 
     @Override
+    public CommunicationPinEditResDTO editCommunicationV1(
+            String uid, Long pinId, CommunicationPinEditMultipartReqDTO req, List<MultipartFile> photos) {
+        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
+        List<PinImageItemReqDTO> existingItems = normalizePinImageUrls(req.pinImageUrls());
+        List<CommunicationPinImportMultipartImageReqDTO> newImageMeta =
+                req.pinImages() == null ? List.of() : req.pinImages();
+
+        validateMultipartEditRequest(existingItems, newImageMeta, photoParts);
+
+        if (photoParts.isEmpty()) {
+            return editCommunication(
+                    uid,
+                    pinId,
+                    new CommunicationPinEditReqDTO(existingItems, req.pinTitle(), req.pinContent()));
+        }
+
+        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
+        try {
+            List<PinImageItemReqDTO> newItems = buildPinImageItemRequests(uploadedUrls, newImageMeta);
+            List<PinImageItemReqDTO> merged = mergePinImageItems(existingItems, newItems);
+            validateCombinedEditPinImages(merged);
+            return editCommunication(
+                    uid,
+                    pinId,
+                    new CommunicationPinEditReqDTO(merged, req.pinTitle(), req.pinContent()));
+        } catch (RuntimeException e) {
+            rollbackUploadedUrls(uploadedUrls);
+            throw e;
+        }
+    }
+
+    @Override
     public CommunicationPinEditResDTO editCommunication(String uid, Long pinId, CommunicationPinEditReqDTO req) {
         Pin pin =
                 pinRepository
@@ -179,32 +213,67 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         }
 
         try {
-            validateCommunicationEditPinImages(req.pinImageUrls());
+            if (req.pinImageUrls() != null) {
+                assertPinImageUrlsBelongToPin(pinId, req.pinImageUrls());
+                validateCommunicationEditPinImages(req.pinImageUrls());
+                syncPinImages(pin, req.pinImageUrls());
+            }
 
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
 
-            syncPinImages(pin, req.pinImageUrls());
-
             pinRepository.save(pin);
 
-            List<PinImageWithIdResDTO> imgs =
-                    pin.getPinImages().stream()
-                            .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
-                            .map(
-                                    pi ->
-                                            new PinImageWithIdResDTO(
-                                                    pi.getPinImageId(),
-                                                    pi.getPinS3Url(),
-                                                    pi.isMainImage()))
-                            .toList();
+            PinLocation pinLocation =
+                    pinLocationRepository
+                            .findByPin_PinId(pinId)
+                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_5));
 
-            return new CommunicationPinEditResDTO(
-                    imgs, pin.getCreatedAt(), pin.getUpdatedAt());
+            return toEditRes(
+                    pin,
+                    pinLocation.getLocation().getRegion(),
+                    pinLocation.getDetailAddress());
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
             throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_5);
         }
+    }
+
+    private void assertPinImageUrlsBelongToPin(Long pinId, List<PinImageItemReqDTO> items) {
+        for (PinImageItemReqDTO item : items) {
+            pinImageRepository.findAllWithPinByPinS3UrlOrderByPinImageIdAsc(item.pinImageUrl()).stream()
+                    .findFirst()
+                    .ifPresent(pi -> {
+                        if (!Objects.equals(pi.getPin().getPinId(), pinId)) {
+                            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+                        }
+                    });
+        }
+    }
+
+    private static List<PinImageItemReqDTO> normalizePinImageUrls(List<PinImageItemReqDTO> pinImageUrls) {
+        return pinImageUrls == null ? null : List.copyOf(pinImageUrls);
+    }
+
+    private static List<PinImageItemReqDTO> mergePinImageItems(
+            List<PinImageItemReqDTO> existingItems, List<PinImageItemReqDTO> newItems) {
+        if (existingItems == null || existingItems.isEmpty()) {
+            return List.copyOf(newItems);
+        }
+        if (newItems.isEmpty()) {
+            return List.copyOf(existingItems);
+        }
+        List<PinImageItemReqDTO> merged = new ArrayList<>(existingItems.size() + newItems.size());
+        merged.addAll(existingItems);
+        merged.addAll(newItems);
+        return merged;
+    }
+
+    private static void validateCombinedEditPinImages(List<PinImageItemReqDTO> merged) {
+        if (merged.size() > 5) {
+            throw PinException.of(PinErrorCode.PIN_IMAGE_400_3);
+        }
+        validateMainFlags(merged, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
     }
 
     private void syncPinImages(Pin pin, List<PinImageItemReqDTO> items) {
@@ -286,9 +355,32 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.getUpdatedAt());
     }
 
+    private CommunicationPinEditResDTO toEditRes(Pin pin, String region, String pinDetailAddress) {
+        List<PinImageWithIdResDTO> imgs =
+                pin.getPinImages().stream()
+                        .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
+                        .map(
+                                pi ->
+                                        new PinImageWithIdResDTO(
+                                                pi.getPinImageId(),
+                                                pi.getPinS3Url(),
+                                                pi.isMainImage()))
+                        .toList();
+
+        return new CommunicationPinEditResDTO(
+                pin.getPinId(),
+                pin.getPinType().name(),
+                region,
+                pinDetailAddress,
+                imgs,
+                pin.getToneType().name(),
+                pin.getCreatedAt(),
+                pin.getUpdatedAt());
+    }
+
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
         if (items == null) {
-            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+            return;
         }
         validateMainFlags(items, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
     }
@@ -300,6 +392,25 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         long mains = items.stream().filter(PinImageItemReqDTO::isMain).count();
         if (mains != 1) {
             throw PinException.of(violation);
+        }
+    }
+
+    private static void validateMultipartEditRequest(
+            List<PinImageItemReqDTO> existingItems,
+            List<CommunicationPinImportMultipartImageReqDTO> newImageMeta,
+            List<MultipartFile> photos) {
+        if (photos.isEmpty()) {
+            if (!newImageMeta.isEmpty()) {
+                throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+            }
+            return;
+        }
+        if (newImageMeta.size() != photos.size()) {
+            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+        }
+        int existingCount = existingItems == null ? 0 : existingItems.size();
+        if (existingCount + photos.size() > 5) {
+            throw PinException.of(PinErrorCode.PIN_IMAGE_400_3);
         }
     }
 
