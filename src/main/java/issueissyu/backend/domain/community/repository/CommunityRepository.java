@@ -25,7 +25,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
      * CARDNEWS는 cardnewsImages도 함께 조회한다.
      */
     @Query("""
-            select distinct c
+            select c
             from Community c
             join fetch c.pin p
             join fetch p.user
