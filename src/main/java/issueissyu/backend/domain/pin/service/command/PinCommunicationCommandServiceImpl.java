@@ -43,6 +43,7 @@ import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -169,22 +170,28 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     public CommunicationPinEditResDTO editCommunicationV1(
             String uid, Long pinId, CommunicationPinEditMultipartReqDTO req, List<MultipartFile> photos) {
         List<MultipartFile> photoParts = photos == null ? List.of() : photos;
+        List<PinImageItemReqDTO> existingItems = normalizePinImageUrls(req.pinImageUrls());
+        List<CommunicationPinImportMultipartImageReqDTO> newImageMeta =
+                req.pinImages() == null ? List.of() : req.pinImages();
 
-        validateMultipartEditRequest(req, photoParts);
+        validateMultipartEditRequest(existingItems, newImageMeta, photoParts);
 
         if (photoParts.isEmpty()) {
             return editCommunication(
-                    uid, pinId, new CommunicationPinEditReqDTO(List.of(), req.pinTitle(), req.pinContent()));
+                    uid,
+                    pinId,
+                    new CommunicationPinEditReqDTO(existingItems, req.pinTitle(), req.pinContent()));
         }
 
         List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
         try {
-            List<PinImageItemReqDTO> pinImageUrls =
-                    buildPinImageItemRequests(uploadedUrls, req.pinImages());
+            List<PinImageItemReqDTO> newItems = buildPinImageItemRequests(uploadedUrls, newImageMeta);
+            List<PinImageItemReqDTO> merged = mergePinImageItems(existingItems, newItems);
+            validateCombinedEditPinImages(merged);
             return editCommunication(
                     uid,
                     pinId,
-                    new CommunicationPinEditReqDTO(pinImageUrls, req.pinTitle(), req.pinContent()));
+                    new CommunicationPinEditReqDTO(merged, req.pinTitle(), req.pinContent()));
         } catch (RuntimeException e) {
             rollbackUploadedUrls(uploadedUrls);
             throw e;
@@ -206,11 +213,13 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         }
 
         try {
-            validateCommunicationEditPinImages(req.pinImageUrls());
+            if (req.pinImageUrls() != null) {
+                assertPinImageUrlsBelongToPin(pinId, req.pinImageUrls());
+                validateCommunicationEditPinImages(req.pinImageUrls());
+                syncPinImages(pin, req.pinImageUrls());
+            }
 
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
-
-            syncPinImages(pin, req.pinImageUrls());
 
             pinRepository.save(pin);
 
@@ -228,6 +237,38 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         } catch (Exception e) {
             throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_5);
         }
+    }
+
+    private void assertPinImageUrlsBelongToPin(Long pinId, List<PinImageItemReqDTO> items) {
+        for (PinImageItemReqDTO item : items) {
+            resolveExistingPinImageByUrl(pinId, item.pinImageUrl())
+                    .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1));
+        }
+    }
+
+    private static List<PinImageItemReqDTO> normalizePinImageUrls(List<PinImageItemReqDTO> pinImageUrls) {
+        return pinImageUrls == null ? null : List.copyOf(pinImageUrls);
+    }
+
+    private static List<PinImageItemReqDTO> mergePinImageItems(
+            List<PinImageItemReqDTO> existingItems, List<PinImageItemReqDTO> newItems) {
+        if (existingItems == null || existingItems.isEmpty()) {
+            return List.copyOf(newItems);
+        }
+        if (newItems.isEmpty()) {
+            return List.copyOf(existingItems);
+        }
+        List<PinImageItemReqDTO> merged = new ArrayList<>(existingItems.size() + newItems.size());
+        merged.addAll(existingItems);
+        merged.addAll(newItems);
+        return merged;
+    }
+
+    private static void validateCombinedEditPinImages(List<PinImageItemReqDTO> merged) {
+        if (merged.size() > 5) {
+            throw PinException.of(PinErrorCode.PIN_IMAGE_400_3);
+        }
+        validateMainFlags(merged, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
     }
 
     private void syncPinImages(Pin pin, List<PinImageItemReqDTO> items) {
@@ -334,7 +375,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
         if (items == null) {
-            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+            return;
         }
         validateMainFlags(items, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
     }
@@ -350,22 +391,21 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     }
 
     private static void validateMultipartEditRequest(
-            CommunicationPinEditMultipartReqDTO req, List<MultipartFile> photos) {
-        if (req == null) {
-            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
-        }
-        List<CommunicationPinImportMultipartImageReqDTO> pinMeta = req.pinImages();
-        if (pinMeta == null) {
-            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
-        }
+            List<PinImageItemReqDTO> existingItems,
+            List<CommunicationPinImportMultipartImageReqDTO> newImageMeta,
+            List<MultipartFile> photos) {
         if (photos.isEmpty()) {
-            if (!pinMeta.isEmpty()) {
+            if (!newImageMeta.isEmpty()) {
                 throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
             }
             return;
         }
-        if (pinMeta.size() != photos.size()) {
+        if (newImageMeta.size() != photos.size()) {
             throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+        }
+        int existingCount = existingItems == null ? 0 : existingItems.size();
+        if (existingCount + photos.size() > 5) {
+            throw PinException.of(PinErrorCode.PIN_IMAGE_400_3);
         }
     }
 
