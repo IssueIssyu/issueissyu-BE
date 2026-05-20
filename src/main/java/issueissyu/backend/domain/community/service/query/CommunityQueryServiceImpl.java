@@ -17,6 +17,7 @@ import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.enums.CommunityTab;
 import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.exception.CommunityException;
+import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
@@ -117,7 +118,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     @Transactional(readOnly = false)
-    public CommunityDetailResDTO getCommunityDetail(Long communityId, String uid) {
+    public CommunityQueryService.CommunityDetailResult getCommunityDetail(Long communityId, String uid) {
         userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
@@ -163,7 +164,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         boolean isMine = pin != null && Objects.equals(pin.getUser().getUid(), uid);
 
-        return new CommunityDetailResDTO(
+        return new CommunityQueryService.CommunityDetailResult(
+                CommunitySuccessCode.forType(type),
+                new CommunityDetailResDTO(
                 item,
                 detailContent,
                 imageUrls,
@@ -175,7 +178,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 issuePinState,
                 petitionCount,
                 isMine
-        );
+        ));
     }
 
     private void validateRegionIfNeeded(CommunityTab tab, String region) {
