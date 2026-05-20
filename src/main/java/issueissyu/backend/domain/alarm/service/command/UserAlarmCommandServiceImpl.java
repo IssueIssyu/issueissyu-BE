@@ -1,18 +1,10 @@
 package issueissyu.backend.domain.alarm.service.command;
 
-import issueissyu.backend.domain.alarm.dto.req.EventAlarmReqDTO;
-import issueissyu.backend.domain.alarm.dto.req.LikeAlarmReqDTO;
-import issueissyu.backend.domain.alarm.dto.req.StoreAlarmReqDTO;
-import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
-import issueissyu.backend.domain.alarm.entity.EventAlarm;
-import issueissyu.backend.domain.alarm.entity.LikeAlarm;
-import issueissyu.backend.domain.alarm.entity.StoreAlarm;
-import issueissyu.backend.domain.alarm.entity.UserAlarm;
+import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.exception.AlarmException;
 import issueissyu.backend.domain.alarm.exception.code.AlarmErrorCode;
-import issueissyu.backend.domain.alarm.repository.EventAlarmRepository;
-import issueissyu.backend.domain.alarm.repository.LikeAlarmRepository;
-import issueissyu.backend.domain.alarm.repository.StoreAlarmRepository;
 import issueissyu.backend.domain.alarm.service.FcmService;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
@@ -20,22 +12,25 @@ import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
 
     private final UserRepository userRepository;
-    private final LikeAlarmRepository likeAlarmRepository;
-    private final EventAlarmRepository eventAlarmRepository;
-    private final StoreAlarmRepository storeAlarmRepository;
+    private final LikeAlarmCommandService likeAlarmCommandService;
+    private final RegionalAlarmCommandService regionalAlarmCommandService;
     private final FcmService fcmService;
 
     @Override
+    @Transactional
     public void savePushToken(String uid, String fcmPushToken) {
         if (!StringUtils.hasText(fcmPushToken)) {
             throw AlarmException.of(AlarmErrorCode.PUSH_TOKEN_400);
@@ -45,87 +40,83 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     }
 
     @Override
-    public AlarmMessageResDTO sendLikeAlarm(Long likeAlarmId, LikeAlarmReqDTO request) {
-        LikeAlarm likeAlarm = likeAlarmRepository.findById(likeAlarmId)
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.LIKE_ALARM_404));
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public LikeAlarmSendResDTO sendLikeAlarm(String likerUid, Long pinId) {
+        LikeAlarmPrepared prepared = likeAlarmCommandService.createLikeAlarmForApi(likerUid, pinId);
 
-        User recipient = likeAlarm.getUserAlarm().getUser();
-
-        if (!recipient.isLikeAlarmActive()) {
-            throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_403);
+        String messageId = null;
+        if (StringUtils.hasText(prepared.pushToken())) {
+            try {
+                messageId = fcmService.sendNotification(
+                        prepared.pushToken(),
+                        prepared.title(),
+                        prepared.body(),
+                        Map.of(
+                                "likeAlarmId",
+                                String.valueOf(prepared.likeAlarmId()),
+                                "pinId",
+                                String.valueOf(prepared.pinId())));
+            } catch (Exception e) {
+                log.error("Failed to send like alarm for pinId={}: {}", pinId, e.getMessage(), e);
+                throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_400);
+            }
         }
 
-        String pushToken = recipient.getPushToken();
-        if (!StringUtils.hasText(pushToken)) {
-            throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_400);
-        }
-
-        try {
-            String messageId = fcmService.sendNotification(
-                    pushToken,
-                    request.likeAlarmTitle(),
-                    request.likeAlarmBody(),
-                    Map.of("likeAlarmId", String.valueOf(likeAlarmId)));
-            return new AlarmMessageResDTO(messageId);
-        } catch (Exception e) {
-            throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_400);
-        }
+        return new LikeAlarmSendResDTO(prepared.likeAlarmId(), messageId, pinId);
     }
 
     @Override
-    public AlarmMessageResDTO sendEventAlarm(Long eventAlarmId, EventAlarmReqDTO request) {
-        EventAlarm eventAlarm = eventAlarmRepository.findById(eventAlarmId)
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.EVENT_ALARM_404));
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public EventAlarmSendResDTO sendEventAlarm(String uid) {
+        EventAlarmPrepared prepared = regionalAlarmCommandService.sendEventAlarmToUser(uid);
 
-        User recipient = eventAlarm.getUserAlarm().getUser();
-
-        if (!recipient.isEventAlarmActive()) {
-            throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_403);
+        String messageId = null;
+        if (StringUtils.hasText(prepared.pushToken())) {
+            try {
+                messageId = fcmService.sendNotification(
+                        prepared.pushToken(),
+                        prepared.title(),
+                        prepared.body(),
+                        Map.of(
+                                "eventAlarmId",
+                                String.valueOf(prepared.eventAlarmId()),
+                                "communityId",
+                                String.valueOf(prepared.communityId())));
+            } catch (Exception e) {
+                log.error("Failed to send event alarm for uid={}: {}", uid, e.getMessage(), e);
+                throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_400);
+            }
         }
 
-        String pushToken = recipient.getPushToken();
-        if (!StringUtils.hasText(pushToken)) {
-            throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_400);
-        }
-
-        try {
-            String messageId = fcmService.sendNotification(
-                    pushToken,
-                    request.eventAlarmTitle(),
-                    request.eventAlarmBody(),
-                    Map.of("eventAlarmId", String.valueOf(eventAlarmId)));
-            return new AlarmMessageResDTO(messageId);
-        } catch (Exception e) {
-            throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_400);
-        }
+        return new EventAlarmSendResDTO(
+                prepared.eventAlarmId(), messageId, prepared.pinId(), prepared.communityId());
     }
 
     @Override
-    public AlarmMessageResDTO sendStoreAlarm(Long storeAlarmId, StoreAlarmReqDTO request) {
-        StoreAlarm storeAlarm = storeAlarmRepository.findById(storeAlarmId)
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.STORE_ALARM_404));
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public StoreAlarmSendResDTO sendStoreAlarm(String uid) {
+        StoreAlarmPrepared prepared = regionalAlarmCommandService.sendStoreAlarmToUser(uid);
 
-        User recipient = storeAlarm.getUserAlarm().getUser();
-
-        if (!recipient.isStoreAlarmActive()) {
-            throw AlarmException.of(AlarmErrorCode.STORE_ALARM_403);
+        String messageId = null;
+        if (StringUtils.hasText(prepared.pushToken())) {
+            try {
+                messageId = fcmService.sendNotification(
+                        prepared.pushToken(),
+                        prepared.title(),
+                        prepared.body(),
+                        Map.of(
+                                "storeAlarmId",
+                                String.valueOf(prepared.storeAlarmId()),
+                                "communityId",
+                                String.valueOf(prepared.communityId())));
+            } catch (Exception e) {
+                log.error("Failed to send store alarm for uid={}: {}", uid, e.getMessage(), e);
+                throw AlarmException.of(AlarmErrorCode.STORE_ALARM_400);
+            }
         }
 
-        String pushToken = recipient.getPushToken();
-        if (!StringUtils.hasText(pushToken)) {
-            throw AlarmException.of(AlarmErrorCode.STORE_ALARM_400);
-        }
-
-        try {
-            String messageId = fcmService.sendNotification(
-                    pushToken,
-                    request.storeAlarmTitle(),
-                    request.storeAlarmBody(),
-                    Map.of("storeAlarmId", String.valueOf(storeAlarmId)));
-            return new AlarmMessageResDTO(messageId);
-        } catch (Exception e) {
-            throw AlarmException.of(AlarmErrorCode.STORE_ALARM_400);
-        }
+        return new StoreAlarmSendResDTO(
+                prepared.storeAlarmId(), messageId, prepared.pinId(), prepared.communityId());
     }
 
     private User findUser(String uid) {

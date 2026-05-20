@@ -102,7 +102,7 @@ dependencies {
 	implementation 'net.sf.geographiclib:GeographicLib-Java:2.0'
 
 	// Firebase Admin SDK
-	implementation 'com.google.firebase:firebase-admin:9.2.0'
+	implementation 'com.google.firebase:firebase-admin:9.4.2'
 }
 
 
