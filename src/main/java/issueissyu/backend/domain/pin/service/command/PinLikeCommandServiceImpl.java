@@ -3,6 +3,7 @@ package issueissyu.backend.domain.pin.service.command;
 import issueissyu.backend.domain.alarm.event.LikeAlarmCreatedEvent;
 import issueissyu.backend.domain.alarm.service.command.LikeAlarmCommandService;
 import issueissyu.backend.domain.alarm.service.command.LikeAlarmPrepared;
+import issueissyu.backend.domain.community.service.query.CommunityPromotionService;
 import issueissyu.backend.domain.pin.dto.res.PinLikeResDTO;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.mapping.PinLike;
@@ -31,6 +32,7 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
     private final UserRepository userRepository;
     private final LikeAlarmCommandService likeAlarmCommandService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommunityPromotionService communityPromotionService;
 
     @Override
     @Transactional
@@ -55,6 +57,9 @@ public class PinLikeCommandServiceImpl implements PinLikeCommandService {
         pinRepository.incrementLikeCountByPinId(pinId);
 
         int likeCount = pinRepository.findLikeCountByPinId(pinId).orElse(pin.getLikeCount());
+
+        // 공감 수가 지역별 커뮤니티 등업 기준에 도달하면 community 테이블에 자동 등록
+        communityPromotionService.promoteIfTargetReached(pin, likeCount);
 
         likeAlarmCommandService
                 .createLikeAlarmIfEligible(uid, pinId)
