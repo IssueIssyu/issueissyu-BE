@@ -40,27 +40,13 @@ public class Community extends BaseEntity {
     private Long communityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pin_id", nullable = true)
+    @JoinColumn(name = "pin_id", nullable = false)
     @ToString.Exclude
     private Pin pin;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "community_type", nullable = false)
     private CommunityType communityType;
-
-    @Column(name = "title", length = 255)
-    private String title;
-
-    @Column(name = "content", length = 255)
-    private String content;
-
-    @Builder.Default
-    @Column(name = "view_count", nullable = false)
-    private int viewCount = 0;
-
-    @Builder.Default
-    @Column(name = "like_count", nullable = false)
-    private int likeCount = 0;
 
     @Builder.Default
     @Column(name = "popularity", nullable = false)
@@ -70,32 +56,6 @@ public class Community extends BaseEntity {
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
-
-    // 실제 DB 데이터상 pin이 연결되어 있는지 확인
-    public boolean hasPin() {
-        return this.pin != null;
-    }
-
-    public boolean requiresPin() {
-        return this.communityType == CommunityType.ISSUE
-                || this.communityType == CommunityType.STORE
-                || this.communityType == CommunityType.FESTIVAL
-                || this.communityType == CommunityType.COMMUNICATION;
-    }
-
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
-
-    public void increaseLikeCount() {
-        this.likeCount++;
-    }
-
-    public void decreaseLikeCount() {
-        if (this.likeCount > 0) {
-            this.likeCount--;
-        }
-    }
 
     // HOT 정렬에 사용할 인기도 점수 갱신
     public void updatePopularity(double popularity) {
