@@ -94,9 +94,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             String cursor,
             int size
     ) {
-        if (!locationRepository.existsByRegion(region)) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
-        }
+        validateRegionIfNeeded(tab, region);
 
         if (tab == CommunityTab.HOT) {
             return getHotFeed(region, cursor, size);
@@ -212,25 +210,22 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                     limit
             );
 
-            case POLICY -> communityRepository.findFeedByTypeAndRegion(
+            case POLICY -> communityRepository.findFeedByType(
                     CommunityType.POLICY,
-                    region,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
             );
 
-            case CONTEST -> communityRepository.findFeedByTypeAndRegion(
+            case CONTEST -> communityRepository.findFeedByType(
                     CommunityType.CONTEST,
-                    region,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
             );
 
-            case CARDNEWS -> communityRepository.findFeedByTypeAndRegion(
+            case CARDNEWS -> communityRepository.findFeedByType(
                     CommunityType.CARDNEWS,
-                    region,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -247,6 +242,21 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
             case HOT -> List.of();
         };
+    }
+
+    private void validateRegionIfNeeded(CommunityTab tab, String region) {
+        if (usesRegion(tab) && !locationRepository.existsByRegion(region)) {
+            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        }
+    }
+
+    private boolean usesRegion(CommunityTab tab) {
+        return tab == CommunityTab.ISSUE
+                || tab == CommunityTab.STORE
+                || tab == CommunityTab.COMMUNICATION
+                || tab == CommunityTab.FESTIVAL
+                || tab == CommunityTab.ALL
+                || tab == CommunityTab.HOT;
     }
 
     private CommunityFeedItemResDTO toFeedItem(Community community) {
