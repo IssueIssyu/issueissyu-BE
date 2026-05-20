@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditReqDTO;
+import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinEditResDTO;
@@ -16,4 +17,7 @@ public interface PinCommunicationCommandService {
             String uid, CommunicationPinImportMultipartReqDTO request, List<MultipartFile> photos);
 
     CommunicationPinEditResDTO editCommunication(String uid, Long pinId, CommunicationPinEditReqDTO request);
+
+    CommunicationPinEditResDTO editCommunicationV1(
+            String uid, Long pinId, CommunicationPinEditMultipartReqDTO request, List<MultipartFile> photos);
 }
