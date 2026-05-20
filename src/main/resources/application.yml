@@ -27,6 +27,8 @@ app:
       weight-comment: 0.25
       weight-like: 0.25
       chart-rank-subtract: 0
+  admin:
+    uid: ${APP_ADMIN_UID}
 
 solapi:
   api-key: ${SOLAPI_API_KEY}

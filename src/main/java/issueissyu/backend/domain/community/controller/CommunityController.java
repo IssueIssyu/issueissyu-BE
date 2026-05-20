@@ -40,8 +40,9 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 피드 조회", description = "탭+지역구+커서 기준으로 피드를 조회합니다.")
     @GetMapping
     public ApiResponse<CommunityCursorPageResDTO> getFeed(
+            // TODO : 홈 구현 후 디폴트 홈으로 바꾸기
             @RequestParam(required = false, defaultValue = "ALL") String tab,
-            @RequestParam String region,
+            @RequestParam(required = false) String region,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         CommunityTab parsedTab = CommunityTab.parse(tab);
