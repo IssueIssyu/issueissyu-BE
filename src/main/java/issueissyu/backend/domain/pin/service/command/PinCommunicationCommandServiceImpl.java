@@ -241,8 +241,13 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
 
     private void assertPinImageUrlsBelongToPin(Long pinId, List<PinImageItemReqDTO> items) {
         for (PinImageItemReqDTO item : items) {
-            resolveExistingPinImageByUrl(pinId, item.pinImageUrl())
-                    .orElseThrow(() -> PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1));
+            pinImageRepository.findAllWithPinByPinS3UrlOrderByPinImageIdAsc(item.pinImageUrl()).stream()
+                    .findFirst()
+                    .ifPresent(pi -> {
+                        if (!Objects.equals(pi.getPin().getPinId(), pinId)) {
+                            throw PinException.of(PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
+                        }
+                    });
         }
     }
 
