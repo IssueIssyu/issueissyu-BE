@@ -36,6 +36,7 @@ public enum MapSuccessCode implements BaseSuccessCode {
             case COMMUNICATION -> MAP_CARD_200_2;
             case STORE -> MAP_CARD_200_3;
             case FESTIVAL -> MAP_CARD_200_4;
+            default -> null;
         };
     }
 }
