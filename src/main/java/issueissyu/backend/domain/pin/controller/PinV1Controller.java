@@ -26,9 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
 
 @RestController
-@RequestMapping("/api/v1/pins")
+@RequestMapping("/api/pins")
 @RequiredArgsConstructor
-@Tag(name = "Pin V1", description = "통합 멀티파트 핀 등록 API")
+@Tag(name = "Pin", description = "핀 등록/수정/삭제/조회")
 public class PinV1Controller {
 
     private final PinCommunicationCommandService pinCommunicationCommandService;
@@ -36,11 +36,11 @@ public class PinV1Controller {
     private final Validator validator;
 
     @Operation(
-            summary = "소통 핀 통합 등록(V1)",
+            summary = "소통 핀 통합 등록",
             description =
                     "photos(선택, 이미지 파일들)와 request(JSON: 위/경도, 제목, 본문, 이미지별 isMain)를 받아 필요 시 S3 업로드 후 소통 핀을 등록합니다.")
     @PostMapping(value = "/import/communication", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<CommunicationPinImportResDTO> importCommunicationV1(
+    public ApiResponse<CommunicationPinImportResDTO> importCommunication(
             @AuthenticationPrincipal String uid,
             @Parameter(description = "`CommunicationPinImportMultipartReqDTO`와 동일한 필드를 가진 JSON 문자열(lat, lng, pinImages?, pinTitle, pinContent)")
             @RequestPart("request") String requestPart,
