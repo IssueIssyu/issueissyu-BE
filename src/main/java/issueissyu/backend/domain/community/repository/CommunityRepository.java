@@ -19,7 +19,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     Optional<Community> findByPin_PinId(Long pinId);
 
     @Query("""
-            select distinct c
+            select c
             from Community c
             left join fetch c.pin p
             left join fetch p.user
