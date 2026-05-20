@@ -128,8 +128,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         CommunityType type = community.getCommunityType();
         Pin pin = community.getPin();
-
+        Long pinId = pin.getPinId();
         int viewCount = increaseDetailViewCount(community);
+
+        IssuePin issuePin =
+                type == CommunityType.ISSUE
+                        ? issuePinRepository.findByPin_PinId(pinId).orElse(null)
+                        : null;
 
         CommunityDetailItemResDTO item = toDetailItem(community, viewCount);
         List<String> imageUrls = resolveDetailImageUrls(community);
@@ -148,6 +153,14 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pin.getPinId(), uid)
                 : null;
 
+        String issuePinState =
+                issuePin != null ? issuePin.getIssuePinState().name() : null;
+
+        Integer petitionCount =
+                type == CommunityType.ISSUE
+                        ? (issuePin != null ? issuePin.getPetitionCount() : 0)
+                        : null;
+
         boolean isMine = pin != null && Objects.equals(pin.getUser().getUid(), uid);
 
         return new CommunityDetailResDTO(
@@ -159,6 +172,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 isReported,
                 isPetitioned,
                 isProblemSolver,
+                issuePinState,
+                petitionCount,
                 isMine
         );
     }

@@ -29,6 +29,7 @@ import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -146,6 +147,13 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public UserLocationCertResDto changeUserRegion(String uid, double lat, double lng) {
         validateLatLngForRegion(lat, lng);
+
+        User user =
+                userRepository
+                        .findById(uid)
+                        .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+        assertEligibleForMonthlyRegionChange(user);
+
         return locationService.userLocationCert(uid, new PGpoint(lng, lat));
     }
 
@@ -180,6 +188,17 @@ public class UserCommandServiceImpl implements UserCommandService {
                         UserAlarmToggleResDTO.builder().storeAlarmActive(user.isStoreAlarmActive()).build());
             }
         };
+    }
+
+    private static void assertEligibleForMonthlyRegionChange(User user) {
+        LocalDateTime last = user.getUserPointUpdated();
+        if (last == null) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (last.plusMonths(1).isAfter(now)) {
+            throw LocationException.of(LocationErrorCode.LOCATION_REGION_CHANGE_TOO_SOON);
+        }
     }
 
     private static void validateLatLngForRegion(double lat, double lng) {

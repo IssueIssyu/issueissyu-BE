@@ -13,6 +13,6 @@ public record IssueCommunityDetailItemResDTO(
         String pinDetailAddress,
         int viewCount,
         long likeCount,
-        String issuePinState
+        String pinState
 ) implements CommunityDetailItemResDTO {
 }

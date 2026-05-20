@@ -51,7 +51,12 @@ public class CommunityController {
         return ApiResponse.onSuccess(CommunitySuccessCode.forTab(parsedTab), result);
     }
 
-    @Operation(summary = "커뮤니티 게시물 상세 조회", description = "연결된 핀 카드 정보와 본문(content)을 반환합니다. 조회 시 조회수가 증가합니다.")
+    @Operation(
+            summary = "커뮤니티 게시물 상세 조회",
+            description =
+                    "연결된 핀 카드 정보와 본문(content)을 반환합니다. 조회 시 조회수가 증가합니다. "
+                            + "이슈(ISSUE) 타입일 때만 issuePinState·petitionCount·isPetitioned·isProblemSolver가 채워지며, "
+                            + "그 외 타입에서는 해당 필드가 null입니다.")
     @GetMapping("/{communityId}")
     public ApiResponse<CommunityDetailResDTO> getDetail(
             @PathVariable Long communityId,

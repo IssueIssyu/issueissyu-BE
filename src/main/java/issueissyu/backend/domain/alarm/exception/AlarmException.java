@@ -1,8 +1,15 @@
 package issueissyu.backend.domain.alarm.exception;
 
-public class AlarmException extends RuntimeException {
+import issueissyu.backend.global.api.code.BaseErrorCode;
+import issueissyu.backend.global.exception.GeneralException;
 
-    public AlarmException(String message) {
-        super(message);
+public class AlarmException extends GeneralException {
+
+    public AlarmException(BaseErrorCode code) {
+        super(code);
+    }
+
+    public static AlarmException of(BaseErrorCode code) {
+        return new AlarmException(code);
     }
 }
