@@ -40,7 +40,7 @@ public class CommunityLikeController {
     // 헬퍼 메서드
     private Long resolvePinId(Long communityId) {
         return communityRepository
-                .findDetailById(communityId)
+                .findById(communityId)
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1))
                 .getPin()
                 .getPinId();
