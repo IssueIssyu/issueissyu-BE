@@ -40,8 +40,9 @@ public class CommunityController {
     @Operation(summary = "커뮤니티 피드 조회", description = "탭+지역구+커서 기준으로 피드를 조회합니다.")
     @GetMapping
     public ApiResponse<CommunityCursorPageResDTO> getFeed(
+            // TODO : 홈 구현 후 디폴트 홈으로 바꾸기
             @RequestParam(required = false, defaultValue = "ALL") String tab,
-            @RequestParam String region,
+            @RequestParam(required = false) String region,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         CommunityTab parsedTab = CommunityTab.parse(tab);
@@ -60,8 +61,9 @@ public class CommunityController {
     public ApiResponse<CommunityDetailResDTO> getDetail(
             @PathVariable Long communityId,
             @AuthenticationPrincipal String uid) {
-        CommunityDetailResDTO result = communityQueryService.getCommunityDetail(communityId, uid);
-        return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_DETAIL_200, result);
+        CommunityQueryService.CommunityDetailResult result =
+                communityQueryService.getCommunityDetail(communityId, uid);
+        return ApiResponse.onSuccess(result.successCode(), result.data());
     }
 
     @Operation(summary = "커뮤니티 게시물 삭제", description = "소통(COMMUNICATION) 타입만 허용. 작성자만 가능하며 연결된 핀과 모든 하위 데이터(댓글·공감·이모지 등)가 함께 삭제됩니다.")
