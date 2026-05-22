@@ -36,8 +36,6 @@ public class CommunityPromotionService {
         Community community = Community.builder()
                 .pin(pin)
                 .communityType(resolveCommunityType(pin.getPinType()))
-                .title(pin.getPinTitle())
-                .content(pin.getPinContent())
                 .build();
 
         try {
@@ -53,6 +51,9 @@ public class CommunityPromotionService {
             case STORE -> CommunityType.STORE;
             case FESTIVAL -> CommunityType.FESTIVAL;
             case COMMUNICATION -> CommunityType.COMMUNICATION;
+            case POLICY -> CommunityType.POLICY;
+            case CONTEST -> CommunityType.CONTEST;
+            case CARDNEWS -> CommunityType.CARDNEWS;
         };
     }
 }
