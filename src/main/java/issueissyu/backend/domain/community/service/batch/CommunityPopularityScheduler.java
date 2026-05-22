@@ -3,6 +3,7 @@ package issueissyu.backend.domain.community.service.batch;
 import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.community.service.command.CommunityPopularityService;
+import issueissyu.backend.global.config.properties.CommunityPopularityProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,11 +22,17 @@ public class CommunityPopularityScheduler {
 
     private final CommunityRepository communityRepository;
     private final CommunityPopularityService communityPopularityService;
+    private final CommunityPopularityProperties communityPopularityProperties;
 
     // 매일 새벽 4시에 최근 7일 게시글의 popularity를 재계산한다.
     @Scheduled(cron = "0 0 4 * * *")
     @Transactional
     public void recalculatePopularity() {
+        if (!communityPopularityProperties.isEnabled()) {
+            log.debug("Community popularity 배치가 비활성화되어 있습니다. (app.community.popularity.enabled=false)");
+            return;
+        }
+
         LocalDateTime since = LocalDateTime.now().minusDays(POPULARITY_RECALC_DAYS);
 
         List<Community> targets = communityRepository.findPopularityUpdateTargets(since);
