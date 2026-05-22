@@ -40,7 +40,7 @@ public class Community extends BaseEntity {
     private Long communityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pin_id", nullable = false)
+    @JoinColumn(name = "pin_id", nullable = false, unique = true)
     @ToString.Exclude
     private Pin pin;
 
@@ -48,14 +48,17 @@ public class Community extends BaseEntity {
     @Column(name = "community_type", nullable = false)
     private CommunityType communityType;
 
-    @Column(length = 255)
-    private String title;
-
-    @Column(length = 255)
-    private String content;
+    @Builder.Default
+    @Column(name = "popularity", nullable = false)
+    private double popularity = 0.0;
 
     @Builder.Default
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<CardnewsImageS3> cardnewsImages = new ArrayList<>();
+
+    // HOT 정렬에 사용할 인기도 점수 갱신
+    public void updatePopularity(double popularity) {
+        this.popularity = popularity;
+    }
 }

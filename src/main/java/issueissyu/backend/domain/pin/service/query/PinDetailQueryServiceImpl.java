@@ -59,6 +59,7 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                         case COMMUNICATION -> PinSuccessCode.PIN_HOME_200_2;
                         case STORE -> PinSuccessCode.PIN_HOME_200_3;
                         case FESTIVAL -> PinSuccessCode.PIN_HOME_200_4;
+                        default -> null;
                     };
 
             String detailAddr =
@@ -183,6 +184,7 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
                         case COMMUNICATION -> PinSuccessCode.PIN_POST_200_2;
                         case STORE -> PinSuccessCode.PIN_POST_200_3;
                         case FESTIVAL -> PinSuccessCode.PIN_POST_200_4;
+                        default -> null;
                     };
 
             boolean isLike = pinLikeRepository.existsByPin_PinIdAndUser_Uid(pinId, uid);
