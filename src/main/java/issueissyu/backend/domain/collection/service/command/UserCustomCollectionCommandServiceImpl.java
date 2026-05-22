@@ -59,16 +59,16 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
     @Override
     @Transactional
     public CollectionBookmarkUpdateResDTO setBookmark(String uid, Long collectionId, boolean isBookmarked) {
-        userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
-
-        customCollectionRepository
-                .findById(collectionId)
-                .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
-
         UserCustomCollection userUnlockRow =
                 userCustomCollectionRepository
                         .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
-                        .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
+                        .orElseThrow(() -> {
+                            if (!customCollectionRepository.existsById(collectionId)) {
+                                return CustomCollectionException.of(
+                                        CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND);
+                            }
+                            return CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED);
+                        });
 
         userUnlockRow.setBookmark(isBookmarked);
 
