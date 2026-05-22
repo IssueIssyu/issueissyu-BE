@@ -16,6 +16,6 @@ public class MyCollectionsResDTO {
     // 대표 프로필 컬렉션 요약 (없으면 null)
     private ProfileCollectionSummaryResDTO myCollection;
 
-    // 전체 컬렉션 목록(ID 순), 해금·북마크 반영
+    // 전체 컬렉션 카탈로그(ID 순). isLocked·isBookmarked 포함. 마이페이지 노출 필터는 클라이언트에서 적용.
     private List<UserCollectionItemResDTO> collections;
 }

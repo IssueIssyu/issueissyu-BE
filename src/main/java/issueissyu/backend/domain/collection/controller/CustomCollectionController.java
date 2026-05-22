@@ -34,7 +34,12 @@ public class CustomCollectionController {
     @Operation(
             summary = "마이페이지 프로필, 내 컬렉션 목록",
             description =
-                    " 사용자의 프로필 정보와 컬렉션 목록을 반환 합니다. 마이페이지 컬렉션 영역은 collections 중 isLocked == false && isBookmarked == true 항목을 사용합니다. myCollection 은 대표 프로필 컬렉션 요약입니다.")
+                    """
+                    사용자의 프로필 정보와 컬렉션 카탈로그 전체를 반환합니다.
+                    collections 는 잠금·북마크 상태(isLocked, isBookmarked)를 포함한 전체 목록이며, 서버에서 북마크 항목만 걸러내지 않습니다.
+                    마이페이지 컬렉션 영역은 클라이언트에서 collections 중 isLocked == false && isBookmarked == true 항목만 표시하면 됩니다.
+                    myCollection 은 대표 프로필 컬렉션 요약입니다.
+                    """)
     @GetMapping
     public ApiResponse<MyCollectionsResDTO> getMyCollections(@AuthenticationPrincipal String uid) {
         MyCollectionsResDTO result = userCustomCollectionQueryService.getMyCollections(uid);
