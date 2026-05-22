@@ -29,4 +29,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Comment c WHERE c.pin.pinId = :pinId")
     void deleteByPin_PinId(@Param("pinId") Long pinId);
+
+    // 배치에서 핀 하나의 댓글 수를 셀 때 사용
+    long countByPin_PinId(Long pinId);
 }

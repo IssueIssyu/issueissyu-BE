@@ -68,4 +68,6 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
             @Param("neLat") double neLat,
             @Param("pinTypeFilter") String pinTypeFilter
     );
+
+    Optional<PinLocation> findFirstByPin_PinId(Long pinId);
 }

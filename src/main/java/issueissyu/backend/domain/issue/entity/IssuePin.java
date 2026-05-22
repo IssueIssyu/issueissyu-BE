@@ -48,6 +48,12 @@ public class IssuePin extends BaseEntity {
     @Column(name = "petition_count", nullable = false)
     private int petitionCount = 0;
 
+    @Column(name = "issue_confidence")
+    private Float issueConfidence;
+
+    @Column(name = "confidence_content", columnDefinition = "text")
+    private String confidenceContent;
+
     public void incrementPetitionCount() {
         this.petitionCount++;
     }

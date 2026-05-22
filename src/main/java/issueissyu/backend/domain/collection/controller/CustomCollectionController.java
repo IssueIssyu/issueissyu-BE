@@ -34,7 +34,12 @@ public class CustomCollectionController {
     @Operation(
             summary = "마이페이지 프로필, 내 컬렉션 목록",
             description =
-                    " 사용자의 프로필 정보와 컬렉션 목록을 반환 합니다. 마이페이지에서는 collections 중 isLocked == false 만 사용할 수 있습니다. myCollection 은 대표 프로필 컬렉션 요약입니다.")
+                    """
+                    사용자의 프로필 정보와 컬렉션 카탈로그 전체를 반환합니다.
+                    collections 는 잠금·북마크 상태(isLocked, isBookmarked)를 포함한 전체 목록이며, 서버에서 북마크 항목만 걸러내지 않습니다.
+                    마이페이지 컬렉션 영역은 클라이언트에서 collections 중 isLocked == false && isBookmarked == true 항목만 표시하면 됩니다.
+                    myCollection 은 대표 프로필 컬렉션 요약입니다.
+                    """)
     @GetMapping
     public ApiResponse<MyCollectionsResDTO> getMyCollections(@AuthenticationPrincipal String uid) {
         MyCollectionsResDTO result = userCustomCollectionQueryService.getMyCollections(uid);
@@ -54,7 +59,7 @@ public class CustomCollectionController {
 
     @Operation(
             summary = "컬렉션 북마크 설정",
-            description = "북마크는 최대 하나만 켜집니다. true이면 다른 해금 컬렉션의 북마크는 모두 해제된 뒤 이 컬렉션만 북마크됩니다.")
+            description = "해금된 컬렉션의 북마크를 설정하거나 해제합니다. 북마크는 복수 설정 가능합니다.")
     @PatchMapping("/{collectionId}/bookmark")
     public ApiResponse<CollectionBookmarkUpdateResDTO> updateBookmark(
             @AuthenticationPrincipal String uid,
