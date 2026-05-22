@@ -1,18 +1,16 @@
 package issueissyu.backend.domain.community.service.query;
 
-import issueissyu.backend.domain.community.dto.res.CommunicationCommunityFeedItemResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityCursorPageResDTO;
-import issueissyu.backend.domain.community.dto.res.CommunityDetailItemResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityDetailResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityFeedItemResDTO;
-import issueissyu.backend.domain.community.dto.res.IssueCommunityDetailItemResDTO;
-import issueissyu.backend.domain.community.dto.res.IssueCommunityFeedItemResDTO;
-import issueissyu.backend.domain.community.dto.res.StoreCommunityFeedItemResDTO;
+import issueissyu.backend.domain.community.dto.res.CommunityHomeResDTO;
+import issueissyu.backend.domain.community.entity.CardnewsImageS3;
 import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.enums.CommunityTab;
 import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.exception.CommunityException;
 import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
+import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
@@ -31,9 +29,9 @@ import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
-import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,11 +49,34 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class CommunityQueryServiceImpl implements CommunityQueryService {
 
-    private static final List<CommunityType> IMPLEMENTED_FEED_TYPES = List.of(
+    private static final List<CommunityType> FEED_TYPES = List.of(
             CommunityType.ISSUE,
             CommunityType.STORE,
-            CommunityType.COMMUNICATION
+            CommunityType.COMMUNICATION,
+            CommunityType.FESTIVAL,
+            CommunityType.POLICY,
+            CommunityType.CONTEST,
+            CommunityType.CARDNEWS
     );
+
+    private static final List<CommunityType> REGION_BASED_FEED_TYPES = List.of(
+            CommunityType.ISSUE,
+            CommunityType.STORE,
+            CommunityType.COMMUNICATION,
+            CommunityType.FESTIVAL
+    );
+
+    private static final List<CommunityType> GLOBAL_FEED_TYPES = List.of(
+            CommunityType.POLICY,
+            CommunityType.CONTEST,
+            CommunityType.CARDNEWS
+    );
+
+    // HOT 인기 점수 계산용
+    private static final int HOT_DAYS = 7;
+    // 홈에서 사용
+    private static final int HOT_PREVIEW_SIZE = 3;
+    private static final int MAX_STORE_SIZE = 10;
 
     private final CommunityRepository communityRepository;
     private final LocationRepository locationRepository;
@@ -72,82 +93,318 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final UserProfileImageQueryService userProfileImageQueryService;
 
     @Override
-    // 탭/지역/커서 기준으로 피드 한 페이지를 만든다.
-    public CommunityCursorPageResDTO getCommunityFeed(
-            CommunityTab tab, String region, String cursor, int size) {
+    public CommunityHomeResDTO getCommunityHome(
+            String region,
+            String recentCursor,
+            int storeSize,
+            int recentSize
+    ) {
+        validateRegion(region);
 
-        if (!locationRepository.existsByRegion(region)) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        boolean isInitialLoad = recentCursor == null || recentCursor.isBlank();
+
+        List<CommunityFeedItemResDTO> storePromotions =
+                isInitialLoad ? fetchStorePromotions(region, storeSize) : List.of();
+
+        List<CommunityFeedItemResDTO> hotPreviews = isInitialLoad ? fetchHotPreviews(region) : List.of();
+
+        CommunityCursorPageResDTO recentNews = fetchRecentNews(region, recentCursor, recentSize);
+
+        return new CommunityHomeResDTO(region, storePromotions, hotPreviews, recentNews);
+    }
+
+    @Override
+    public CommunityCursorPageResDTO getCommunityFeed(
+            CommunityTab tab,
+            String region,
+            String cursor,
+            int size
+    ) {
+        validateRegionIfNeeded(tab, region);
+
+        if (tab == CommunityTab.HOT) {
+            return getHotFeed(region, cursor, size);
         }
 
         CursorKey cursorKey = CursorKey.parse(cursor, size);
         List<Community> communities = fetchCommunities(tab, region, cursorKey);
+
         boolean hasNext = communities.size() > size;
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
 
-        List<CommunityFeedItemResDTO> items = pageItems.stream()
+        List<CommunityFeedItemResDTO> content = pageItems.stream()
                 .map(this::toFeedItem)
                 .toList();
 
-        String nextCursor = hasNext ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode() : null;
-        return new CommunityCursorPageResDTO(region, items, nextCursor, hasNext);
+        String nextCursor = hasNext
+                ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
+                : null;
+
+        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
     }
 
     @Override
     @Transactional(readOnly = false)
-    public CommunityDetailResDTO getCommunityDetail(Long communityId, String uid) {
+    public CommunityQueryService.CommunityDetailResult getCommunityDetail(Long communityId, String uid) {
         userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
         Community community = communityRepository.findDetailById(communityId)
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
-        Pin pin = community.getPin();
-        int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
-        Long pinId = pin.getPinId();
+
         CommunityType type = community.getCommunityType();
-        IssuePin issuePin =
-                type == CommunityType.ISSUE
-                        ? issuePinRepository.findByPin_PinId(pinId).orElse(null)
-                        : null;
+        Pin pin = community.getPin();
 
-        CommunityDetailItemResDTO item = toDetailItem(community, viewCount);
-        List<String> pinImageUrls = pinImageRepository
-                .findByPin_PinIdOrderByPinImageIdAsc(pinId)
-                .stream()
-                .map(PinImage::getPinS3Url)
-                .toList();
+        int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
 
-        // STORE는 content가 피드 item 안에 포함되므로 래퍼의 content는 null
-        String detailContent = type == CommunityType.STORE ? null : community.getContent();
-
-        // 신고 여부 - ISSUE, COMMUNICATION, STORE 타입만
-        Boolean isReported = (type == CommunityType.ISSUE
-                        || type == CommunityType.COMMUNICATION
-                        || type == CommunityType.STORE)
-                ? declarationRepository.existsByPin_PinIdAndUser_Uid(pinId, uid)
+        IssuePin issuePin = type == CommunityType.ISSUE
+                ? issuePinRepository.findByPin_PinId(pin.getPinId()).orElse(null)
                 : null;
 
-        // 청원·지금가요 여부 - ISSUE 타입만
+        Boolean isReported = isReportableType(type)
+                ? declarationRepository.existsByPin_PinIdAndUser_Uid(pin.getPinId(), uid)
+                : null;
+
         Boolean isPetitioned = type == CommunityType.ISSUE
-                ? issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
-                : null;
-        Boolean isProblemSolver = type == CommunityType.ISSUE
-                ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid)
+                ? issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pin.getPinId(), uid)
                 : null;
 
-        String issuePinState =
-                issuePin != null ? issuePin.getIssuePinState().name() : null;
-        Integer petitionCount =
-                type == CommunityType.ISSUE
-                        ? (issuePin != null ? issuePin.getPetitionCount() : 0)
-                        : null;
+        Boolean isProblemSolver = type == CommunityType.ISSUE
+                ? problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pin.getPinId(), uid)
+                : null;
+
+        String issuePinState = issuePin != null
+                ? issuePin.getIssuePinState().name()
+                : null;
+
+        Integer petitionCount = issuePin != null
+                ? issuePin.getPetitionCount()
+                : null;
 
         boolean isMine = Objects.equals(pin.getUser().getUid(), uid);
 
+        CommunityDetailResDTO detail = toDetailRes(
+                community,
+                viewCount,
+                isReported,
+                isPetitioned,
+                isProblemSolver,
+                issuePinState,
+                petitionCount,
+                isMine
+        );
+
+        return new CommunityQueryService.CommunityDetailResult(
+                CommunitySuccessCode.forType(type),
+                detail
+        );
+    }
+
+    private List<Community> fetchCommunities(CommunityTab tab, String region, CursorKey cursorKey) {
+        Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
+
+        return switch (tab) {
+            case ISSUE -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.ISSUE,
+                    region,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case STORE -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.STORE,
+                    region,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.COMMUNICATION,
+                    region,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case FESTIVAL -> communityRepository.findFeedByTypeAndRegion(
+                    CommunityType.FESTIVAL,
+                    region,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case POLICY -> communityRepository.findFeedByType(
+                    CommunityType.POLICY,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case CONTEST -> communityRepository.findFeedByType(
+                    CommunityType.CONTEST,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case CARDNEWS -> communityRepository.findFeedByType(
+                    CommunityType.CARDNEWS,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case ALL -> communityRepository.findFeedByRegionOrGlobalTypes(
+                    REGION_BASED_FEED_TYPES,
+                    GLOBAL_FEED_TYPES,
+                    region,
+                    cursorKey.createdAt(),
+                    cursorKey.communityId(),
+                    limit
+            );
+
+            case HOME, HOT -> List.of();
+        };
+    }
+
+    private void validateRegion(String region) {
+        if (!locationRepository.existsByRegion(region)) {
+            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        }
+    }
+
+    private List<CommunityFeedItemResDTO> fetchStorePromotions(String region, int storeSize) {
+        int resolvedSize = Math.min(Math.max(1, storeSize), MAX_STORE_SIZE);
+        Pageable limit = PageRequest.of(0, resolvedSize);
+
+        List<Community> communities = communityRepository.findFeedByTypeAndRegion(
+                CommunityType.STORE,
+                region,
+                null,
+                null,
+                limit
+        );
+
+        return communities.stream().map(this::toFeedItem).toList();
+    }
+
+    private List<CommunityFeedItemResDTO> fetchHotPreviews(String region) {
+        LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
+        Pageable limit = PageRequest.of(0, HOT_PREVIEW_SIZE);
+
+        return communityRepository.findHotFeedByRegionOrGlobalTypes(
+                        REGION_BASED_FEED_TYPES,
+                        GLOBAL_FEED_TYPES,
+                        region,
+                        since,
+                        null,
+                        null,
+                        limit
+                )
+                .stream()
+                .map(this::toFeedItem)
+                .toList();
+    }
+
+    private CommunityCursorPageResDTO fetchRecentNews(String region, String recentCursor, int recentSize) {
+        CursorKey cursorKey = CursorKey.parse(recentCursor, recentSize);
+        Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
+
+        List<Community> communities = communityRepository.findFeedByTypesAndRegion(
+                REGION_BASED_FEED_TYPES,
+                region,
+                cursorKey.createdAt(),
+                cursorKey.communityId(),
+                limit
+        );
+
+        boolean hasNext = communities.size() > cursorKey.requestSize();
+        List<Community> pageItems =
+                hasNext ? communities.subList(0, cursorKey.requestSize()) : communities;
+
+        List<CommunityFeedItemResDTO> content = pageItems.stream()
+                .map(this::toFeedItem)
+                .toList();
+
+        String nextCursor = hasNext
+                ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
+                : null;
+
+        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
+    }
+
+    private void validateRegionIfNeeded(CommunityTab tab, String region) {
+        if (usesRegion(tab) && !locationRepository.existsByRegion(region)) {
+            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+        }
+    }
+
+    private boolean usesRegion(CommunityTab tab) {
+        return tab == CommunityTab.HOME
+                || tab == CommunityTab.ISSUE
+                || tab == CommunityTab.STORE
+                || tab == CommunityTab.COMMUNICATION
+                || tab == CommunityTab.FESTIVAL
+                || tab == CommunityTab.ALL
+                || tab == CommunityTab.HOT;
+    }
+
+    private CommunityFeedItemResDTO toFeedItem(Community community) {
+        Pin pin = community.getPin();
+        CommunityType type = community.getCommunityType();
+        Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
+
+        return new CommunityFeedItemResDTO(
+                type,
+                community.getCommunityId(),
+                pin.getPinId(),
+                pin.getPinTitle(),
+                pin.getPinContent(),
+                resolveThumbnailUrl(community).orElse(null),
+                pin.getUser().getNickname(),
+                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
+                resolveAddress(pin.getPinId()),
+                pin.getViewCount(),
+                pin.getLikeCount(),
+                eventPin.map(EventPin::getDiscount).orElse(null),
+                eventPin.map(EventPin::getEventStartTime).orElse(null),
+                eventPin.map(EventPin::getEventEndTime).orElse(null)
+        );
+    }
+
+    private CommunityDetailResDTO toDetailRes(
+            Community community,
+            int viewCount,
+            Boolean isReported,
+            Boolean isPetitioned,
+            Boolean isProblemSolver,
+            String issuePinState,
+            Integer petitionCount,
+            boolean isMine
+    ) {
+        Pin pin = community.getPin();
+        CommunityType type = community.getCommunityType();
+        Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
+
         return new CommunityDetailResDTO(
-                item,
-                detailContent,
-                pinImageUrls,
+                type,
+                community.getCommunityId(),
+                pin.getPinId(),
+                pin.getPinTitle(),
+                pin.getPinContent(),
+                resolveThumbnailUrl(community).orElse(null),
+                resolveDetailImageUrls(community),
+                pin.getUser().getNickname(),
+                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
+                resolveAddress(pin.getPinId()),
+                viewCount,
+                pin.getLikeCount(),
+                eventPin.map(EventPin::getDiscount).orElse(null),
+                eventPin.map(EventPin::getEventStartTime).orElse(null),
+                eventPin.map(EventPin::getEventEndTime).orElse(null),
                 community.getCreatedAt(),
                 community.getUpdatedAt(),
                 isReported,
@@ -155,158 +412,135 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 isProblemSolver,
                 issuePinState,
                 petitionCount,
-                isMine);
+                isMine
+        );
     }
 
-    // 상세 조회용 DTO 분기 (타입별 카드 메타; 이슈 전용 상태는 래퍼 필드 참고)
-    private CommunityDetailItemResDTO toDetailItem(Community community, int viewCount) {
-        return switch (community.getCommunityType()) {
-            case ISSUE -> toIssueDetailItem(community, viewCount);
-            case STORE -> toStoreFeedItem(community, viewCount);
-            case COMMUNICATION -> toCommunicationFeedItem(community, viewCount);
-            default -> null;
-        };
+    private Optional<EventPin> resolveEventPin(CommunityType type, Long pinId) {
+        if (type == CommunityType.STORE || type == CommunityType.FESTIVAL) {
+            return eventPinRepository.findByPin_PinId(pinId);
+        }
+
+        return Optional.empty();
     }
 
-    // ISSUE 상세 카드 DTO 매핑 (이슈 진행·청원 수는 래퍼 CommunityDetailResDTO에 포함)
-    private IssueCommunityDetailItemResDTO toIssueDetailItem(Community community, int viewCount) {
-        Pin pin = community.getPin();
-        Long pinId = pin.getPinId();
+    private Optional<String> resolveThumbnailUrl(Community community) {
+        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+            return resolveCardnewsThumbnailUrl(community);
+        }
 
-        return new IssueCommunityDetailItemResDTO(
-                community.getCommunityId(),
-                pinId,
-                community.getTitle(),
-                resolvePinThumbnailUrl(pinId).orElse(null),
-                pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
-                resolveAddress(pinId),
-                viewCount,
-                pin.getLikeCount());
+        if (community.getCommunityType() == CommunityType.STORE
+                || community.getCommunityType() == CommunityType.FESTIVAL) {
+            Optional<String> storeImageUrl = storeImageRepository
+                    .findByEventPin_Pin_PinId(community.getPin().getPinId())
+                    .map(StoreImage::getImageS3Url);
+
+            if (storeImageUrl.isPresent()) {
+                return storeImageUrl;
+            }
+        }
+
+        return resolvePinThumbnailUrl(community.getPin().getPinId());
     }
 
-    // 탭 규칙에 맞는 community 목록을 조회한다.
-    private List<Community> fetchCommunities(CommunityTab tab, String region, CursorKey cursorKey) {
-        Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
-        return switch (tab) {
-            case ISSUE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.ISSUE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            case STORE -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.STORE, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
-                    CommunityType.COMMUNICATION, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            case ALL -> communityRepository.findFeedByTypesAndRegion(
-                    IMPLEMENTED_FEED_TYPES, region, cursorKey.createdAt(), cursorKey.communityId(), limit);
-            // 축제·카드뉴스 등 미노출 탭: 피드는 빈 목록
-            case FESTIVAL -> List.of();
-            case HOT, POLICY, CONTEST, CARDNEWS -> List.of();
-        };
+    private List<String> resolveDetailImageUrls(Community community) {
+        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+            return community.getCardnewsImages()
+                    .stream()
+                    .map(CardnewsImageS3::getCardnewsImageS3Url)
+                    .toList();
+        }
+
+        return pinImageRepository
+                .findByPin_PinIdOrderByPinImageIdAsc(community.getPin().getPinId())
+                .stream()
+                .map(PinImage::getPinS3Url)
+                .toList();
     }
 
-    // communityType에 맞는 피드 DTO로 분기한다.
-    private CommunityFeedItemResDTO toFeedItem(Community community) {
-        return switch (community.getCommunityType()) {
-            case ISSUE -> toIssueFeedItem(community);
-            case STORE -> toStoreFeedItem(community);
-            case COMMUNICATION -> toCommunicationFeedItem(community);
-            default -> null;
-        };
+    private Optional<String> resolveCardnewsThumbnailUrl(Community community) {
+        return community.getCardnewsImages()
+                .stream()
+                .map(CardnewsImageS3::getCardnewsImageS3Url)
+                .findFirst();
     }
 
-    // ISSUE 카드 DTO 매핑.
-    private IssueCommunityFeedItemResDTO toIssueFeedItem(Community community) {
-        Pin pin = community.getPin();
-        return new IssueCommunityFeedItemResDTO(
-                community.getCommunityId(),
-                pin.getPinId(),
-                community.getTitle(),
-                resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
-                pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
-                resolveAddress(pin.getPinId()),
-                pin.getViewCount(),
-                pin.getLikeCount());
-    }
-
-    // STORE 카드 DTO 매핑.
-    private StoreCommunityFeedItemResDTO toStoreFeedItem(Community community) {
-        return toStoreFeedItem(community, community.getPin().getViewCount());
-    }
-
-    private StoreCommunityFeedItemResDTO toStoreFeedItem(Community community, int viewCount) {
-        Pin pin = community.getPin();
-        Optional<StoreImage> storeImage = storeImageRepository.findByEventPin_Pin_PinId(pin.getPinId());
-        Optional<EventPin> eventPin = eventPinRepository.findByPin_PinId(pin.getPinId());
-        return new StoreCommunityFeedItemResDTO(
-                community.getCommunityId(),
-                pin.getPinTitle(),
-                storeImage.map(StoreImage::getImageS3Url)
-                        .or(() -> resolvePinThumbnailUrl(pin.getPinId()))
-                        .orElse(null),
-                community.getContent(),
-                eventPin.map(EventPin::getDiscount).orElse(null),
-                resolveAddress(pin.getPinId()),
-                eventPin.map(EventPin::getEventStartTime).orElse(null),
-                eventPin.map(EventPin::getEventEndTime).orElse(null),
-                viewCount,
-                pin.getLikeCount());
-    }
-
-    // COMMUNICATION 카드 DTO 매핑.
-    private CommunicationCommunityFeedItemResDTO toCommunicationFeedItem(Community community) {
-        return toCommunicationFeedItem(community, community.getPin().getViewCount());
-    }
-
-    private CommunicationCommunityFeedItemResDTO toCommunicationFeedItem(Community community, int viewCount) {
-        Pin pin = community.getPin();
-        return new CommunicationCommunityFeedItemResDTO(
-                community.getCommunityId(),
-                pin.getPinId(),
-                community.getTitle(),
-                resolvePinThumbnailUrl(pin.getPinId()).orElse(null),
-                pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
-                resolveAddress(pin.getPinId()),
-                viewCount,
-                pin.getLikeCount());
-    }
-
-    // 핀의 주소 조회.
     private String resolveAddress(Long pinId) {
         return pinLocationRepository.findByPin_PinId(pinId)
                 .map(PinLocation::getDetailAddress)
                 .orElse(null);
     }
 
-    // 핀 썸네일 URL(대표 이미지 우선, 없으면 첫 이미지) 조회.
     private Optional<String> resolvePinThumbnailUrl(Long pinId) {
         Optional<String> mainImage = pinImageRepository.findFirstByPin_PinIdAndMainImageTrue(pinId)
                 .map(PinImage::getPinS3Url);
+
         return mainImage.isPresent()
                 ? mainImage
                 : pinImageRepository.findFirstByPin_PinIdOrderByPinImageIdAsc(pinId)
-                        .map(PinImage::getPinS3Url);
+                .map(PinImage::getPinS3Url);
     }
 
-    // hasNext 판단을 위해 요청 개수 + 1만큼 조회한다.
+    private boolean isReportableType(CommunityType type) {
+        return type == CommunityType.ISSUE
+                || type == CommunityType.STORE
+                || type == CommunityType.FESTIVAL
+                || type == CommunityType.COMMUNICATION
+                || type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS;
+    }
+
+    private CommunityCursorPageResDTO getHotFeed(String region, String cursor, int size) {
+        HotCursorKey cursorKey = HotCursorKey.parse(cursor, size);
+        LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
+        Pageable limit = PageRequest.of(0, sizeWithLookahead(size));
+
+        List<Community> communities = communityRepository.findHotFeedByRegionOrGlobalTypes(
+                REGION_BASED_FEED_TYPES,
+                GLOBAL_FEED_TYPES,
+                region,
+                since,
+                cursorKey.popularity(),
+                cursorKey.communityId(),
+                limit
+        );
+
+        boolean hasNext = communities.size() > size;
+        List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
+
+        List<CommunityFeedItemResDTO> content = pageItems.stream()
+                .map(this::toFeedItem)
+                .toList();
+
+        String nextCursor = hasNext
+                ? HotCursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
+                : null;
+
+        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
+    }
+
     private int sizeWithLookahead(int requestSize) {
         return Math.max(1, requestSize) + 1;
     }
 
-    // 커서 파싱/인코딩용 키(createdAt + communityId).
     private record CursorKey(LocalDateTime createdAt, Long communityId, int requestSize) {
 
         private static CursorKey parse(String raw, int requestSize) {
             if (raw == null || raw.isBlank()) {
                 return new CursorKey(null, null, requestSize);
             }
+
             String[] parts = raw.split("\\|", 2);
+
             if (parts.length != 2) {
                 throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
             }
+
             try {
                 LocalDateTime createdAt = LocalDateTime.parse(parts[0]);
                 Long communityId = Long.parseLong(parts[1]);
+
                 return new CursorKey(createdAt, communityId, requestSize);
             } catch (DateTimeParseException | NumberFormatException e) {
                 throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
@@ -319,6 +553,38 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         private String encode() {
             return createdAt + "|" + communityId;
+        }
+    }
+
+    private record HotCursorKey(Double popularity, Long communityId, int requestSize) {
+
+        private static HotCursorKey parse(String raw, int requestSize) {
+            if (raw == null || raw.isBlank()) {
+                return new HotCursorKey(null, null, requestSize);
+            }
+
+            String[] parts = raw.split("\\|", 2);
+
+            if (parts.length != 2) {
+                throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
+            }
+
+            try {
+                Double popularity = Double.parseDouble(parts[0]);
+                Long communityId = Long.parseLong(parts[1]);
+
+                return new HotCursorKey(popularity, communityId, requestSize);
+            } catch (NumberFormatException e) {
+                throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_3);
+            }
+        }
+
+        private static HotCursorKey from(Community community) {
+            return new HotCursorKey(community.getPopularity(), community.getCommunityId(), 0);
+        }
+
+        private String encode() {
+            return popularity + "|" + communityId;
         }
     }
 }

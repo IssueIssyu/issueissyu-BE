@@ -4,5 +4,8 @@ public enum PinType {
     ISSUE,
     STORE,
     FESTIVAL,
-    COMMUNICATION;
+    COMMUNICATION,
+    POLICY,
+    CONTEST,
+    CARDNEWS
 }
