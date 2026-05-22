@@ -68,6 +68,39 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     );
 
     /**
+     * 지역 기반 복수 타입 피드 조회.
+     *
+     * HOME 동네 최근 소식 등에서
+     * ISSUE / STORE / FESTIVAL / COMMUNICATION만 조회할 때 사용한다.
+     */
+    @Query("""
+            select c
+            from Community c
+            join fetch c.pin p
+            join fetch p.user
+            where c.communityType in :types
+              and exists (
+                    select 1
+                    from PinLocation pl
+                    where pl.pin = p
+                      and pl.location.region = :regionCode
+              )
+              and (
+                    cast(:cursorCreatedAt as LocalDateTime) is null
+                    or c.createdAt < :cursorCreatedAt
+                    or (c.createdAt = :cursorCreatedAt and c.communityId < :cursorId)
+              )
+            order by c.createdAt desc, c.communityId desc
+            """)
+    List<Community> findFeedByTypesAndRegion(
+            @Param("types") Collection<CommunityType> types,
+            @Param("regionCode") String regionCode,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable
+    );
+
+    /**
      * 전역 단일 타입 피드 조회.
      *
      * POLICY / CONTEST / CARDNEWS처럼

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum CommunitySuccessCode implements BaseSuccessCode {
+    COMMUNITY_HOME_200(HttpStatus.OK, "COMMUNITY_HOME_200", "커뮤니티 홈 조회에 성공했습니다."),
     COMMUNITY_FEED_HOT_200(HttpStatus.OK, "COMMUNITY_FEED_HOT_200", "Hot 커뮤니티 목록 조회에 성공했습니다."),
     COMMUNITY_FEED_ALL_200(HttpStatus.OK, "COMMUNITY_FEED_ALL_200", "전체 커뮤니티 목록 조회에 성공했습니다."),
     COMMUNITY_FEED_ISSUE_200(HttpStatus.OK, "COMMUNITY_FEED_ISSUE_200", "이슈 커뮤니티 목록 조회에 성공했습니다."),
@@ -40,6 +41,7 @@ public enum CommunitySuccessCode implements BaseSuccessCode {
 
     public static CommunitySuccessCode forTab(CommunityTab tab) {
         return switch (tab) {
+            case HOME -> COMMUNITY_HOME_200;
             case HOT -> COMMUNITY_FEED_HOT_200;
             case ALL -> COMMUNITY_FEED_ALL_200;
             case ISSUE -> COMMUNITY_FEED_ISSUE_200;
