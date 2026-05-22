@@ -55,34 +55,22 @@ public class UserCustomCollectionCommandServiceImpl implements UserCustomCollect
                 .build();
     }
 
-    // 북마크는 하나만 켜짐, 0 도 가능
+    // 해금된 컬렉션만 북마크 가능, 복수 설정 가능
     @Override
     @Transactional
     public CollectionBookmarkUpdateResDTO setBookmark(String uid, Long collectionId, boolean isBookmarked) {
-        
-        // 사용자 검증
-        userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+        UserCustomCollection userUnlockRow =
+                userCustomCollectionRepository
+                        .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
+                        .orElseThrow(() -> {
+                            if (!customCollectionRepository.existsById(collectionId)) {
+                                return CustomCollectionException.of(
+                                        CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND);
+                            }
+                            return CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED);
+                        });
 
-        // 컬렉션 검증
-        customCollectionRepository
-                .findById(collectionId)
-                .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_NOT_FOUND));
-
-        if (isBookmarked) {
-            List<UserCustomCollection> allUserUnlockRows =
-                    userCustomCollectionRepository.findAllByUser_UidOrderByCustomCollection_CustomCollectionIdAsc(uid);
-            UserCustomCollection userUnlockRow = allUserUnlockRows.stream()
-                    .filter(row -> row.getCustomCollection().getCustomCollectionId().equals(collectionId))
-                    .findFirst()
-                    .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED));
-            allUserUnlockRows.forEach(row -> row.setBookmark(false));
-            userUnlockRow.setBookmark(true);
-        } else {
-            userCustomCollectionRepository
-                    .findByUser_UidAndCustomCollection_CustomCollectionId(uid, collectionId)
-                    .orElseThrow(() -> CustomCollectionException.of(CustomCollectionErrorCode.CUSTOM_COLLECTION_LOCKED))
-                    .setBookmark(false);
-        }
+        userUnlockRow.setBookmark(isBookmarked);
 
         return CollectionBookmarkUpdateResDTO.builder()
                 .customCollectionId(collectionId)

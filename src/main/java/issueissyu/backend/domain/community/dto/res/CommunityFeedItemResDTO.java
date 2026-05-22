@@ -1,18 +1,35 @@
 package issueissyu.backend.domain.community.dto.res;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import issueissyu.backend.domain.community.enums.CommunityType;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = IssueCommunityFeedItemResDTO.class, name = "ISSUE"),
-        @JsonSubTypes.Type(value = StoreCommunityFeedItemResDTO.class, name = "STORE"),
-        @JsonSubTypes.Type(value = FestivalCommunityFeedItemResDTO.class, name = "FESTIVAL"),
-        @JsonSubTypes.Type(value = CommunicationCommunityFeedItemResDTO.class, name = "COMMUNICATION")
-})
-public sealed interface CommunityFeedItemResDTO
-        permits IssueCommunityFeedItemResDTO,
-        StoreCommunityFeedItemResDTO,
-        FestivalCommunityFeedItemResDTO,
-        CommunicationCommunityFeedItemResDTO {
+import java.time.LocalDateTime;
+
+public record CommunityFeedItemResDTO(
+        CommunityType kind,
+
+        Long communityId,
+        Long pinId,
+
+        String title,
+        String content,
+
+        String thumbnailUrl,
+
+        String writerNickname,
+        String writerProfileUrl,
+
+        String detailAddress,
+
+        int viewCount,
+        long likeCount,
+
+        String discount,
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime eventStartTime,
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime eventEndTime
+) {
 }
