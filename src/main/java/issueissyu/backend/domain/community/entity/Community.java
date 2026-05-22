@@ -40,7 +40,7 @@ public class Community extends BaseEntity {
     private Long communityId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pin_id", nullable = false)
+    @JoinColumn(name = "pin_id", nullable = false, unique = true)
     @ToString.Exclude
     private Pin pin;
 
