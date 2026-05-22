@@ -3,7 +3,7 @@ package issueissyu.backend.domain.pin.service.command;
 import issueissyu.backend.domain.alarm.event.LikeAlarmCreatedEvent;
 import issueissyu.backend.domain.alarm.service.command.LikeAlarmCommandService;
 import issueissyu.backend.domain.alarm.service.command.LikeAlarmPrepared;
-import issueissyu.backend.domain.community.service.query.CommunityPromotionService;
+import issueissyu.backend.domain.community.service.command.CommunityPromotionService;
 import issueissyu.backend.domain.pin.dto.res.PinLikeResDTO;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.mapping.PinLike;

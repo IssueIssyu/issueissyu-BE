@@ -1,4 +1,4 @@
-package issueissyu.backend.domain.community.service.query;
+package issueissyu.backend.domain.community.service.command;
 
 import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.enums.CommunityType;
