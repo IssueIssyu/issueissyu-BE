@@ -94,40 +94,40 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     public CommunityHomeResDTO getCommunityHome(
-            String region,
+            Long locationId,
             String recentCursor,
             int storeSize,
             int recentSize
     ) {
-        validateRegion(region);
+        validateLocationId(locationId);
 
         boolean isInitialLoad = recentCursor == null || recentCursor.isBlank();
 
         List<CommunityFeedItemResDTO> storePromotions =
-                isInitialLoad ? fetchStorePromotions(region, storeSize) : List.of();
+                isInitialLoad ? fetchStorePromotions(locationId, storeSize) : List.of();
 
-        List<CommunityFeedItemResDTO> hotPreviews = isInitialLoad ? fetchHotPreviews(region) : List.of();
+        List<CommunityFeedItemResDTO> hotPreviews = isInitialLoad ? fetchHotPreviews(locationId) : List.of();
 
-        CommunityCursorPageResDTO recentNews = fetchRecentNews(region, recentCursor, recentSize);
+        CommunityCursorPageResDTO recentNews = fetchRecentNews(locationId, recentCursor, recentSize);
 
-        return new CommunityHomeResDTO(region, storePromotions, hotPreviews, recentNews);
+        return new CommunityHomeResDTO(locationId, storePromotions, hotPreviews, recentNews);
     }
 
     @Override
     public CommunityCursorPageResDTO getCommunityFeed(
             CommunityTab tab,
-            String region,
+            Long locationId,
             String cursor,
             int size
     ) {
-        validateRegionIfNeeded(tab, region);
+        validateLocationIdIfNeeded(tab, locationId);
 
         if (tab == CommunityTab.HOT) {
-            return getHotFeed(region, cursor, size);
+            return getHotFeed(locationId, cursor, size);
         }
 
         CursorKey cursorKey = CursorKey.parse(cursor, size);
-        List<Community> communities = fetchCommunities(tab, region, cursorKey);
+        List<Community> communities = fetchCommunities(tab, locationId, cursorKey);
 
         boolean hasNext = communities.size() > size;
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
@@ -140,7 +140,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
                 : null;
 
-        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
     }
 
     @Override
@@ -200,13 +200,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         );
     }
 
-    private List<Community> fetchCommunities(CommunityTab tab, String region, CursorKey cursorKey) {
+    private List<Community> fetchCommunities(CommunityTab tab, Long locationId, CursorKey cursorKey) {
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
 
         return switch (tab) {
             case ISSUE -> communityRepository.findFeedByTypeAndRegion(
                     CommunityType.ISSUE,
-                    region,
+                    locationId,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -214,7 +214,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
             case STORE -> communityRepository.findFeedByTypeAndRegion(
                     CommunityType.STORE,
-                    region,
+                    locationId,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -222,7 +222,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
             case COMMUNICATION -> communityRepository.findFeedByTypeAndRegion(
                     CommunityType.COMMUNICATION,
-                    region,
+                    locationId,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -230,7 +230,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
             case FESTIVAL -> communityRepository.findFeedByTypeAndRegion(
                     CommunityType.FESTIVAL,
-                    region,
+                    locationId,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -260,7 +260,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             case ALL -> communityRepository.findFeedByRegionOrGlobalTypes(
                     REGION_BASED_FEED_TYPES,
                     GLOBAL_FEED_TYPES,
-                    region,
+                    locationId,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
@@ -270,19 +270,19 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         };
     }
 
-    private void validateRegion(String region) {
-        if (!locationRepository.existsByRegion(region)) {
+    private void validateLocationId(Long locationId) {
+        if (locationId == null || !locationRepository.existsById(locationId)) {
             throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
         }
     }
 
-    private List<CommunityFeedItemResDTO> fetchStorePromotions(String region, int storeSize) {
+    private List<CommunityFeedItemResDTO> fetchStorePromotions(Long locationId, int storeSize) {
         int resolvedSize = Math.min(Math.max(1, storeSize), MAX_STORE_SIZE);
         Pageable limit = PageRequest.of(0, resolvedSize);
 
         List<Community> communities = communityRepository.findFeedByTypeAndRegion(
                 CommunityType.STORE,
-                region,
+                locationId,
                 null,
                 null,
                 limit
@@ -291,14 +291,14 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return communities.stream().map(this::toFeedItem).toList();
     }
 
-    private List<CommunityFeedItemResDTO> fetchHotPreviews(String region) {
+    private List<CommunityFeedItemResDTO> fetchHotPreviews(Long locationId) {
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, HOT_PREVIEW_SIZE);
 
         return communityRepository.findHotFeedByRegionOrGlobalTypes(
                         REGION_BASED_FEED_TYPES,
                         GLOBAL_FEED_TYPES,
-                        region,
+                        locationId,
                         since,
                         null,
                         null,
@@ -309,13 +309,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
     }
 
-    private CommunityCursorPageResDTO fetchRecentNews(String region, String recentCursor, int recentSize) {
+    private CommunityCursorPageResDTO fetchRecentNews(Long locationId, String recentCursor, int recentSize) {
         CursorKey cursorKey = CursorKey.parse(recentCursor, recentSize);
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
 
         List<Community> communities = communityRepository.findFeedByTypesAndRegion(
                 REGION_BASED_FEED_TYPES,
-                region,
+                locationId,
                 cursorKey.createdAt(),
                 cursorKey.communityId(),
                 limit
@@ -333,11 +333,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
                 : null;
 
-        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
     }
 
-    private void validateRegionIfNeeded(CommunityTab tab, String region) {
-        if (usesRegion(tab) && !locationRepository.existsByRegion(region)) {
+    private void validateLocationIdIfNeeded(CommunityTab tab, Long locationId) {
+        if (usesRegion(tab) && (locationId == null || !locationRepository.existsById(locationId))) {
             throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
         }
     }
@@ -491,7 +491,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 || type == CommunityType.CARDNEWS;
     }
 
-    private CommunityCursorPageResDTO getHotFeed(String region, String cursor, int size) {
+    private CommunityCursorPageResDTO getHotFeed(Long locationId, String cursor, int size) {
         HotCursorKey cursorKey = HotCursorKey.parse(cursor, size);
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, sizeWithLookahead(size));
@@ -499,7 +499,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         List<Community> communities = communityRepository.findHotFeedByRegionOrGlobalTypes(
                 REGION_BASED_FEED_TYPES,
                 GLOBAL_FEED_TYPES,
-                region,
+                locationId,
                 since,
                 cursorKey.popularity(),
                 cursorKey.communityId(),
@@ -517,7 +517,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? HotCursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
                 : null;
 
-        return new CommunityCursorPageResDTO(region, content, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
     }
 
     private int sizeWithLookahead(int requestSize) {
