@@ -37,10 +37,10 @@ public class PatchNoteQueryServiceImpl implements PatchNoteQueryService {
     private final PatchNoteCursorCodec patchNoteCursorCodec;
 
     @Override
-    public PatchNoteResDTO getPatchNotes(String uid, String region, Integer size, String cursor) {
+    public PatchNoteResDTO getPatchNotes(String uid, Long locationId, Integer size, String cursor) {
         try {
             int pageSize = resolveSize(size);
-            String resolvedRegion = resolveRegion(uid, region);
+            String resolvedRegion = resolveRegion(uid, locationId);
 
             boolean applyCursor = StringUtils.hasText(cursor);
             int cursorRank = 0;
@@ -106,13 +106,11 @@ public class PatchNoteQueryServiceImpl implements PatchNoteQueryService {
         return s;
     }
 
-    private String resolveRegion(String uid, String region) {
-        if (StringUtils.hasText(region)) {
-            String trimmed = region.trim();
-            if (!locationRepository.existsByRegion(trimmed)) {
-                throw MapException.of(MapErrorCode.PATCHNOTE_400_1);
-            }
-            return trimmed;
+    private String resolveRegion(String uid, Long locationId) {
+        if (locationId != null) {
+            return locationRepository.findById(locationId)
+                    .map(location -> location.getRegion())
+                    .orElseThrow(() -> MapException.of(MapErrorCode.PATCHNOTE_400_1));
         }
         try {
             return locationService.getUserLocation(uid).getAddress();
