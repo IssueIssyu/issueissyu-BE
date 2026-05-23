@@ -62,7 +62,7 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
             if (currentEmojiId.equals(targetEmojiId)) {
                 currentActive.deactivate();
                 pinEmojiRepository.save(currentActive);
-                communicationPinActivityMarker.markReactionOrComment(pinId);
+                markPinEmojiReaction(pinId);
                 return ApplyPinEmojiResDTO.builder()
                         .selectedEmojiId(null)
                         .build();
@@ -84,10 +84,15 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
         targetRow.activate();
         pinEmojiRepository.save(targetRow);
 
-        communicationPinActivityMarker.markReactionOrComment(pinId);
+        markPinEmojiReaction(pinId);
 
         return ApplyPinEmojiResDTO.builder()
                 .selectedEmojiId(targetEmojiId)
                 .build();
+    }
+
+    private void markPinEmojiReaction(Long pinId) {
+        pinEmojiRepository.flush();
+        communicationPinActivityMarker.markReactionOrComment(pinId);
     }
 }
