@@ -11,6 +11,7 @@ public enum CommunityErrorCode implements BaseErrorCode {
     COMMUNITY_400_1(HttpStatus.BAD_REQUEST, "COMMUNITY_400_1", "지원하지 않는 커뮤니티 탭입니다."),
     COMMUNITY_400_2(HttpStatus.BAD_REQUEST, "COMMUNITY_400_2", "지원하지 않는 지역 코드입니다."),
     COMMUNITY_400_3(HttpStatus.BAD_REQUEST, "COMMUNITY_400_3", "유효하지 않은 커서 형식입니다."),
+    COMMUNITY_400_4(HttpStatus.BAD_REQUEST, "COMMUNITY_400_4", "사용자의 동네가 등록되지 않아 커뮤니티 조회가 불가능합니다."),
     COMMUNITY_403_1(HttpStatus.FORBIDDEN, "COMMUNITY_403_1", "커뮤니티 게시물을 삭제할 권한이 없습니다."),
     COMMUNITY_403_2(HttpStatus.FORBIDDEN, "COMMUNITY_403_2", "소통 게시물만 삭제할 수 있습니다."),
     COMMUNITY_403_3(HttpStatus.FORBIDDEN, "COMMUNITY_403_3", "커뮤니티 게시물을 내릴 권한이 없습니다."),

@@ -19,16 +19,6 @@ app:
     # 프론트 연결 전: http://localhost:8080/dev/login/callback (토큰 확인 페이지)
     # 프론트 연결 후: .env의 DEV_OAUTH2_REDIRECT_URI 에 프론트 콜백 URL 설정
     redirect-uri: ${DEV_OAUTH2_REDIRECT_URI:http://localhost:8080/dev/login/callback}
-  community:
-    popularity:
-      enabled: true
-      refresh-cron: "0 5 4 * * *"
-      weight-view: 0.01
-      weight-comment: 0.25
-      weight-like: 0.25
-      chart-rank-subtract: 0
-  admin:
-    uid: ${APP_ADMIN_UID}
 
 solapi:
   api-key: ${SOLAPI_API_KEY}
@@ -55,7 +45,6 @@ cloud:
         location: user/
 server:
   port: ${PORT:8080}
-  forward-headers-strategy: framework
   tomcat:
     max-swallow-size: -1
     max-http-form-post-size: -1

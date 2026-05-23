@@ -43,9 +43,11 @@ public class CommunityController {
             description =
                     "tab=HOME(기본)이면 홈 화면(가게 홍보·Hot 미리보기·동네 최근 소식)을 반환합니다. "
                             + "cursor가 없으면 3개 섹션을 함께 내려주고, cursor가 있으면 동네 최근 소식만 추가 조회합니다. "
-                            + "그 외 탭은 기존 피드 목록을 반환합니다.")
+                            + "그 외 탭은 기존 피드 목록을 반환합니다. "
+                            + "locationId 생략 시 동네 인증된 시군구 locationId을 사용합니다.")
     @GetMapping
     public ApiResponse<?> getFeed(
+            @AuthenticationPrincipal String uid,
             @RequestParam(required = false, defaultValue = "HOME") String tab,
             @RequestParam(required = false) Long locationId,
             @RequestParam(required = false) String cursor,
@@ -55,12 +57,12 @@ public class CommunityController {
 
         if (parsedTab == CommunityTab.HOME) {
             CommunityHomeResDTO result =
-                    communityQueryService.getCommunityHome(locationId, cursor, storeSize, size);
+                    communityQueryService.getCommunityHome(uid, locationId, cursor, storeSize, size);
             return ApiResponse.onSuccess(CommunitySuccessCode.COMMUNITY_HOME_200, result);
         }
 
         CommunityCursorPageResDTO result =
-                communityQueryService.getCommunityFeed(parsedTab, locationId, cursor, size);
+                communityQueryService.getCommunityFeed(parsedTab, uid, locationId, cursor, size);
         return ApiResponse.onSuccess(CommunitySuccessCode.forTab(parsedTab), result);
     }
 
