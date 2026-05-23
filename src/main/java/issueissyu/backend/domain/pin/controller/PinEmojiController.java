@@ -3,6 +3,7 @@ package issueissyu.backend.domain.pin.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.pin.dto.req.ApplyPinEmojiReqDTO;
+import issueissyu.backend.domain.pin.dto.req.RegisterPinEmojiReqDTO;
 import issueissyu.backend.domain.pin.dto.res.ApplyPinEmojiResDTO;
 import issueissyu.backend.domain.pin.dto.res.PinEmojiSummaryListResDTO;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,8 +45,26 @@ public class PinEmojiController {
     }
 
     @Operation(
-            summary = "내 핀 반응 토글(등록/해제)",
-            description = "같은 이모지를 다시 요청하면 반응이 해제되고, 다른 이모지를 요청하면 기존 반응은 해제된 뒤 새 반응으로 교체됩니다."
+            summary = "내 핀 반응 등록(피커 확정)",
+            description = "피커에서 선택 후 버튼으로 확정할 때 사용합니다. emojiId=null이면 반응 취소, "
+                    + "값이 있으면 등록/변경합니다(같은 이모지 재전송 시 유지, 토글 해제 없음)."
+    )
+    @PostMapping("/me")
+    public ApiResponse<ApplyPinEmojiResDTO> registerMyEmoji(
+            @PathVariable Long pinId,
+            @AuthenticationPrincipal String uid,
+            @RequestBody RegisterPinEmojiReqDTO request
+    ) {
+        return ApiResponse.onSuccess(
+                PinSuccessCode.APPLY_EMOJI_200,
+                pinEmojiCommandService.registerMyEmoji(pinId, uid, request)
+        );
+    }
+
+    @Operation(
+            summary = "내 핀 반응 토글",
+            description = "이미 남긴 반응을 즉시 조작할 때 사용합니다. 같은 이모지를 다시 요청하면 해제되고, "
+                    + "다른 이모지를 요청하면 교체됩니다."
     )
     @PutMapping("/me")
     public ApiResponse<ApplyPinEmojiResDTO> applyMyEmoji(
