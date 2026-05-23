@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.map.support;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import issueissyu.backend.domain.issue.enums.IssuePinState;
 import issueissyu.backend.domain.map.exception.MapException;
@@ -28,14 +29,14 @@ public class PatchNoteCursorCodec {
     public record Decoded(int rank, LocalDateTime createdAt, long pinId, IssuePinState state) {}
 
     public String encode(IssuePinState state, LocalDateTime createdAt, long pinId) {
+        CursorJson json = new CursorJson(state.name(), createdAt.format(CURSOR_TIME), pinId);
         try {
-            CursorJson json = new CursorJson(state.name(), createdAt.format(CURSOR_TIME), pinId);
             String raw = objectMapper.writeValueAsString(json);
             return Base64.getUrlEncoder()
                     .withoutPadding()
                     .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
-        } catch (Exception e) {
-            throw MapException.of(MapErrorCode.PATCHNOTE_400_5);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("패치노트 커서 인코딩에 실패했습니다.", e);
         }
     }
 

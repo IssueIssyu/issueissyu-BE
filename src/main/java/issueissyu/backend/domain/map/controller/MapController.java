@@ -76,16 +76,16 @@ public class MapController {
 
     @Operation(
             summary = "패치노트 조회",
-            description = "이슈 핀만 반환. 정렬은 해결전, 해결중, 해결 완료 순 + 오래된 순. region 생략 시 /api/location/user 과 동일 기준(인증된 시군구 명)을 사용합니다.")
+            description = "이슈 핀만 반환. 정렬은 해결전, 해결중, 해결 완료 순 + 오래된 순. locationId 생략 시 /api/location/user 과 동일 기준(인증된 시군구 address)을 사용합니다.")
     @GetMapping("/patch-note")
     public ApiResponse<PatchNoteResDTO> getPatchNotes(
             @AuthenticationPrincipal String uid,
-            @RequestParam(required = false) String region,
+            @RequestParam(required = false) Long locationId,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String cursor) {
         return ApiResponse.onSuccess(
                 MapSuccessCode.PATCHNOTE_200,
-                patchNoteQueryService.getPatchNotes(uid, region, size, cursor));
+                patchNoteQueryService.getPatchNotes(uid, locationId, size, cursor));
     }
 
     @Operation(

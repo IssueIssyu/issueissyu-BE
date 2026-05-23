@@ -6,5 +6,5 @@ import issueissyu.backend.domain.map.dto.res.PatchNoteResDTO;
 
 public interface PatchNoteQueryService {
 
-    PatchNoteResDTO getPatchNotes(String uid, String region, Integer size, String cursor);
+    PatchNoteResDTO getPatchNotes(String uid, Long locationId, Integer size, String cursor);
 }
