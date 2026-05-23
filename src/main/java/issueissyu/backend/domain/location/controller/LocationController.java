@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
 import issueissyu.backend.domain.location.dto.res.LocationRegionListResDTO;
+import issueissyu.backend.domain.location.dto.res.LocationRegionResDTO;
 import issueissyu.backend.domain.location.dto.res.UserLocationCertResDto;
 import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
 import issueissyu.backend.domain.location.service.LocationService;
+import issueissyu.backend.domain.location.service.query.LocationQueryService;
 import issueissyu.backend.domain.location.service.query.LocationRegionListQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.postgresql.geometric.PGpoint;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +31,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class LocationController {
     private final LocationService locationService;
     private final LocationRegionListQueryService locationRegionListQueryService;
+    private final LocationQueryService locationQueryService;
+
+    @Operation(
+            summary = "지역구 단일 조회",
+            description = "locationId로 지역구 이름(도-시-군구 형식)을 조회합니다.")
+    @GetMapping("/region/{locationId}")
+    public ApiResponse<LocationRegionResDTO> getRegionByLocationId(@PathVariable Long locationId) {
+        LocationRegionResDTO result = locationQueryService.getRegionByLocationId(locationId);
+        return ApiResponse.onSuccess(LocationSuccessCode.LOCATION_REGION_200, result);
+    }
 
     @Operation(
             summary = "지역구 목록 조회",

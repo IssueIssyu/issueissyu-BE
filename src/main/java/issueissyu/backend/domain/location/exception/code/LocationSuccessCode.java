@@ -16,7 +16,8 @@ public enum LocationSuccessCode implements BaseSuccessCode {
     LOCATION_ROAD_ADDRESS_SUCCESS(HttpStatus.OK, "LOCATION_200_6", "도로명 주소 조회에 성공했습니다."),
     LOCATION_COORDINATE_RESOLVE_SUCCESS(HttpStatus.OK, "LOCATION_200_7", "좌표 기준 주소 및 location_id 조회에 성공했습니다."),
     LOCATION_LIST_200(HttpStatus.OK, "LOCATION_LIST_200", "지역구 리스트 조회에 성공했습니다."),
-    LOCATION_LIST_204(HttpStatus.OK, "LOCATION_LIST_204", "지역구 리스트 조회에 성공했습니다.");
+    LOCATION_LIST_204(HttpStatus.OK, "LOCATION_LIST_204", "지역구 리스트 조회에 성공했습니다."),
+    LOCATION_REGION_200(HttpStatus.OK, "LOCATION_REGION_200", "지역구 이름 조회에 성공했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
