@@ -53,6 +53,16 @@ public class LocationService {
     }
 
     @Transactional(readOnly = true)
+    public Long getUserCertifiedLocationId(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+        if (user.getUserLocation() == null || user.getUserLocation().getLocation() == null) {
+            throw LocationException.of(LocationErrorCode.LOCATION_LEGAL_DISTRICT_CODE_NOT_FOUND);
+        }
+        return user.getUserLocation().getLocation().getLocationId();
+    }
+
+    @Transactional(readOnly = true)
     public UserLocationResDTO getRoadAddress(PGpoint point) {
         String address = naverMapService.resolveRoadAddressOf(point);
         return new UserLocationResDTO(address);
