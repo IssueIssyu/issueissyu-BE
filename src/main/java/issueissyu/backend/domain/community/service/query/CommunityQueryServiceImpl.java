@@ -17,8 +17,10 @@ import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
 import issueissyu.backend.domain.location.entity.PinLocation;
+import issueissyu.backend.domain.location.exception.LocationException;
 import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
+import issueissyu.backend.domain.location.service.LocationService;
 import issueissyu.backend.domain.pin.entity.EventPin;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.PinImage;
@@ -80,6 +82,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     private final CommunityRepository communityRepository;
     private final LocationRepository locationRepository;
+    private final LocationService locationService;
     private final PinLocationRepository pinLocationRepository;
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
@@ -94,40 +97,43 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     public CommunityHomeResDTO getCommunityHome(
+            String uid,
             Long locationId,
             String recentCursor,
             int storeSize,
             int recentSize
     ) {
-        validateLocationId(locationId);
+        Long resolvedLocationId = resolveLocationId(uid, locationId);
 
         boolean isInitialLoad = recentCursor == null || recentCursor.isBlank();
 
         List<CommunityFeedItemResDTO> storePromotions =
-                isInitialLoad ? fetchStorePromotions(locationId, storeSize) : List.of();
+                isInitialLoad ? fetchStorePromotions(resolvedLocationId, storeSize) : List.of();
 
-        List<CommunityFeedItemResDTO> hotPreviews = isInitialLoad ? fetchHotPreviews(locationId) : List.of();
+        List<CommunityFeedItemResDTO> hotPreviews =
+                isInitialLoad ? fetchHotPreviews(resolvedLocationId) : List.of();
 
-        CommunityCursorPageResDTO recentNews = fetchRecentNews(locationId, recentCursor, recentSize);
+        CommunityCursorPageResDTO recentNews = fetchRecentNews(resolvedLocationId, recentCursor, recentSize);
 
-        return new CommunityHomeResDTO(locationId, storePromotions, hotPreviews, recentNews);
+        return new CommunityHomeResDTO(resolvedLocationId, storePromotions, hotPreviews, recentNews);
     }
 
     @Override
     public CommunityCursorPageResDTO getCommunityFeed(
             CommunityTab tab,
+            String uid,
             Long locationId,
             String cursor,
             int size
     ) {
-        validateLocationIdIfNeeded(tab, locationId);
+        Long resolvedLocationId = usesRegion(tab) ? resolveLocationId(uid, locationId) : locationId;
 
         if (tab == CommunityTab.HOT) {
-            return getHotFeed(locationId, cursor, size);
+            return getHotFeed(resolvedLocationId, cursor, size);
         }
 
         CursorKey cursorKey = CursorKey.parse(cursor, size);
-        List<Community> communities = fetchCommunities(tab, locationId, cursorKey);
+        List<Community> communities = fetchCommunities(tab, resolvedLocationId, cursorKey);
 
         boolean hasNext = communities.size() > size;
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
@@ -140,7 +146,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
                 : null;
 
-        return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
+        return new CommunityCursorPageResDTO(resolvedLocationId, content, nextCursor, hasNext);
     }
 
     @Override
@@ -270,10 +276,28 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         };
     }
 
-    private void validateLocationId(Long locationId) {
-        if (locationId == null || !locationRepository.existsById(locationId)) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+    private Long resolveLocationId(String uid, Long locationId) {
+        if (locationId != null) {
+            if (!locationRepository.existsById(locationId)) {
+                throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
+            }
+            return locationId;
         }
+        try {
+            return locationService.getUserCertifiedLocationId(uid);
+        } catch (LocationException e) {
+            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_4);
+        }
+    }
+
+    private boolean usesRegion(CommunityTab tab) {
+        return tab == CommunityTab.HOME
+                || tab == CommunityTab.ISSUE
+                || tab == CommunityTab.STORE
+                || tab == CommunityTab.COMMUNICATION
+                || tab == CommunityTab.FESTIVAL
+                || tab == CommunityTab.ALL
+                || tab == CommunityTab.HOT;
     }
 
     private List<CommunityFeedItemResDTO> fetchStorePromotions(Long locationId, int storeSize) {
@@ -334,22 +358,6 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 : null;
 
         return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
-    }
-
-    private void validateLocationIdIfNeeded(CommunityTab tab, Long locationId) {
-        if (usesRegion(tab) && (locationId == null || !locationRepository.existsById(locationId))) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_2);
-        }
-    }
-
-    private boolean usesRegion(CommunityTab tab) {
-        return tab == CommunityTab.HOME
-                || tab == CommunityTab.ISSUE
-                || tab == CommunityTab.STORE
-                || tab == CommunityTab.COMMUNICATION
-                || tab == CommunityTab.FESTIVAL
-                || tab == CommunityTab.ALL
-                || tab == CommunityTab.HOT;
     }
 
     private CommunityFeedItemResDTO toFeedItem(Community community) {
