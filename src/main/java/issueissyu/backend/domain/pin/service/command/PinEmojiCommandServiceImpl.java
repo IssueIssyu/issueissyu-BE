@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.billing.repository.UserEmojiRepository;
 import issueissyu.backend.domain.pin.dto.req.ApplyPinEmojiReqDTO;
+import issueissyu.backend.domain.pin.dto.req.RegisterPinEmojiReqDTO;
 import issueissyu.backend.domain.pin.dto.res.ApplyPinEmojiResDTO;
 import issueissyu.backend.domain.pin.entity.Emoji;
 import issueissyu.backend.domain.pin.entity.Pin;
@@ -11,7 +12,6 @@ import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.repository.EmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
-import issueissyu.backend.domain.pin.service.command.CommunicationPinActivityMarker;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -33,6 +33,76 @@ public class PinEmojiCommandServiceImpl implements PinEmojiCommandService {
     private final UserEmojiRepository userEmojiRepository;
     private final UserRepository userRepository;
     private final CommunicationPinActivityMarker communicationPinActivityMarker;
+
+    @Override
+    public ApplyPinEmojiResDTO registerMyEmoji(Long pinId, String uid, RegisterPinEmojiReqDTO request) {
+        if (!pinRepository.existsById(pinId)) {
+            throw PinException.of(PinErrorCode.PIN_NOT_FOUND);
+        }
+        userRepository.findById(uid)
+                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        // null -> 현재 활성화된 이모지 해제
+        if (request.getEmojiId() == null) {
+            Optional<PinEmoji> currentActiveOpt = pinEmojiRepository.findActiveByPinIdAndUidForUpdate(pinId, uid);
+            if (currentActiveOpt.isEmpty()) {
+                return ApplyPinEmojiResDTO.builder()
+                        .selectedEmojiId(null)
+                        .build();
+            }
+
+            PinEmoji currentActive = currentActiveOpt.get();
+            currentActive.deactivate();
+            pinEmojiRepository.save(currentActive);
+            markPinEmojiReaction(pinId);
+            return ApplyPinEmojiResDTO.builder()
+                    .selectedEmojiId(null)
+                    .build();
+        }
+
+        Pin pin = pinRepository.findById(pinId)
+                .orElseThrow(() -> PinException.of(PinErrorCode.PIN_NOT_FOUND));
+        Emoji targetEmoji = emojiRepository.findById(request.getEmojiId())
+                .orElseThrow(() -> PinException.of(PinErrorCode.EMOJI_NOT_FOUND));
+
+        if (!targetEmoji.isDefault() && !userEmojiRepository.existsByUserUidAndEmojiEmojiId(uid, targetEmoji.getEmojiId())) {
+            throw PinException.of(PinErrorCode.EMOJI_NOT_OWNED);
+        }
+
+        User user = userRepository.findById(uid)
+                .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        Optional<PinEmoji> currentActiveOpt = pinEmojiRepository.findActiveByPinIdAndUidForUpdate(pinId, uid);
+        Long targetEmojiId = targetEmoji.getEmojiId();
+
+        if (currentActiveOpt.isPresent()) {
+            PinEmoji currentActive = currentActiveOpt.get();
+            if (currentActive.getEmoji().getEmojiId().equals(targetEmojiId)) {
+                return ApplyPinEmojiResDTO.builder()
+                        .selectedEmojiId(targetEmojiId)
+                        .build();
+            }
+
+            currentActive.deactivate();
+            pinEmojiRepository.save(currentActive);
+        }
+
+        PinEmoji targetRow = pinEmojiRepository.findByPinPinIdAndUserUidAndEmojiEmojiId(pinId, uid, targetEmojiId)
+                .orElse(PinEmoji.builder()
+                        .pin(pin)
+                        .user(user)
+                        .emoji(targetEmoji)
+                        .active(false)
+                        .build());
+
+        targetRow.activate();
+        pinEmojiRepository.save(targetRow);
+        markPinEmojiReaction(pinId);
+
+        return ApplyPinEmojiResDTO.builder()
+                .selectedEmojiId(targetEmojiId)
+                .build();
+    }
 
     @Override
     public ApplyPinEmojiResDTO applyMyEmoji(Long pinId, String uid, ApplyPinEmojiReqDTO request) {
