@@ -37,65 +37,58 @@ public class PatchNoteQueryServiceImpl implements PatchNoteQueryService {
     private final PatchNoteCursorCodec patchNoteCursorCodec;
 
     @Override
-    public PatchNoteResDTO getPatchNotes(String uid, String region, Integer size, String cursor) {
-        try {
-            int pageSize = resolveSize(size);
-            String resolvedRegion = resolveRegion(uid, region);
+    public PatchNoteResDTO getPatchNotes(String uid, Long locationId, Integer size, String cursor) {
+        int pageSize = resolveSize(size);
+        String resolvedRegion = resolveRegion(uid, locationId);
 
-            boolean applyCursor = StringUtils.hasText(cursor);
-            int cursorRank = 0;
-            LocalDateTime cursorCreatedAt = CURSOR_DUMMY_TIME;
-            long cursorPinId = 0L;
+        boolean applyCursor = StringUtils.hasText(cursor);
+        int cursorRank = 0;
+        LocalDateTime cursorCreatedAt = CURSOR_DUMMY_TIME;
+        long cursorPinId = 0L;
 
-            if (applyCursor) {
-                PatchNoteCursorCodec.Decoded decoded = patchNoteCursorCodec.decode(cursor);
-                cursorRank = decoded.rank();
-                cursorCreatedAt = decoded.createdAt();
-                cursorPinId = decoded.pinId();
-            }
-
-            List<PatchNotePinRow> rows =
-                    patchNoteRepository.findPatchNotes(
-                            resolvedRegion,
-                            applyCursor,
-                            cursorRank,
-                            cursorCreatedAt,
-                            cursorPinId,
-                            pageSize + 1);
-
-            boolean hasNext = rows.size() > pageSize;
-            List<PatchNotePinRow> pageRows = hasNext ? rows.subList(0, pageSize) : rows;
-
-            List<PatchNotePinItemResDTO> pins =
-                    pageRows.stream()
-                            .map(
-                                    r ->
-                                            new PatchNotePinItemResDTO(
-                                                    r.getPinId(),
-                                                    r.getPinType(),
-                                                    r.getPinTitle(),
-                                                    r.getViewCount() == null ? 0 : r.getViewCount(),
-                                                    r.getPinDetailAddress(),
-                                                    r.getIssuePinState(),
-                                                    r.getPinUserProfile(),
-                                                    r.getPinUserNickname(),
-                                                    r.getCreatedAt()))
-                            .toList();
-
-            String nextCursor = null;
-            if (hasNext && !pageRows.isEmpty()) {
-                PatchNotePinRow last = pageRows.get(pageRows.size() - 1);
-                IssuePinState state = IssuePinState.valueOf(last.getIssuePinState());
-                nextCursor =
-                        patchNoteCursorCodec.encode(state, last.getCreatedAt(), last.getPinId());
-            }
-
-            return new PatchNoteResDTO(pins, new PatchNotePageInfoResDTO(hasNext, nextCursor));
-        } catch (MapException e) {
-            throw e;
-        } catch (Exception e) {
-            throw MapException.of(MapErrorCode.PATCHNOTE_400_5);
+        if (applyCursor) {
+            PatchNoteCursorCodec.Decoded decoded = patchNoteCursorCodec.decode(cursor);
+            cursorRank = decoded.rank();
+            cursorCreatedAt = decoded.createdAt();
+            cursorPinId = decoded.pinId();
         }
+
+        List<PatchNotePinRow> rows =
+                patchNoteRepository.findPatchNotes(
+                        resolvedRegion,
+                        applyCursor,
+                        cursorRank,
+                        cursorCreatedAt,
+                        cursorPinId,
+                        pageSize + 1);
+
+        boolean hasNext = rows.size() > pageSize;
+        List<PatchNotePinRow> pageRows = hasNext ? rows.subList(0, pageSize) : rows;
+
+        List<PatchNotePinItemResDTO> pins =
+                pageRows.stream()
+                        .map(
+                                r ->
+                                        new PatchNotePinItemResDTO(
+                                                r.getPinId(),
+                                                r.getPinType(),
+                                                r.getPinTitle(),
+                                                r.getViewCount() == null ? 0 : r.getViewCount(),
+                                                r.getPinDetailAddress(),
+                                                r.getIssuePinState(),
+                                                r.getPinUserProfile(),
+                                                r.getPinUserNickname(),
+                                                r.getCreatedAt()))
+                        .toList();
+
+        String nextCursor = null;
+        if (hasNext && !pageRows.isEmpty()) {
+            PatchNotePinRow last = pageRows.get(pageRows.size() - 1);
+            IssuePinState state = IssuePinState.valueOf(last.getIssuePinState());
+            nextCursor = patchNoteCursorCodec.encode(state, last.getCreatedAt(), last.getPinId());
+        }
+
+        return new PatchNoteResDTO(pins, new PatchNotePageInfoResDTO(hasNext, nextCursor));
     }
 
     private int resolveSize(Integer size) {
@@ -106,13 +99,11 @@ public class PatchNoteQueryServiceImpl implements PatchNoteQueryService {
         return s;
     }
 
-    private String resolveRegion(String uid, String region) {
-        if (StringUtils.hasText(region)) {
-            String trimmed = region.trim();
-            if (!locationRepository.existsByRegion(trimmed)) {
-                throw MapException.of(MapErrorCode.PATCHNOTE_400_1);
-            }
-            return trimmed;
+    private String resolveRegion(String uid, Long locationId) {
+        if (locationId != null) {
+            return locationRepository.findById(locationId)
+                    .map(location -> location.getRegion())
+                    .orElseThrow(() -> MapException.of(MapErrorCode.PATCHNOTE_400_1));
         }
         try {
             return locationService.getUserLocation(uid).getAddress();

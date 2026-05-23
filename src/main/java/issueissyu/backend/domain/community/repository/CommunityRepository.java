@@ -50,7 +50,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                     select 1
                     from PinLocation pl
                     where pl.pin = p
-                      and pl.location.region = :regionCode
+                      and pl.location.locationId = :locationId
               )
               and (
                     cast(:cursorCreatedAt as LocalDateTime) is null
@@ -61,7 +61,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypeAndRegion(
             @Param("type") CommunityType type,
-            @Param("regionCode") String regionCode,
+            @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
@@ -83,7 +83,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                     select 1
                     from PinLocation pl
                     where pl.pin = p
-                      and pl.location.region = :regionCode
+                      and pl.location.locationId = :locationId
               )
               and (
                     cast(:cursorCreatedAt as LocalDateTime) is null
@@ -94,7 +94,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypesAndRegion(
             @Param("types") Collection<CommunityType> types,
-            @Param("regionCode") String regionCode,
+            @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
@@ -151,7 +151,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                             select 1
                             from PinLocation pl
                             where pl.pin = p
-                              and pl.location.region = :regionCode
+                              and pl.location.locationId = :locationId
                         )
                     )
                     or c.communityType in :globalTypes
@@ -166,7 +166,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     List<Community> findFeedByRegionOrGlobalTypes(
             @Param("regionTypes") Collection<CommunityType> regionTypes,
             @Param("globalTypes") Collection<CommunityType> globalTypes,
-            @Param("regionCode") String regionCode,
+            @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
@@ -197,7 +197,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                             select 1
                             from PinLocation pl
                             where pl.pin = p
-                              and pl.location.region = :regionCode
+                              and pl.location.locationId = :locationId
                         )
                     )
                     or c.communityType in :globalTypes
@@ -213,7 +213,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     List<Community> findHotFeedByRegionOrGlobalTypes(
             @Param("regionTypes") Collection<CommunityType> regionTypes,
             @Param("globalTypes") Collection<CommunityType> globalTypes,
-            @Param("regionCode") String regionCode,
+            @Param("locationId") Long locationId,
             @Param("since") LocalDateTime since,
             @Param("cursorPopularity") Double cursorPopularity,
             @Param("cursorId") Long cursorId,

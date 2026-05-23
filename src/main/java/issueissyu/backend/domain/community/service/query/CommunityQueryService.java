@@ -8,13 +8,13 @@ import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 
 public interface CommunityQueryService {
     CommunityHomeResDTO getCommunityHome(
-            String region,
+            Long locationId,
             String recentCursor,
             int storeSize,
             int recentSize
     );
 
-    CommunityCursorPageResDTO getCommunityFeed(CommunityTab tab, String region, String cursor, int size);
+    CommunityCursorPageResDTO getCommunityFeed(CommunityTab tab, Long locationId, String cursor, int size);
 
     CommunityDetailResult getCommunityDetail(Long communityId, String uid);
 
