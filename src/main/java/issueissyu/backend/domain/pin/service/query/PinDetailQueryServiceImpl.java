@@ -198,12 +198,14 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
             String pinNickname = null;
 
             switch (type) {
-                case ISSUE, COMMUNICATION -> {
+                case ISSUE, COMMUNICATION, STORE, FESTIVAL -> {
                     pinUserId = author.getUid();
-                    pinProfile = userProfileImageQueryService.findUrlByUserUid(author.getUid()).orElse(null);
+                    pinProfile =
+                            userProfileImageQueryService
+                                    .findUrlByUserUid(author.getUid())
+                                    .orElse(null);
                     pinNickname = author.getNickname();
                 }
-                case STORE, FESTIVAL -> {}
             }
 
             String discount =
