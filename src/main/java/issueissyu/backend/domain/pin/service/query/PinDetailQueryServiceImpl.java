@@ -104,24 +104,13 @@ public class PinDetailQueryServiceImpl implements PinDetailQueryService {
             String pinNickname = null;
 
             switch (type) {
-                case ISSUE -> {
-                    pinUserId = author.getUid();
-                    pinProfile = userProfileImageQueryService.findUrlByUserUid(author.getUid()).orElse(null);
-                    pinNickname = author.getNickname();
-                }
-                case STORE -> {
-                    pinUserId = author.getUid();
-                }
-                case COMMUNICATION -> {
+                case ISSUE, COMMUNICATION, STORE, FESTIVAL -> {
                     pinUserId = author.getUid();
                     pinProfile =
                             userProfileImageQueryService
                                     .findUrlByUserUid(author.getUid())
                                     .orElse(null);
                     pinNickname = author.getNickname();
-                }
-                case FESTIVAL -> {
-                    // 명세: 작성자 노출 필드 null
                 }
             }
 
