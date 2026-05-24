@@ -29,4 +29,6 @@ public class MapPinCardResDTO {
     private String discount;
     private String storeImageUrl;
     private Long communityId;
+    private Double latitude;
+    private Double longitude;
 }
