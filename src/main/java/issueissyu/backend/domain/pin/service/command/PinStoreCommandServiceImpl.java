@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -174,20 +175,27 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
             String uid,
             StorePinImportMultipartReqDTO req,
             List<MultipartFile> photos,
-            String storeProfileImageUrl) {
-        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
-
-        validateMultipartImportRequest(req, photoParts);
-
-        if (photoParts.isEmpty()) {
-            StorePinImportReqDTO mappedReq = mapStoreImportRequest(req, List.of(), storeProfileImageUrl);
-            return importStore(uid, mappedReq);
+            MultipartFile storeProfileImage) {
+        if (storeProfileImage == null || storeProfileImage.isEmpty()) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
         }
 
-        List<String> uploadedUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
+        List<MultipartFile> photoParts = photos == null ? List.of() : photos;
+        validateMultipartImportRequest(req, photoParts);
+
+        List<String> uploadedUrls = new ArrayList<>();
         try {
-            List<PinImageItemReqDTO> pinImageUrls =
-                    buildPinImageItemRequests(uploadedUrls, req.pinImages());
+            String storeProfileImageUrl =
+                    pinImageUploadCommandService.uploadPinImages(List.of(storeProfileImage)).get(0);
+            uploadedUrls.add(storeProfileImageUrl);
+
+            List<PinImageItemReqDTO> pinImageUrls = List.of();
+            if (!photoParts.isEmpty()) {
+                List<String> photoUrls = pinImageUploadCommandService.uploadPinImages(photoParts);
+                uploadedUrls.addAll(photoUrls);
+                pinImageUrls = buildPinImageItemRequests(photoUrls, req.pinImages());
+            }
+
             StorePinImportReqDTO mappedReq =
                     mapStoreImportRequest(req, pinImageUrls, storeProfileImageUrl);
             return importStore(uid, mappedReq);

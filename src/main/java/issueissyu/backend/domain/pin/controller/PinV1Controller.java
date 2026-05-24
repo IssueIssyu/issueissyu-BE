@@ -64,7 +64,7 @@ public class PinV1Controller {
             description =
                     """
                     ADMIN 권한 계정만 사용 가능합니다.
-                    photos(선택)와 request(JSON), storeProfileImage(S3 URL)를 받아 필요 시 S3 업로드 후 가게 핀을 등록합니다.
+                    photos(선택)와 request(JSON), storeProfileImage(필수, 이미지 파일 1개)를 받아 S3 업로드 후 가게 핀을 등록합니다.
                     """)
     @PostMapping(value = "/import/store", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<StorePinImportResDTO> importStore(
@@ -75,16 +75,12 @@ public class PinV1Controller {
                     @RequestPart("request")
                     String requestPart,
             @RequestPart(value = "photos", required = false) List<MultipartFile> photos,
-            @Parameter(description = "가게 프로필 이미지 S3 URL")
+            @Parameter(description = "가게 프로필 이미지 파일 (1개 필수)")
             @RequestPart("storeProfileImage")
-                    String storeProfileImage) {
+                    MultipartFile storeProfileImage) {
         StorePinImportMultipartReqDTO request = parseStoreMultipartRequestBody(requestPart);
-        if (!StringUtils.hasText(storeProfileImage)) {
-            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
-        }
         StorePinImportResDTO res =
-                pinStoreCommandService.importStoreV1(
-                        uid, request, photos, storeProfileImage.trim());
+                pinStoreCommandService.importStoreV1(uid, request, photos, storeProfileImage);
         return ApiResponse.onSuccess(PinSuccessCode.PIN_IMPORT_STORE_200, res);
     }
 

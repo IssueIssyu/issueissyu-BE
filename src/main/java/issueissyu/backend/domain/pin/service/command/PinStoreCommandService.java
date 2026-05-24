@@ -14,5 +14,5 @@ public interface PinStoreCommandService {
             String uid,
             StorePinImportMultipartReqDTO request,
             List<MultipartFile> photos,
-            String storeProfileImageUrl);
+            MultipartFile storeProfileImage);
 }
