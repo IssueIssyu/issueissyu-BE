@@ -3,6 +3,7 @@ package issueissyu.backend.domain.map.service.query;
 import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
+import issueissyu.backend.domain.location.entity.PinLocation;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
 import issueissyu.backend.domain.map.exception.MapException;
@@ -17,6 +18,7 @@ import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,10 +55,19 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
         PinType type = pin.getPinType();
         User author = pin.getUser();
 
-        String detailAddr =
-                pinLocationRepository
-                        .findFirstByPin_PinIdOrderByPinLocationIdAsc(pinId)
-                        .map(pl -> pl.getDetailAddress())
+        Optional<PinLocation> pinLocationOpt =
+                pinLocationRepository.findFirstByPin_PinIdOrderByPinLocationIdAsc(pinId);
+
+        String detailAddr = pinLocationOpt.map(PinLocation::getDetailAddress).orElse(null);
+        Double latitude =
+                pinLocationOpt
+                        .map(PinLocation::getPinPoint)
+                        .map(Point::getY)
+                        .orElse(null);
+        Double longitude =
+                pinLocationOpt
+                        .map(PinLocation::getPinPoint)
+                        .map(Point::getX)
                         .orElse(null);
 
         Optional<String> mainImageUrlOpt = resolveMainImageUrl(pin);
@@ -102,7 +113,9 @@ public class MapPinCardQueryServiceImpl implements MapPinCardQueryService {
                         .communityId(communityId)
                         .pinImageUrl(mainImageUrlOpt.orElse(null))
                         .discount(null)
-                        .storeImageUrl(null);
+                        .storeImageUrl(null)
+                        .latitude(latitude)
+                        .longitude(longitude);
 
         switch (type) {
             case ISSUE, COMMUNICATION -> b.pinUserId(author.getUid())
