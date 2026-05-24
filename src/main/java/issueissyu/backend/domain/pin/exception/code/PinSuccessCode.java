@@ -30,6 +30,9 @@ public enum PinSuccessCode implements BaseSuccessCode {
     // 소통 핀 등록
     PIN_IMPORT_COMMUNICATION_200(HttpStatus.OK, "PIN_IMPORT_COMMUNICATION_200", "소통 핀 등록에 성공했습니다."),
 
+    // 가게 핀 등록
+    PIN_IMPORT_STORE_200(HttpStatus.OK, "PIN_IMPORT_STORE_200", "가게 핀 등록에 성공했습니다."),
+
     // 소통 핀 수정
     PIN_EDIT_COMMUNICATION_200(HttpStatus.OK, "PIN_EDIT_COMMUNICATION_200", "소통 핀 수정에 성공했습니다."),
 

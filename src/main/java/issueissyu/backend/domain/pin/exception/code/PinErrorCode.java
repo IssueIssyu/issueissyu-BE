@@ -33,6 +33,10 @@ public enum PinErrorCode implements BaseErrorCode {
     PIN_IMPORT_COMMUNICATION_400_1(HttpStatus.BAD_REQUEST, "PIN_IMPORT_COMMUNICATION_400_1", "필수 요청 값 누락."),
     PIN_IMPORT_COMMUNICATION_400_2(HttpStatus.BAD_REQUEST, "PIN_IMPORT_COMMUNICATION_400_2", "소통 핀 등록 API를 실행 할 수 없습니다."),
 
+    // 가게 핀 등록
+    PIN_IMPORT_STORE_400_1(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_1", "필수 요청 값 누락."),
+    PIN_IMPORT_STORE_400_2(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_2", "소통 핀 등록 API를 실행 할 수 없습니다."),
+
     // 소통 핀 수정
     PIN_EDIT_COMMUNICATION_400_1(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_1", "필수 요청 값 누락."),
     PIN_EDIT_COMMUNICATION_400_2(HttpStatus.NOT_FOUND, "PIN_EDIT_COMMUNICATION_400_2", "존재하지 않는 핀 입니다."),

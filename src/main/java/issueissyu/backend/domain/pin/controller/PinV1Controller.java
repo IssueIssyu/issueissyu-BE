@@ -6,12 +6,15 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinEditMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.req.CommunicationPinImportMultipartReqDTO;
+import issueissyu.backend.domain.pin.dto.req.StorePinImportMultipartReqDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinEditResDTO;
 import issueissyu.backend.domain.pin.dto.res.CommunicationPinImportResDTO;
+import issueissyu.backend.domain.pin.dto.res.StorePinImportResDTO;
 import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
 import issueissyu.backend.domain.pin.exception.code.PinSuccessCode;
 import issueissyu.backend.domain.pin.service.command.PinCommunicationCommandService;
+import issueissyu.backend.domain.pin.service.command.PinStoreCommandService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -37,6 +40,7 @@ import org.springframework.util.StringUtils;
 public class PinV1Controller {
 
     private final PinCommunicationCommandService pinCommunicationCommandService;
+    private final PinStoreCommandService pinStoreCommandService;
     private final ObjectMapper objectMapper;
     private final Validator validator;
 
@@ -53,6 +57,35 @@ public class PinV1Controller {
         CommunicationPinImportMultipartReqDTO request = parseMultipartRequestBody(requestPart);
         CommunicationPinImportResDTO res = pinCommunicationCommandService.importCommunicationV1(uid, request, photos);
         return ApiResponse.onSuccess(PinSuccessCode.PIN_IMPORT_COMMUNICATION_200, res);
+    }
+
+    @Operation(
+            summary = "가게 핀 통합 등록",
+            description =
+                    """
+                    ADMIN 권한 계정만 사용 가능합니다.
+                    photos(선택)와 request(JSON), storeProfileImage(S3 URL)를 받아 필요 시 S3 업로드 후 가게 핀을 등록합니다.
+                    """)
+    @PostMapping(value = "/import/store", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<StorePinImportResDTO> importStore(
+            @AuthenticationPrincipal String uid,
+            @Parameter(
+                            description =
+                                    "`StorePinImportMultipartReqDTO` JSON(lat, lng, pinImages?, pinTitle, pinContent, eventStartTime, eventEndTime, discount)")
+                    @RequestPart("request")
+                    String requestPart,
+            @RequestPart(value = "photos", required = false) List<MultipartFile> photos,
+            @Parameter(description = "가게 프로필 이미지 S3 URL")
+            @RequestPart("storeProfileImage")
+                    String storeProfileImage) {
+        StorePinImportMultipartReqDTO request = parseStoreMultipartRequestBody(requestPart);
+        if (!StringUtils.hasText(storeProfileImage)) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
+        }
+        StorePinImportResDTO res =
+                pinStoreCommandService.importStoreV1(
+                        uid, request, photos, storeProfileImage.trim());
+        return ApiResponse.onSuccess(PinSuccessCode.PIN_IMPORT_STORE_200, res);
     }
 
     @Operation(
@@ -105,6 +138,25 @@ public class PinV1Controller {
             throw e;
         } catch (Exception e) {
             throw PinException.of(PinErrorCode.PIN_IMPORT_COMMUNICATION_400_1);
+        }
+    }
+
+    private StorePinImportMultipartReqDTO parseStoreMultipartRequestBody(String requestPart) {
+        if (!StringUtils.hasText(requestPart)) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
+        }
+        try {
+            StorePinImportMultipartReqDTO dto =
+                    objectMapper.readValue(requestPart.trim(), StorePinImportMultipartReqDTO.class);
+            Set<ConstraintViolation<StorePinImportMultipartReqDTO>> violations = validator.validate(dto);
+            if (!violations.isEmpty()) {
+                throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
+            }
+            return dto;
+        } catch (PinException e) {
+            throw e;
+        } catch (Exception e) {
+            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_1);
         }
     }
 
