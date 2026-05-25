@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FirebaseConfig {
 
+    // JSON 파싱
     private final ObjectMapper objectMapper;
     @Value("${fcm.type}")
     private String type;
@@ -55,6 +56,7 @@ public class FirebaseConfig {
         this.objectMapper = objectMapper;
     }
 
+    // Firebase Admin SDK 초기화
     @PostConstruct
     public void init() {
         if (!FirebaseApp.getApps().isEmpty()) {
