@@ -1,23 +1,55 @@
 package issueissyu.backend.global.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration
 public class FirebaseConfig {
 
-    private static final String SERVICE_ACCOUNT_RESOURCE = "firebase-service-account.json";
-
     private final ObjectMapper objectMapper;
+    @Value("${fcm.type}")
+    private String type;
+
+    @Value("${fcm.project-id}")
+    private String projectId;
+
+    @Value("${fcm.private-key-id}")
+    private String privateKeyId;
+
+    @Value("${fcm.private-key}")
+    private String privateKey;
+
+    @Value("${fcm.client-email}")
+    private String clientEmail;
+
+    @Value("${fcm.client-id}")
+    private String clientId;
+
+    @Value("${fcm.auth-uri}")
+    private String authUri;
+
+    @Value("${fcm.token-uri}")
+    private String tokenUri;
+
+    @Value("${fcm.auth-provider-x509-cert-url}")
+    private String authProviderX509CertUrl;
+
+    @Value("${fcm.client-x509-cert-url}")
+    private String clientX509CertUrl;
+
+    @Value("${fcm.universe-domain}")
+    private String universeDomain;
 
     public FirebaseConfig(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -25,36 +57,32 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void init() {
-        try (InputStream serviceAccount =
-                getClass().getClassLoader().getResourceAsStream(SERVICE_ACCOUNT_RESOURCE)) {
-            if (serviceAccount == null) {
-                log.warn(
-                        "{} not found in classpath; FCM will be disabled. "
-                                + "Download a Service Account key from Firebase Console "
-                                + "(Project settings > Service accounts > Generate new private key).",
-                        SERVICE_ACCOUNT_RESOURCE);
-                return;
-            }
+        if (!FirebaseApp.getApps().isEmpty()) {
+            return;
+        }
 
-            byte[] credentialsBytes = serviceAccount.readAllBytes();
-            JsonNode credentialsJson = objectMapper.readTree(credentialsBytes);
-            if (!credentialsJson.has("type")
-                    || !"service_account".equals(credentialsJson.get("type").asText())) {
-                log.error(
-                        "Invalid Firebase credentials file: '{}' must be a Service Account JSON "
-                                + "with \"type\": \"service_account\". "
-                                + "google-services.json (Android/iOS client config) cannot be used on the server.",
-                        SERVICE_ACCOUNT_RESOURCE);
-                return;
-            }
+        try {
+            Map<String, String> fcmProperties = new HashMap<>();
+            fcmProperties.put("type", type);
+            fcmProperties.put("project_id", projectId);
+            fcmProperties.put("private_key_id", privateKeyId);
+            fcmProperties.put("private_key", privateKey.replace("\\n", "\n"));
+            fcmProperties.put("client_email", clientEmail);
+            fcmProperties.put("client_id", clientId);
+            fcmProperties.put("auth_uri", authUri);
+            fcmProperties.put("token_uri", tokenUri);
+            fcmProperties.put("auth_provider_x509_cert_url", authProviderX509CertUrl);
+            fcmProperties.put("client_x509_cert_url", clientX509CertUrl);
+            fcmProperties.put("universe_domain", universeDomain);
 
+            String jsonCredentials = objectMapper.writeValueAsString(fcmProperties);
+            byte[] credentialsBytes = jsonCredentials.getBytes(StandardCharsets.UTF_8);
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(new ByteArrayInputStream(credentialsBytes)))
                     .build();
-            if (FirebaseApp.getApps().isEmpty()) {
-                FirebaseApp.initializeApp(options);
-                log.info("Firebase Admin SDK initialized.");
-            }
+
+            FirebaseApp.initializeApp(options);
+            log.info("Firebase Admin SDK initialized with environment variables.");
         } catch (Exception e) {
             log.error("Firebase initialization failed: {}", e.getMessage(), e);
         }
