@@ -12,6 +12,7 @@ import issueissyu.backend.domain.user.entity.OAuth;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.OAuthRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class OnboardingService {
 
     private static final String DEFAULT_PROFILE_NAME = "default";
+    private static final List<String> STARTER_COLLECTION_NAMES = List.of("무관심", "행복양");
 
     private final UserRepository userRepository;
     private final OAuthRepository oAuthRepository;
@@ -71,6 +73,21 @@ public class OnboardingService {
                                                                 defaultProfile)
                                                         .isProfile(true)
                                                         .build()));
+
+        for (String collectionName : STARTER_COLLECTION_NAMES) {
+            CustomCollection starterCollection = customCollectionRepository
+                    .findByCustomCollectionName(collectionName)
+                    .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
+            userCustomCollectionRepository
+                    .findByUser_UidAndCustomCollection_CustomCollectionName(uid, collectionName)
+                    .orElseGet(
+                            () ->
+                                    userCustomCollectionRepository.save(
+                                            UserCustomCollection.builder()
+                                                    .user(user)
+                                                    .customCollection(starterCollection)
+                                                    .build()));
+        }
 
         return OnboardingResDTO.builder()
                 .uuid(user.getUid())
