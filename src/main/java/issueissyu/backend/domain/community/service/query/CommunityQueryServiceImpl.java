@@ -28,6 +28,7 @@ import issueissyu.backend.domain.pin.entity.StoreImage;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinImageRepository;
+import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.user.repository.UserRepository;
@@ -92,6 +93,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private final IssuePetitionRepository issuePetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
     private final DeclarationRepository declarationRepository;
+    private final PinLikeRepository pinLikeRepository;
     private final UserRepository userRepository;
     private final UserProfileImageQueryService userProfileImageQueryService;
 
@@ -188,10 +190,12 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 : null;
 
         boolean isMine = Objects.equals(pin.getUser().getUid(), uid);
+        boolean isLike = pinLikeRepository.existsByPin_PinIdAndUser_Uid(pin.getPinId(), uid);
 
         CommunityDetailResDTO detail = toDetailRes(
                 community,
                 viewCount,
+                isLike,
                 isReported,
                 isPetitioned,
                 isProblemSolver,
@@ -386,6 +390,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private CommunityDetailResDTO toDetailRes(
             Community community,
             int viewCount,
+            boolean isLike,
             Boolean isReported,
             Boolean isPetitioned,
             Boolean isProblemSolver,
@@ -410,6 +415,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 resolveAddress(pin.getPinId()),
                 viewCount,
                 pin.getLikeCount(),
+                isLike,
                 eventPin.map(EventPin::getDiscount).orElse(null),
                 eventPin.map(EventPin::getEventStartTime).orElse(null),
                 eventPin.map(EventPin::getEventEndTime).orElse(null),
