@@ -11,6 +11,7 @@ import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.exception.CommunityException;
 import issueissyu.backend.domain.community.exception.code.CommunityErrorCode;
 import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
+import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
@@ -43,9 +44,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,6 +87,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private static final int MAX_STORE_SIZE = 10;
 
     private final CommunityRepository communityRepository;
+    private final CardnewsImageS3Repository cardnewsImageS3Repository;
     private final LocationRepository locationRepository;
     private final LocationService locationService;
     private final PinLocationRepository pinLocationRepository;
@@ -140,9 +146,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         boolean hasNext = communities.size() > size;
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
 
-        List<CommunityFeedItemResDTO> content = pageItems.stream()
-                .map(this::toFeedItem)
-                .toList();
+        List<CommunityFeedItemResDTO> content = toFeedItems(pageItems);
 
         String nextCursor = hasNext
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
@@ -316,25 +320,22 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 limit
         );
 
-        return communities.stream().map(this::toFeedItem).toList();
+        return toFeedItems(communities);
     }
 
     private List<CommunityFeedItemResDTO> fetchHotPreviews(Long locationId) {
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, HOT_PREVIEW_SIZE);
 
-        return communityRepository.findHotFeedByRegionOrGlobalTypes(
-                        REGION_BASED_FEED_TYPES,
-                        GLOBAL_FEED_TYPES,
-                        locationId,
-                        since,
-                        null,
-                        null,
-                        limit
-                )
-                .stream()
-                .map(this::toFeedItem)
-                .toList();
+        return toFeedItems(communityRepository.findHotFeedByRegionOrGlobalTypes(
+                REGION_BASED_FEED_TYPES,
+                GLOBAL_FEED_TYPES,
+                locationId,
+                since,
+                null,
+                null,
+                limit
+        ));
     }
 
     private CommunityCursorPageResDTO fetchRecentNews(Long locationId, String recentCursor, int recentSize) {
@@ -353,9 +354,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         List<Community> pageItems =
                 hasNext ? communities.subList(0, cursorKey.requestSize()) : communities;
 
-        List<CommunityFeedItemResDTO> content = pageItems.stream()
-                .map(this::toFeedItem)
-                .toList();
+        List<CommunityFeedItemResDTO> content = toFeedItems(pageItems);
 
         String nextCursor = hasNext
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
@@ -364,27 +363,133 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return new CommunityCursorPageResDTO(locationId, content, nextCursor, hasNext);
     }
 
-    private CommunityFeedItemResDTO toFeedItem(Community community) {
+    private List<CommunityFeedItemResDTO> toFeedItems(List<Community> communities) {
+        FeedItemContext context = buildFeedItemContext(communities);
+        return communities.stream()
+                .map(community -> toFeedItem(community, context))
+                .toList();
+    }
+
+    private FeedItemContext buildFeedItemContext(List<Community> communities) {
+        if (communities.isEmpty()) {
+            return new FeedItemContext(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        }
+
+        List<Long> pinIds = communities.stream()
+                .map(community -> community.getPin().getPinId())
+                .distinct()
+                .toList();
+
+        Set<String> uids = communities.stream()
+                .map(community -> community.getPin().getUser().getUid())
+                .collect(Collectors.toSet());
+
+        List<Long> eventPinIds = communities.stream()
+                .filter(community -> community.getCommunityType() == CommunityType.STORE
+                        || community.getCommunityType() == CommunityType.FESTIVAL)
+                .map(community -> community.getPin().getPinId())
+                .distinct()
+                .toList();
+
+        List<Long> cardnewsCommunityIds = communities.stream()
+                .filter(community -> community.getCommunityType() == CommunityType.CARDNEWS)
+                .map(Community::getCommunityId)
+                .distinct()
+                .toList();
+
+        Map<String, String> profileUrlByUid = userProfileImageQueryService.findUrlsByUserUids(uids);
+
+        Map<Long, String> addressByPinId = pinLocationRepository.findByPin_PinIdIn(pinIds).stream()
+                .collect(Collectors.toMap(
+                        pinLocation -> pinLocation.getPin().getPinId(),
+                        PinLocation::getDetailAddress,
+                        (left, right) -> left
+                ));
+
+        Map<Long, EventPin> eventPinByPinId = eventPinIds.isEmpty()
+                ? Map.of()
+                : eventPinRepository.findWithStoreImageByPinIdIn(eventPinIds).stream()
+                        .collect(Collectors.toMap(
+                                eventPin -> eventPin.getPin().getPinId(),
+                                eventPin -> eventPin,
+                                (left, right) -> left
+                        ));
+
+        Map<Long, String> pinThumbnailByPinId = new HashMap<>();
+        for (PinImage pinImage : pinImageRepository
+                .findByPin_PinIdInOrderByPin_PinIdAscMainImageDescPinImageIdAsc(pinIds)) {
+            pinThumbnailByPinId.putIfAbsent(pinImage.getPin().getPinId(), pinImage.getPinS3Url());
+        }
+
+        Map<Long, String> cardnewsThumbnailByCommunityId = new HashMap<>();
+        if (!cardnewsCommunityIds.isEmpty()) {
+            for (CardnewsImageS3 cardnewsImage : cardnewsImageS3Repository
+                    .findAllByCommunityCommunityIdInOrderByCardnewsImageS3IdAsc(cardnewsCommunityIds)) {
+                cardnewsThumbnailByCommunityId.putIfAbsent(
+                        cardnewsImage.getCommunity().getCommunityId(),
+                        cardnewsImage.getCardnewsImageS3Url()
+                );
+            }
+        }
+
+        return new FeedItemContext(
+                profileUrlByUid,
+                addressByPinId,
+                eventPinByPinId,
+                pinThumbnailByPinId,
+                cardnewsThumbnailByCommunityId
+        );
+    }
+
+    private CommunityFeedItemResDTO toFeedItem(Community community, FeedItemContext context) {
         Pin pin = community.getPin();
         CommunityType type = community.getCommunityType();
-        Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
+        Long pinId = pin.getPinId();
+        EventPin eventPin = context.eventPinByPinId().get(pinId);
 
         return new CommunityFeedItemResDTO(
                 type,
                 community.getCommunityId(),
-                pin.getPinId(),
+                pinId,
                 pin.getPinTitle(),
                 pin.getPinContent(),
-                resolveThumbnailUrl(community).orElse(null),
+                resolveFeedThumbnailUrl(community, context).orElse(null),
                 pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
-                resolveAddress(pin.getPinId()),
+                context.profileUrlByUid().get(pin.getUser().getUid()),
+                context.addressByPinId().get(pinId),
                 pin.getViewCount(),
                 pin.getLikeCount(),
-                eventPin.map(EventPin::getDiscount).orElse(null),
-                eventPin.map(EventPin::getEventStartTime).orElse(null),
-                eventPin.map(EventPin::getEventEndTime).orElse(null)
+                eventPin != null ? eventPin.getDiscount() : null,
+                eventPin != null ? eventPin.getEventStartTime() : null,
+                eventPin != null ? eventPin.getEventEndTime() : null
         );
+    }
+
+    private Optional<String> resolveFeedThumbnailUrl(Community community, FeedItemContext context) {
+        Long pinId = community.getPin().getPinId();
+
+        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+            return Optional.ofNullable(context.cardnewsThumbnailByCommunityId().get(community.getCommunityId()));
+        }
+
+        if (community.getCommunityType() == CommunityType.STORE
+                || community.getCommunityType() == CommunityType.FESTIVAL) {
+            EventPin eventPin = context.eventPinByPinId().get(pinId);
+            if (eventPin != null && eventPin.getStoreImage() != null) {
+                return Optional.of(eventPin.getStoreImage().getImageS3Url());
+            }
+        }
+
+        return Optional.ofNullable(context.pinThumbnailByPinId().get(pinId));
+    }
+
+    private record FeedItemContext(
+            Map<String, String> profileUrlByUid,
+            Map<Long, String> addressByPinId,
+            Map<Long, EventPin> eventPinByPinId,
+            Map<Long, String> pinThumbnailByPinId,
+            Map<Long, String> cardnewsThumbnailByCommunityId
+    ) {
     }
 
     private CommunityDetailResDTO toDetailRes(
@@ -523,9 +628,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         boolean hasNext = communities.size() > size;
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
 
-        List<CommunityFeedItemResDTO> content = pageItems.stream()
-                .map(this::toFeedItem)
-                .toList();
+        List<CommunityFeedItemResDTO> content = toFeedItems(pageItems);
 
         String nextCursor = hasNext
                 ? HotCursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
