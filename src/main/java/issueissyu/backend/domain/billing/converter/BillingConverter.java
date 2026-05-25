@@ -18,7 +18,6 @@ public class BillingConverter {
     public static ProductRes toProductRes(Emoji emoji) {
         return ProductRes.builder()
                 .emojiId(emoji.getEmojiId())
-                .emojiType(emoji.getEmojiType())
                 .productId(emoji.getProductId())
                 .emojiImageUrl(emoji.getEmojiImageUrl())
                 .isDefault(emoji.isDefault())
