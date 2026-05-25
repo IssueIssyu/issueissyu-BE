@@ -56,7 +56,7 @@ public class FirebaseConfig {
         this.objectMapper = objectMapper;
     }
 
-    // Firebase Admin SDK 초기화
+    // Firebase SDK 초기화
     @PostConstruct
     public void init() {
         if (!FirebaseApp.getApps().isEmpty()) {
