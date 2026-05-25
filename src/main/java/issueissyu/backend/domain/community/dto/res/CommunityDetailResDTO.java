@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.community.dto.res;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import issueissyu.backend.domain.community.enums.CommunityType;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ public record CommunityDetailResDTO(
 
         int viewCount,
         long likeCount,
+        @JsonProperty("isLike") boolean isLike,
 
         String discount,
 
