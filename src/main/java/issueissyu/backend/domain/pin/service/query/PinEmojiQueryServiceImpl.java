@@ -89,15 +89,20 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
 
     @Override
     public List<EmojiCandidateResDTO> getEmojiCandidates(String uid) {
-        // 전체 이모지(기본/유료 포함) 목록 조회
-        List<Emoji> allEmojis = emojiRepository.findAllByOrderByEmojiIdAsc();
-
-        // 사용자 보유 이모지 id 목록 Set으로 만들어 포함 검사 사용
         Set<Long> ownedEmojiIds = new HashSet<>(userEmojiRepository.findOwnedEmojiIdsByUid(uid));
 
-        // 화면에서 바로 사용할 형태로 변환하여 리스트 반환
         List<EmojiCandidateResDTO> result = new ArrayList<>();
-        for (Emoji emoji : allEmojis) {
+        for (Emoji emoji : emojiRepository.findAllByIsDefaultTrueOrderByEmojiIdAsc()) {
+            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
+            result.add(EmojiCandidateResDTO.builder()
+                    .emojiId(emoji.getEmojiId())
+                    .emojiImageUrl(emoji.getEmojiImageUrl())
+                    .isDefault(emoji.isDefault())
+                    .isOwned(availability.isOwned())
+                    .productId(availability.productId())
+                    .build());
+        }
+        for (Emoji emoji : emojiRepository.findAllByIsDefaultFalseOrderByEmojiIdAsc()) {
             EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
             result.add(EmojiCandidateResDTO.builder()
                     .emojiId(emoji.getEmojiId())
