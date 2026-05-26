@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CollectionUnlockServiceImpl implements CollectionUnlockService {
 
-    private static final long LIKE_MISSION_COLLECTION_ID = 10L;
+    private static final String LIKE_MISSION_COLLECTION_NAME = "음흉씨";
     private static final int REQUIRED_PIN_LIKE_COUNT = 3;
 
     private final UserRepository userRepository;
@@ -40,7 +40,7 @@ public class CollectionUnlockServiceImpl implements CollectionUnlockService {
         
         // 해금 되어있으면 패스
         if (userCustomCollectionRepository
-                .findByUser_UidAndCustomCollection_CustomCollectionId(uid, LIKE_MISSION_COLLECTION_ID)
+                .findByUser_UidAndCustomCollection_CustomCollectionName(uid, LIKE_MISSION_COLLECTION_NAME)
                 .isPresent()) {
             return;
         }
@@ -52,7 +52,7 @@ public class CollectionUnlockServiceImpl implements CollectionUnlockService {
 
         // 컬렉션이 있는지..
         CustomCollection collection = customCollectionRepository
-                .findById(LIKE_MISSION_COLLECTION_ID)
+                .findByCustomCollectionName(LIKE_MISSION_COLLECTION_NAME)
                 .orElse(null);
         if (collection == null) {
             return;
