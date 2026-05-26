@@ -1,12 +1,14 @@
 package issueissyu.backend.domain.collection.service.query;
 
 import issueissyu.backend.domain.collection.dto.res.MyCollectionsResDTO;
+import issueissyu.backend.domain.collection.dto.res.NewlyUnlockedCollectionResDTO;
 import issueissyu.backend.domain.collection.dto.res.ProfileCollectionSummaryResDTO;
 import issueissyu.backend.domain.collection.dto.res.UserCollectionItemResDTO;
 import issueissyu.backend.domain.collection.entity.CustomCollection;
 import issueissyu.backend.domain.collection.entity.mapping.UserCustomCollection;
 import issueissyu.backend.domain.collection.repository.CustomCollectionRepository;
 import issueissyu.backend.domain.collection.repository.UserCustomCollectionRepository;
+import issueissyu.backend.domain.collection.service.command.CollectionUnlockService;
 import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -28,11 +30,16 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
     private final UserRepository userRepository;
     private final CustomCollectionRepository customCollectionRepository;
     private final UserCustomCollectionRepository userCustomCollectionRepository;
+    private final CollectionUnlockService collectionUnlockService;
 
     // 마스터 전부 ID 순으로 내려주고, 해금 행 있으면 북마크 반영 / 프로필 요약은 myCollection
     @Override
-    public MyCollectionsResDTO getMyCollections(String uid) {
+    @Transactional(readOnly = false)
+    public MyCollectionsResDTO getMyCollections(String uid, boolean checkUnlock) {
         User user = userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+
+        List<NewlyUnlockedCollectionResDTO> newlyUnlocked =
+                checkUnlock ? collectionUnlockService.evaluateAndUnlockMissions(uid) : List.of();
 
         List<CustomCollection> catalogDefinitions =
                 customCollectionRepository.findAllByOrderByCustomCollectionIdAsc();
@@ -66,6 +73,7 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
                 .nickname(user.getNickname())
                 .myCollection(profileSummary)
                 .collections(collections)
+                .newlyUnlocked(newlyUnlocked)
                 .build();
     }
 

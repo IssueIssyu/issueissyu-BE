@@ -38,6 +38,10 @@ public enum AuthErrorCode implements BaseErrorCode {
     LOGIN_LINK_400_2(HttpStatus.BAD_REQUEST, "LOGIN_LINK_400_2", "연동 대상이 현재 계정과 동일합니다."),
     LOGIN_LINK_400_3(HttpStatus.BAD_REQUEST, "LOGIN_LINK_400_3", "해당 소셜 타입은 이미 연동되어 있습니다."),
     ONBOARDING_400(HttpStatus.BAD_REQUEST, "ONBOARDING_400", "온보딩 실패"),
+    ONBOARDING_500(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "ONBOARDING_500",
+            "필수 컬렉션 데이터가 설정되지 않았습니다."),
 
     REFRESH_INVALID(HttpStatus.UNAUTHORIZED, "REFRESH_401", "토큰 재발급에 실패했습니다."),
     LOGOUT_INVALID(HttpStatus.UNAUTHORIZED, "LOGOUT_401", "유효하지 않은 토큰입니다."),
