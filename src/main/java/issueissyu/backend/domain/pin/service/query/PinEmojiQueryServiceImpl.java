@@ -92,17 +92,7 @@ public class PinEmojiQueryServiceImpl implements PinEmojiQueryService {
         Set<Long> ownedEmojiIds = new HashSet<>(userEmojiRepository.findOwnedEmojiIdsByUid(uid));
 
         List<EmojiCandidateResDTO> result = new ArrayList<>();
-        for (Emoji emoji : emojiRepository.findAllByIsDefaultTrueOrderByEmojiIdAsc()) {
-            EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
-            result.add(EmojiCandidateResDTO.builder()
-                    .emojiId(emoji.getEmojiId())
-                    .emojiImageUrl(emoji.getEmojiImageUrl())
-                    .isDefault(emoji.isDefault())
-                    .isOwned(availability.isOwned())
-                    .productId(availability.productId())
-                    .build());
-        }
-        for (Emoji emoji : emojiRepository.findAllByIsDefaultFalseOrderByEmojiIdAsc()) {
+        for (Emoji emoji : emojiRepository.findAllByOrderByIsDefaultDescEmojiIdAsc()) {
             EmojiAvailability availability = resolveAvailability(emoji, ownedEmojiIds);
             result.add(EmojiCandidateResDTO.builder()
                     .emojiId(emoji.getEmojiId())

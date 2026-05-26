@@ -11,7 +11,5 @@ public interface EmojiRepository extends JpaRepository<Emoji, Long> {
 
     List<Emoji> findAllByOrderByEmojiIdAsc();
 
-    List<Emoji> findAllByIsDefaultTrueOrderByEmojiIdAsc();
-
-    List<Emoji> findAllByIsDefaultFalseOrderByEmojiIdAsc();
+    List<Emoji> findAllByOrderByIsDefaultDescEmojiIdAsc();
 }
