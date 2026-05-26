@@ -21,7 +21,10 @@ public enum AlarmErrorCode implements BaseErrorCode {
 
     STORE_ALARM_404(HttpStatus.NOT_FOUND, "STORE_ALARM_404", "존재하지 않는 가게 알람입니다."),
     STORE_ALARM_403(HttpStatus.FORBIDDEN, "STORE_ALARM_403", "해당 사용자는 푸시 알림 수신을 제한해두었습니다."),
-    STORE_ALARM_400(HttpStatus.BAD_REQUEST, "STORE_ALARM_400", "푸시 알림 전송에 실패했습니다.");
+    STORE_ALARM_400(HttpStatus.BAD_REQUEST, "STORE_ALARM_400", "푸시 알림 전송에 실패했습니다."),
+
+    ALARM_LIST_400_1(HttpStatus.BAD_REQUEST, "ALARM_LIST_400_1", "조회 불가능한 사이즈 입니다."),
+    ALARM_LIST_400_2(HttpStatus.BAD_REQUEST, "ALARM_LIST_400_2", "조회 불가능한 cursor 입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
