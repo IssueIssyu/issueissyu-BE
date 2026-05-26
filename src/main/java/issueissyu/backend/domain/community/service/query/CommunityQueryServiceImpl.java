@@ -372,9 +372,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
     }
 
+    private static final Set<CommunityType> ADMIN_AUTHORED_TYPES = Set.of(
+            CommunityType.FESTIVAL, CommunityType.POLICY, CommunityType.CONTEST, CommunityType.CARDNEWS
+    );
+
     private FeedItemContext buildFeedItemContext(List<Community> communities) {
         if (communities.isEmpty()) {
-            return new FeedItemContext(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+            return new FeedItemContext(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), null, null);
         }
 
         List<Long> pinIds = communities.stream()
@@ -434,12 +438,27 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             }
         }
 
+        boolean hasAdminType = communities.stream()
+                .anyMatch(c -> ADMIN_AUTHORED_TYPES.contains(c.getCommunityType()));
+
+        String adminNickname = null;
+        String adminProfileUrl = null;
+        if (hasAdminType) {
+            User admin = userRepository.findFirstByRole(UserRole.ADMIN).orElse(null);
+            if (admin != null) {
+                adminNickname = admin.getNickname();
+                adminProfileUrl = userProfileImageQueryService.findUrlByUserUid(admin.getUid()).orElse(null);
+            }
+        }
+
         return new FeedItemContext(
                 profileUrlByUid,
                 addressByPinId,
                 eventPinByPinId,
                 pinThumbnailByPinId,
-                cardnewsThumbnailByCommunityId
+                cardnewsThumbnailByCommunityId,
+                adminNickname,
+                adminProfileUrl
         );
     }
 
@@ -456,8 +475,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getPinTitle(),
                 pin.getPinContent(),
                 resolveFeedThumbnailUrl(community, context).orElse(null),
-                pin.getUser().getNickname(),
-                context.profileUrlByUid().get(pin.getUser().getUid()),
+                resolveFeedWriterNickname(type, pin, eventPin, context),
+                resolveFeedWriterProfileUrl(type, pin, eventPin, context),
                 context.addressByPinId().get(pinId),
                 pin.getViewCount(),
                 pin.getLikeCount(),
@@ -492,8 +511,32 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             Map<Long, String> addressByPinId,
             Map<Long, EventPin> eventPinByPinId,
             Map<Long, String> pinThumbnailByPinId,
-            Map<Long, String> cardnewsThumbnailByCommunityId
+            Map<Long, String> cardnewsThumbnailByCommunityId,
+            String adminNickname,
+            String adminProfileUrl
     ) {
+    }
+
+    private String resolveFeedWriterNickname(CommunityType type, Pin pin, EventPin eventPin, FeedItemContext context) {
+        if (type == CommunityType.STORE) {
+            return pin.getPinTitle();
+        }
+        if (ADMIN_AUTHORED_TYPES.contains(type)) {
+            return context.adminNickname() != null ? context.adminNickname() : pin.getUser().getNickname();
+        }
+        return pin.getUser().getNickname();
+    }
+
+    private String resolveFeedWriterProfileUrl(CommunityType type, Pin pin, EventPin eventPin, FeedItemContext context) {
+        if (type == CommunityType.STORE) {
+            return eventPin != null && eventPin.getStoreImage() != null
+                    ? eventPin.getStoreImage().getImageS3Url()
+                    : null;
+        }
+        if (ADMIN_AUTHORED_TYPES.contains(type)) {
+            return context.adminProfileUrl();
+        }
+        return context.profileUrlByUid().get(pin.getUser().getUid());
     }
 
     private CommunityDetailResDTO toDetailRes(
