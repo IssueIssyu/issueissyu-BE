@@ -30,7 +30,7 @@ public class AlarmBatchService {
 
     @Transactional
     public List<FcmNotificationPayload> persistEventAlarms(
-            List<User> recipients, String body, String communityId) {
+            List<User> recipients, String body, Long pinId, Long communityId) {
         if (recipients.isEmpty()) {
             return List.of();
         }
@@ -47,6 +47,8 @@ public class AlarmBatchService {
                     .userAlarm(userAlarms.get(i))
                     .eventAlarmTitle(EVENT_ALARM_TITLE)
                     .eventAlarmBody(body)
+                    .eventPinId(pinId)
+                    .eventCommunityId(communityId)
                     .build());
         }
         eventAlarms = eventAlarmRepository.saveAll(eventAlarms);
@@ -63,14 +65,14 @@ public class AlarmBatchService {
                             "eventAlarmId",
                             String.valueOf(eventAlarm.getEventAlarmId()),
                             "communityId",
-                            communityId)));
+                            communityId != null ? String.valueOf(communityId) : "")));
         }
         return payloads;
     }
 
     @Transactional
     public List<FcmNotificationPayload> persistStoreAlarms(
-            List<User> recipients, String body, String communityId) {
+            List<User> recipients, String body, Long pinId, Long communityId) {
         if (recipients.isEmpty()) {
             return List.of();
         }
@@ -87,6 +89,8 @@ public class AlarmBatchService {
                     .userAlarm(userAlarms.get(i))
                     .storeAlarmTitle(STORE_ALARM_TITLE)
                     .storeAlarmBody(body)
+                    .storePinId(pinId)
+                    .storeCommunityId(communityId)
                     .build());
         }
         storeAlarms = storeAlarmRepository.saveAll(storeAlarms);
@@ -103,7 +107,7 @@ public class AlarmBatchService {
                             "storeAlarmId",
                             String.valueOf(storeAlarm.getStoreAlarmId()),
                             "communityId",
-                            communityId)));
+                            communityId != null ? String.valueOf(communityId) : "")));
         }
         return payloads;
     }
@@ -117,6 +121,8 @@ public class AlarmBatchService {
                         .userAlarm(userAlarm)
                         .eventAlarmTitle(EVENT_ALARM_TITLE)
                         .eventAlarmBody(body)
+                        .eventPinId(pinId)
+                        .eventCommunityId(communityId)
                         .build());
 
         return new EventAlarmPrepared(
@@ -137,6 +143,8 @@ public class AlarmBatchService {
                         .userAlarm(userAlarm)
                         .storeAlarmTitle(STORE_ALARM_TITLE)
                         .storeAlarmBody(body)
+                        .storePinId(pinId)
+                        .storeCommunityId(communityId)
                         .build());
 
         return new StoreAlarmPrepared(
