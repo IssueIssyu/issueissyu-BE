@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CollectionUnlockServiceImpl implements CollectionUnlockService {
 
-    private static final String LIKE_MISSION_COLLECTION_NAME = "음흉씨";
+    private static final String LIKE_MISSION_COLLECTION_NAME = "버터떡";
     private static final int REQUIRED_PIN_LIKE_COUNT = 3;
 
     private final UserRepository userRepository;
