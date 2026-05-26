@@ -49,7 +49,7 @@ public class OnboardingService {
 
         CustomCollection defaultProfile = customCollectionRepository
                 .findByCustomCollectionName(DEFAULT_PROFILE_NAME)
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_500));
 
         UserCustomCollection savedProfile =
                 userCustomCollectionRepository
@@ -77,7 +77,7 @@ public class OnboardingService {
         for (String collectionName : STARTER_COLLECTION_NAMES) {
             CustomCollection starterCollection = customCollectionRepository
                     .findByCustomCollectionName(collectionName)
-                    .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_400));
+                    .orElseThrow(() -> AuthException.of(AuthErrorCode.ONBOARDING_500));
             userCustomCollectionRepository
                     .findByUser_UidAndCustomCollection_CustomCollectionName(uid, collectionName)
                     .orElseGet(
