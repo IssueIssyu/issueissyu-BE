@@ -32,6 +32,8 @@ import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
+import issueissyu.backend.domain.user.entity.User;
+import issueissyu.backend.domain.user.enums.UserRole;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -370,9 +372,13 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
     }
 
+    private static final Set<CommunityType> ADMIN_AUTHORED_TYPES = Set.of(
+            CommunityType.FESTIVAL, CommunityType.POLICY, CommunityType.CONTEST, CommunityType.CARDNEWS
+    );
+
     private FeedItemContext buildFeedItemContext(List<Community> communities) {
         if (communities.isEmpty()) {
-            return new FeedItemContext(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+            return new FeedItemContext(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), null, null);
         }
 
         List<Long> pinIds = communities.stream()
@@ -392,7 +398,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
 
         List<Long> cardnewsCommunityIds = communities.stream()
-                .filter(community -> community.getCommunityType() == CommunityType.CARDNEWS)
+                .filter(community -> community.getCommunityType() == CommunityType.CARDNEWS
+                        || community.getCommunityType() == CommunityType.POLICY
+                        || community.getCommunityType() == CommunityType.CONTEST)
                 .map(Community::getCommunityId)
                 .distinct()
                 .toList();
@@ -430,12 +438,27 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             }
         }
 
+        boolean hasAdminType = communities.stream()
+                .anyMatch(c -> ADMIN_AUTHORED_TYPES.contains(c.getCommunityType()));
+
+        String adminNickname = null;
+        String adminProfileUrl = null;
+        if (hasAdminType) {
+            User admin = userRepository.findFirstByRole(UserRole.ADMIN).orElse(null);
+            if (admin != null) {
+                adminNickname = admin.getNickname();
+                adminProfileUrl = userProfileImageQueryService.findUrlByUserUid(admin.getUid()).orElse(null);
+            }
+        }
+
         return new FeedItemContext(
                 profileUrlByUid,
                 addressByPinId,
                 eventPinByPinId,
                 pinThumbnailByPinId,
-                cardnewsThumbnailByCommunityId
+                cardnewsThumbnailByCommunityId,
+                adminNickname,
+                adminProfileUrl
         );
     }
 
@@ -452,8 +475,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 pin.getPinTitle(),
                 pin.getPinContent(),
                 resolveFeedThumbnailUrl(community, context).orElse(null),
-                pin.getUser().getNickname(),
-                context.profileUrlByUid().get(pin.getUser().getUid()),
+                resolveFeedWriterNickname(type, pin, eventPin, context),
+                resolveFeedWriterProfileUrl(type, pin, eventPin, context),
                 context.addressByPinId().get(pinId),
                 pin.getViewCount(),
                 pin.getLikeCount(),
@@ -466,7 +489,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private Optional<String> resolveFeedThumbnailUrl(Community community, FeedItemContext context) {
         Long pinId = community.getPin().getPinId();
 
-        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+        if (community.getCommunityType() == CommunityType.CARDNEWS
+                || community.getCommunityType() == CommunityType.POLICY
+                || community.getCommunityType() == CommunityType.CONTEST) {
             return Optional.ofNullable(context.cardnewsThumbnailByCommunityId().get(community.getCommunityId()));
         }
 
@@ -486,8 +511,32 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             Map<Long, String> addressByPinId,
             Map<Long, EventPin> eventPinByPinId,
             Map<Long, String> pinThumbnailByPinId,
-            Map<Long, String> cardnewsThumbnailByCommunityId
+            Map<Long, String> cardnewsThumbnailByCommunityId,
+            String adminNickname,
+            String adminProfileUrl
     ) {
+    }
+
+    private String resolveFeedWriterNickname(CommunityType type, Pin pin, EventPin eventPin, FeedItemContext context) {
+        if (type == CommunityType.STORE) {
+            return pin.getPinTitle();
+        }
+        if (ADMIN_AUTHORED_TYPES.contains(type)) {
+            return context.adminNickname() != null ? context.adminNickname() : pin.getUser().getNickname();
+        }
+        return pin.getUser().getNickname();
+    }
+
+    private String resolveFeedWriterProfileUrl(CommunityType type, Pin pin, EventPin eventPin, FeedItemContext context) {
+        if (type == CommunityType.STORE) {
+            return eventPin != null && eventPin.getStoreImage() != null
+                    ? eventPin.getStoreImage().getImageS3Url()
+                    : null;
+        }
+        if (ADMIN_AUTHORED_TYPES.contains(type)) {
+            return context.adminProfileUrl();
+        }
+        return context.profileUrlByUid().get(pin.getUser().getUid());
     }
 
     private CommunityDetailResDTO toDetailRes(
@@ -504,17 +553,17 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Pin pin = community.getPin();
         CommunityType type = community.getCommunityType();
         Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
+        boolean isCardnews = type == CommunityType.CARDNEWS;
 
         return new CommunityDetailResDTO(
                 type,
                 community.getCommunityId(),
                 pin.getPinId(),
                 pin.getPinTitle(),
-                pin.getPinContent(),
-                resolveThumbnailUrl(community).orElse(null),
+                isCardnews ? null : pin.getPinContent(),
                 resolveDetailImageUrls(community),
-                pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
+                resolveWriterNickname(type, pin),
+                resolveWriterProfileUrl(type, pin),
                 resolveAddress(pin.getPinId()),
                 viewCount,
                 pin.getLikeCount(),
@@ -541,25 +590,6 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return Optional.empty();
     }
 
-    private Optional<String> resolveThumbnailUrl(Community community) {
-        if (community.getCommunityType() == CommunityType.CARDNEWS) {
-            return resolveCardnewsThumbnailUrl(community);
-        }
-
-        if (community.getCommunityType() == CommunityType.STORE
-                || community.getCommunityType() == CommunityType.FESTIVAL) {
-            Optional<String> storeImageUrl = storeImageRepository
-                    .findByEventPin_Pin_PinId(community.getPin().getPinId())
-                    .map(StoreImage::getImageS3Url);
-
-            if (storeImageUrl.isPresent()) {
-                return storeImageUrl;
-            }
-        }
-
-        return resolvePinThumbnailUrl(community.getPin().getPinId());
-    }
-
     private List<String> resolveDetailImageUrls(Community community) {
         if (community.getCommunityType() == CommunityType.CARDNEWS) {
             return community.getCardnewsImages()
@@ -575,27 +605,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
     }
 
-    private Optional<String> resolveCardnewsThumbnailUrl(Community community) {
-        return community.getCardnewsImages()
-                .stream()
-                .map(CardnewsImageS3::getCardnewsImageS3Url)
-                .findFirst();
-    }
-
     private String resolveAddress(Long pinId) {
         return pinLocationRepository.findByPin_PinId(pinId)
                 .map(PinLocation::getDetailAddress)
                 .orElse(null);
-    }
-
-    private Optional<String> resolvePinThumbnailUrl(Long pinId) {
-        Optional<String> mainImage = pinImageRepository.findFirstByPin_PinIdAndMainImageTrue(pinId)
-                .map(PinImage::getPinS3Url);
-
-        return mainImage.isPresent()
-                ? mainImage
-                : pinImageRepository.findFirstByPin_PinIdOrderByPinImageIdAsc(pinId)
-                .map(PinImage::getPinS3Url);
     }
 
     private boolean isReportableType(CommunityType type) {
@@ -606,6 +619,38 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 || type == CommunityType.POLICY
                 || type == CommunityType.CONTEST
                 || type == CommunityType.CARDNEWS;
+    }
+
+    private String resolveWriterNickname(CommunityType type, Pin pin) {
+        if (type == CommunityType.STORE) {
+            return pin.getPinTitle();
+        }
+        if (type == CommunityType.FESTIVAL
+                || type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS) {
+            return userRepository.findFirstByRole(UserRole.ADMIN)
+                    .map(User::getNickname)
+                    .orElse(pin.getUser().getNickname());
+        }
+        return pin.getUser().getNickname();
+    }
+
+    private String resolveWriterProfileUrl(CommunityType type, Pin pin) {
+        if (type == CommunityType.STORE) {
+            return storeImageRepository.findByEventPin_Pin_PinId(pin.getPinId())
+                    .map(StoreImage::getImageS3Url)
+                    .orElse(null);
+        }
+        if (type == CommunityType.FESTIVAL
+                || type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS) {
+            return userRepository.findFirstByRole(UserRole.ADMIN)
+                    .flatMap(admin -> userProfileImageQueryService.findUrlByUserUid(admin.getUid()))
+                    .orElse(null);
+        }
+        return userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null);
     }
 
     private CommunityCursorPageResDTO getHotFeed(Long locationId, String cursor, int size) {
