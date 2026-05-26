@@ -399,12 +399,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         Map<String, String> profileUrlByUid = userProfileImageQueryService.findUrlsByUserUids(uids);
 
-        Map<Long, String> addressByPinId = pinLocationRepository.findByPin_PinIdIn(pinIds).stream()
-                .collect(Collectors.toMap(
-                        pinLocation -> pinLocation.getPin().getPinId(),
-                        PinLocation::getDetailAddress,
-                        (left, right) -> left
-                ));
+        Map<Long, String> addressByPinId = new HashMap<>();
+        for (PinLocation pinLocation : pinLocationRepository.findByPin_PinIdIn(pinIds)) {
+            addressByPinId.putIfAbsent(pinLocation.getPin().getPinId(), pinLocation.getDetailAddress());
+        }
 
         Map<Long, EventPin> eventPinByPinId = eventPinIds.isEmpty()
                 ? Map.of()
