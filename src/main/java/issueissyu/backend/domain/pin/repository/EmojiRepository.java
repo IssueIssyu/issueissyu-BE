@@ -10,4 +10,6 @@ public interface EmojiRepository extends JpaRepository<Emoji, Long> {
     Optional<Emoji> findByProductId(String productId);
 
     List<Emoji> findAllByOrderByEmojiIdAsc();
+
+    List<Emoji> findAllByOrderByIsDefaultDescEmojiIdAsc();
 }

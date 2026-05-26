@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -39,10 +40,13 @@ public class CustomCollectionController {
                     collections 는 잠금·북마크 상태(isLocked, isBookmarked)를 포함한 전체 목록이며, 서버에서 북마크 항목만 걸러내지 않습니다.
                     마이페이지 컬렉션 영역은 클라이언트에서 collections 중 isLocked == false && isBookmarked == true 항목만 표시하면 됩니다.
                     myCollection 은 대표 프로필 컬렉션 요약입니다.
+                    checkUnlock=true 이면 미션 조건을 검사해 해금하고, 이번 요청에서 새로 풀린 항목을 newlyUnlocked 에 담습니다. (컬렉션 화면 진입 시 사용)
                     """)
     @GetMapping
-    public ApiResponse<MyCollectionsResDTO> getMyCollections(@AuthenticationPrincipal String uid) {
-        MyCollectionsResDTO result = userCustomCollectionQueryService.getMyCollections(uid);
+    public ApiResponse<MyCollectionsResDTO> getMyCollections(
+            @AuthenticationPrincipal String uid,
+            @RequestParam(defaultValue = "false") boolean checkUnlock) {
+        MyCollectionsResDTO result = userCustomCollectionQueryService.getMyCollections(uid, checkUnlock);
         return ApiResponse.onSuccess(CustomCollectionSuccessCode.USER_COLLECTIONS_GET_SUCCESS, result);
     }
 
