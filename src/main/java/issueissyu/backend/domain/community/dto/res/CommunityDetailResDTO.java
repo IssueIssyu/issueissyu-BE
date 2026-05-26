@@ -16,7 +16,6 @@ public record CommunityDetailResDTO(
         String title,
         String content,
 
-        String thumbnailUrl,
         List<String> imageUrls,
 
         String writerNickname,
