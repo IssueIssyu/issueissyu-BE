@@ -394,7 +394,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
 
         List<Long> cardnewsCommunityIds = communities.stream()
-                .filter(community -> community.getCommunityType() == CommunityType.CARDNEWS)
+                .filter(community -> community.getCommunityType() == CommunityType.CARDNEWS
+                        || community.getCommunityType() == CommunityType.POLICY
+                        || community.getCommunityType() == CommunityType.CONTEST)
                 .map(Community::getCommunityId)
                 .distinct()
                 .toList();
@@ -468,7 +470,9 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private Optional<String> resolveFeedThumbnailUrl(Community community, FeedItemContext context) {
         Long pinId = community.getPin().getPinId();
 
-        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+        if (community.getCommunityType() == CommunityType.CARDNEWS
+                || community.getCommunityType() == CommunityType.POLICY
+                || community.getCommunityType() == CommunityType.CONTEST) {
             return Optional.ofNullable(context.cardnewsThumbnailByCommunityId().get(community.getCommunityId()));
         }
 
