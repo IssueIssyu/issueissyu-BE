@@ -32,6 +32,8 @@ import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
+import issueissyu.backend.domain.user.entity.User;
+import issueissyu.backend.domain.user.enums.UserRole;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.domain.user.service.query.UserProfileImageQueryService;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
@@ -504,17 +506,17 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Pin pin = community.getPin();
         CommunityType type = community.getCommunityType();
         Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
+        boolean isCardnews = type == CommunityType.CARDNEWS;
 
         return new CommunityDetailResDTO(
                 type,
                 community.getCommunityId(),
                 pin.getPinId(),
                 pin.getPinTitle(),
-                pin.getPinContent(),
-                resolveThumbnailUrl(community).orElse(null),
+                isCardnews ? null : pin.getPinContent(),
                 resolveDetailImageUrls(community),
-                pin.getUser().getNickname(),
-                userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null),
+                resolveWriterNickname(type, pin),
+                resolveWriterProfileUrl(type, pin),
                 resolveAddress(pin.getPinId()),
                 viewCount,
                 pin.getLikeCount(),
@@ -541,25 +543,6 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return Optional.empty();
     }
 
-    private Optional<String> resolveThumbnailUrl(Community community) {
-        if (community.getCommunityType() == CommunityType.CARDNEWS) {
-            return resolveCardnewsThumbnailUrl(community);
-        }
-
-        if (community.getCommunityType() == CommunityType.STORE
-                || community.getCommunityType() == CommunityType.FESTIVAL) {
-            Optional<String> storeImageUrl = storeImageRepository
-                    .findByEventPin_Pin_PinId(community.getPin().getPinId())
-                    .map(StoreImage::getImageS3Url);
-
-            if (storeImageUrl.isPresent()) {
-                return storeImageUrl;
-            }
-        }
-
-        return resolvePinThumbnailUrl(community.getPin().getPinId());
-    }
-
     private List<String> resolveDetailImageUrls(Community community) {
         if (community.getCommunityType() == CommunityType.CARDNEWS) {
             return community.getCardnewsImages()
@@ -575,27 +558,10 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .toList();
     }
 
-    private Optional<String> resolveCardnewsThumbnailUrl(Community community) {
-        return community.getCardnewsImages()
-                .stream()
-                .map(CardnewsImageS3::getCardnewsImageS3Url)
-                .findFirst();
-    }
-
     private String resolveAddress(Long pinId) {
         return pinLocationRepository.findByPin_PinId(pinId)
                 .map(PinLocation::getDetailAddress)
                 .orElse(null);
-    }
-
-    private Optional<String> resolvePinThumbnailUrl(Long pinId) {
-        Optional<String> mainImage = pinImageRepository.findFirstByPin_PinIdAndMainImageTrue(pinId)
-                .map(PinImage::getPinS3Url);
-
-        return mainImage.isPresent()
-                ? mainImage
-                : pinImageRepository.findFirstByPin_PinIdOrderByPinImageIdAsc(pinId)
-                .map(PinImage::getPinS3Url);
     }
 
     private boolean isReportableType(CommunityType type) {
@@ -606,6 +572,38 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 || type == CommunityType.POLICY
                 || type == CommunityType.CONTEST
                 || type == CommunityType.CARDNEWS;
+    }
+
+    private String resolveWriterNickname(CommunityType type, Pin pin) {
+        if (type == CommunityType.STORE) {
+            return pin.getPinTitle();
+        }
+        if (type == CommunityType.FESTIVAL
+                || type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS) {
+            return userRepository.findFirstByRole(UserRole.ADMIN)
+                    .map(User::getNickname)
+                    .orElse(pin.getUser().getNickname());
+        }
+        return pin.getUser().getNickname();
+    }
+
+    private String resolveWriterProfileUrl(CommunityType type, Pin pin) {
+        if (type == CommunityType.STORE) {
+            return storeImageRepository.findByEventPin_Pin_PinId(pin.getPinId())
+                    .map(StoreImage::getImageS3Url)
+                    .orElse(null);
+        }
+        if (type == CommunityType.FESTIVAL
+                || type == CommunityType.POLICY
+                || type == CommunityType.CONTEST
+                || type == CommunityType.CARDNEWS) {
+            return userRepository.findFirstByRole(UserRole.ADMIN)
+                    .flatMap(admin -> userProfileImageQueryService.findUrlByUserUid(admin.getUid()))
+                    .orElse(null);
+        }
+        return userProfileImageQueryService.findUrlByUserUid(pin.getUser().getUid()).orElse(null);
     }
 
     private CommunityCursorPageResDTO getHotFeed(Long locationId, String cursor, int size) {
