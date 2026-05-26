@@ -17,9 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class PinSolveQueryServiceImpl implements PinSolveQueryService {
 
-    /** TODO: issue_pin.reliability 컬럼 추가 후 엔티티/조회 로직으로 대체 */
-    private static final int STUB_AI_RELIABILITY = 66;
-
     private final PinRepository pinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
@@ -41,7 +38,7 @@ public class PinSolveQueryServiceImpl implements PinSolveQueryService {
             boolean isProblemSolver =
                     problemSolverRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
 
-            return new PinSolveResDTO(isPetitioned, isProblemSolver, STUB_AI_RELIABILITY);
+            return new PinSolveResDTO(isPetitioned, isProblemSolver);
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
