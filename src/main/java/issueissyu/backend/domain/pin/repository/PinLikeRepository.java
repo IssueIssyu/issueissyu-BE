@@ -13,6 +13,8 @@ public interface PinLikeRepository extends JpaRepository<PinLike, Long> {
 
     boolean existsByPin_PinIdAndUser_Uid(Long pinId, String uid);
 
+    long countByUser_Uid(String uid);
+
     @EntityGraph(attributePaths = "user")
     List<PinLike> findByPin_PinId(Long pinId);
 
