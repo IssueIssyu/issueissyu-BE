@@ -92,6 +92,7 @@ public class LikeAlarmCommandServiceImpl implements LikeAlarmCommandService {
                         .userAlarm(userAlarm)
                         .likeAlarmTitle(LIKE_ALARM_TITLE)
                         .likeAlarmBody(body)
+                        .likePinId(context.pin().getPinId())
                         .build());
 
         return new LikeAlarmPrepared(

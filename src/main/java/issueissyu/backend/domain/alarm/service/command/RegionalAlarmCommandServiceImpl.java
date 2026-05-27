@@ -142,11 +142,11 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
         String body = String.format(EVENT_ALARM_BODY_TEMPLATE, eventPin.getPin().getPinTitle());
 
         Long locationId = resolvePinLocationId(pinId);
-        String communityId = resolveCommunityIdAsString(pinId);
+        Long communityId = resolveCommunityIdOrNull(pinId);
 
         List<User> recipients = userRepository.findEventAlarmEligibleByLocationId(locationId);
         List<FcmNotificationPayload> payloads =
-                alarmBatchService.persistEventAlarms(recipients, body, communityId);
+                alarmBatchService.persistEventAlarms(recipients, body, pinId, communityId);
 
         dispatchFcmBatch(payloads, "event");
     }
@@ -156,11 +156,11 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
         String body = buildStoreAlarmBody(eventPin);
 
         Long locationId = resolvePinLocationId(pinId);
-        String communityId = resolveCommunityIdAsString(pinId);
+        Long communityId = resolveCommunityIdOrNull(pinId);
 
         List<User> recipients = userRepository.findStoreAlarmEligibleByLocationId(locationId);
         List<FcmNotificationPayload> payloads =
-                alarmBatchService.persistStoreAlarms(recipients, body, communityId);
+                alarmBatchService.persistStoreAlarms(recipients, body, pinId, communityId);
 
         dispatchFcmBatch(payloads, "store");
     }
@@ -215,11 +215,10 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
                 .orElseThrow(() -> AlarmException.of(notFoundError));
     }
 
-    private String resolveCommunityIdAsString(Long pinId) {
+    private Long resolveCommunityIdOrNull(Long pinId) {
         return communityRepository
                 .findByPin_PinId(pinId)
                 .map(Community::getCommunityId)
-                .map(String::valueOf)
-                .orElse("");
+                .orElse(null);
     }
 }

@@ -39,4 +39,10 @@ public class HotAlarm {
 
     @Column(name = "hot_alarm_title", nullable = false, length = 100)
     private String hotAlarmTitle;
+
+    @Column(name = "hot_pin_id")
+    private Long hotPinId;
+
+    @Column(name = "hot_community_id")
+    private Long hotCommunityId;
 }

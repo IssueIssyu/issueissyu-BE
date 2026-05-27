@@ -39,4 +39,10 @@ public class StoreAlarm {
 
     @Column(name = "store_alarm_title", nullable = false, length = 100)
     private String storeAlarmTitle;
+
+    @Column(name = "store_pin_id")
+    private Long storePinId;
+
+    @Column(name = "store_community_id")
+    private Long storeCommunityId;
 }

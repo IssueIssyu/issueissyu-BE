@@ -39,4 +39,10 @@ public class EventAlarm {
 
     @Column(name = "event_alarm_title", nullable = false, length = 100)
     private String eventAlarmTitle;
+
+    @Column(name = "event_pin_id")
+    private Long eventPinId;
+
+    @Column(name = "event_community_id")
+    private Long eventCommunityId;
 }

@@ -3,15 +3,18 @@ package issueissyu.backend.domain.alarm.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.alarm.dto.req.PushTokenReqDTO;
+import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
 import issueissyu.backend.domain.alarm.service.command.UserAlarmCommandService;
+import issueissyu.backend.domain.alarm.service.query.UserAlarmQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +28,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserAlarmController {
 
     private final UserAlarmCommandService userAlarmCommandService;
+    private final UserAlarmQueryService userAlarmQueryService;
+
+    @Operation(
+            summary = "알람 단건 조회",
+            description = "로그인한 사용자의 알람 단건을 user_alarm_id 기준으로 조회합니다.")
+    @GetMapping("/{alarmId}")
+    public ApiResponse<AlarmListItemResDTO> getAlarm(
+            @AuthenticationPrincipal String uid, @PathVariable Long alarmId) {
+        AlarmListItemResDTO result = userAlarmQueryService.getAlarm(uid, alarmId);
+        return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_200, result);
+    }
 
     @Operation(
             summary = "FCM Push Token 저장",
@@ -34,7 +48,7 @@ public class UserAlarmController {
             @AuthenticationPrincipal String uid,
             @Valid @RequestBody PushTokenReqDTO request) {
         userAlarmCommandService.savePushToken(uid, request.fcmPushToken());
-        return ApiResponse.onSuccess(AlarmSuccessCode.PUSH_TOKEN_200, null);
+        return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_TOKEN_200, null);
     }
 
     @Operation(
