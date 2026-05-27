@@ -12,6 +12,8 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
 
     boolean existsByIssuePin_Pin_PinIdAndUser_Uid(Long pinId, String uid);
 
+    Optional<ProblemSolver> findByIssuePin_Pin_PinIdAndUser_Uid(Long pinId, String uid);
+
     @Query(
             """
             select ps from ProblemSolver ps
