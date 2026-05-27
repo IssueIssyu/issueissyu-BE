@@ -57,6 +57,15 @@ public class UserAlarmQueryServiceImpl implements UserAlarmQueryService {
         return new AlarmListResDTO(alarms, new AlarmListPageInfoResDTO(hasNext, nextCursor));
     }
 
+    @Override
+    public AlarmListItemResDTO getAlarm(String uid, Long alarmId) {
+        UserAlarmListRow row = userAlarmListRepository
+                .findAlarmDetail(uid, alarmId)
+                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.ALARM_404));
+
+        return userAlarmConverter.toListItem(row, LocalDateTime.now());
+    }
+
     private int resolveSize(Integer size) {
         int resolved = size == null ? SIZE_DEFAULT : size;
         if (resolved < SIZE_MIN || resolved > SIZE_MAX) {
