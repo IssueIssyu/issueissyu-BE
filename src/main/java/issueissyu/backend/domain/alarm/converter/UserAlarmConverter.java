@@ -22,6 +22,7 @@ public class UserAlarmConverter {
                 row.getAlarmBody(),
                 row.getPinId(),
                 row.getCommunityId(),
+                row.getCreatedAt(),
                 alarmTimeAgoFormatter.format(row.getCreatedAt(), now));
     }
 }
