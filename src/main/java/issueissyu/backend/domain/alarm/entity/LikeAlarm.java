@@ -39,4 +39,10 @@ public class LikeAlarm {
 
     @Column(name = "like_alarm_title", nullable = false, length = 100)
     private String likeAlarmTitle;
+
+    @Column(name = "like_pin_id")
+    private Long likePinId;
+
+    @Column(name = "like_community_id")
+    private Long likeCommunityId;
 }
