@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AlarmErrorCode implements BaseErrorCode {
 
-    PUSH_TOKEN_400(HttpStatus.BAD_REQUEST, "PUSH_TOKEN_400", "유효하지 않은 토큰을 입력하였습니다."),
+    ALARM_TOKEN_404(HttpStatus.NOT_FOUND, "ALARM_TOKEN_404", "유효하지 않은 토큰을 입력하였습니다."),
 
     LIKE_ALARM_404(HttpStatus.NOT_FOUND, "LIKE_ALARM_404", "존재하지 않는 좋아요 알람입니다."),
     LIKE_ALARM_403(HttpStatus.FORBIDDEN, "LIKE_ALARM_403", "해당 사용자는 푸시 알림 수신을 제한해두었습니다."),

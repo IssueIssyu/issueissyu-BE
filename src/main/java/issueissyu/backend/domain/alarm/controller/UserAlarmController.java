@@ -34,7 +34,7 @@ public class UserAlarmController {
             @AuthenticationPrincipal String uid,
             @Valid @RequestBody PushTokenReqDTO request) {
         userAlarmCommandService.savePushToken(uid, request.fcmPushToken());
-        return ApiResponse.onSuccess(AlarmSuccessCode.PUSH_TOKEN_200, null);
+        return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_TOKEN_200, null);
     }
 
     @Operation(
