@@ -1,8 +1,7 @@
 package issueissyu.backend.domain.alarm.support;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,18 +12,26 @@ public class AlarmTimeAgoFormatter {
             return "0000-00-00 00:00:00.000000";
         }
 
-        Period period = Period.between(createdAt.toLocalDate(), now.toLocalDate());
-        int years = period.getYears();
-        int months = period.getMonths();
-        int days = period.getDays();
+        LocalDateTime temp = createdAt;
+        long years = ChronoUnit.YEARS.between(temp, now);
+        temp = temp.plusYears(years);
 
-        LocalDateTime adjusted = createdAt.plusYears(years).plusMonths(months).plusDays(days);
-        Duration remainder = Duration.between(adjusted, now);
+        long months = ChronoUnit.MONTHS.between(temp, now);
+        temp = temp.plusMonths(months);
 
-        long hours = remainder.toHours();
-        long minutes = remainder.toMinutesPart();
-        long seconds = remainder.toSecondsPart();
-        long micros = remainder.toNanosPart() / 1_000L;
+        long days = ChronoUnit.DAYS.between(temp, now);
+        temp = temp.plusDays(days);
+
+        long hours = ChronoUnit.HOURS.between(temp, now);
+        temp = temp.plusHours(hours);
+
+        long minutes = ChronoUnit.MINUTES.between(temp, now);
+        temp = temp.plusMinutes(minutes);
+
+        long seconds = ChronoUnit.SECONDS.between(temp, now);
+        temp = temp.plusSeconds(seconds);
+
+        long micros = ChronoUnit.MICROS.between(temp, now);
 
         return String.format(
                 "%04d-%02d-%02d %02d:%02d:%02d.%06d",
