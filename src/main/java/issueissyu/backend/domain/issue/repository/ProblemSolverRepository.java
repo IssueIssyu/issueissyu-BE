@@ -45,7 +45,7 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
     @Query("SELECT ps.problemSolverId FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
     List<Long> findAllProblemSolverIdsByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
     void deleteAllByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
 }

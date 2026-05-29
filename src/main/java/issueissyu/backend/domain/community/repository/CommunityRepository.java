@@ -4,6 +4,7 @@ import issueissyu.backend.domain.community.entity.Community;
 import issueissyu.backend.domain.community.enums.CommunityType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -234,4 +235,8 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             where c.createdAt >= :since
             """)
     List<Community> findPopularityUpdateTargets(@Param("since") LocalDateTime since);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Community c WHERE c.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 }
