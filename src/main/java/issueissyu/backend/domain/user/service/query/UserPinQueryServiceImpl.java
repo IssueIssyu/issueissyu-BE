@@ -67,6 +67,7 @@ public class UserPinQueryServiceImpl implements UserPinQueryService {
                                     return new UserMyPinItemResDTO(
                                             r.getPinId(),
                                             pinType,
+                                            r.getPinTitle(),
                                             r.getPinDetailAddress(),
                                             state,
                                             r.getCreatedAt());
