@@ -3,6 +3,7 @@ package issueissyu.backend.domain.pin.service.command;
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
+import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.repository.ComplaintPetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
@@ -100,7 +101,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
 
         issuePinRepository
                 .findByPin_PinId(pinId)
-                .ifPresent(issuePin -> deleteIssueAssociations(issuePin.getIssuePinId()));
+                .ifPresent(this::deleteIssueAssociations);
         issuePinRepository.deleteByPin_PinId(pinId);
 
         storeImageRepository.deleteByEventPin_Pin_PinId(pinId);
@@ -116,7 +117,8 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         pinRepository.delete(pin);
     }
 
-    private void deleteIssueAssociations(Long issuePinId) {
+    private void deleteIssueAssociations(IssuePin issuePin) {
+        Long issuePinId = issuePin.getIssuePinId();
         issuePetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
         complaintPetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
 
