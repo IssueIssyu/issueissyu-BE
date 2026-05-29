@@ -21,6 +21,8 @@ import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
+import issueissyu.backend.domain.user.enums.UserRole;
+import issueissyu.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,15 +50,24 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
     private final PinLocationRepository pinLocationRepository;
+    private final UserRepository userRepository;
 
     @Override
     public void deletePin(String uid, Long pinId) {
         try {
             Pin pin = pinRepository.findById(pinId).orElseThrow(() -> PinException.of(PinErrorCode.PIN_DELETE_400_2));
-            if (!pin.getUser().getUid().equals(uid)) {
+            boolean isAdmin =
+                    userRepository
+                            .findById(uid)
+                            .map(user -> user.getRole() == UserRole.ADMIN)
+                            .orElse(false);
+
+            if (!isAdmin && !pin.getUser().getUid().equals(uid)) {
                 throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
             }
-            if (pin.getPinType() == PinType.ISSUE && communityRepository.existsByPin_PinId(pinId)) {
+            if (!isAdmin
+                    && pin.getPinType() == PinType.ISSUE
+                    && communityRepository.existsByPin_PinId(pinId)) {
                 throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
             }
 
