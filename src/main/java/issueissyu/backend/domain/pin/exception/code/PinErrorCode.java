@@ -48,7 +48,6 @@ public enum PinErrorCode implements BaseErrorCode {
     PIN_DELETE_400_1(HttpStatus.BAD_REQUEST, "PIN_DELETE_400_1", "등업된 이슈 핀은 삭제가 불가능 합니다."),
     PIN_DELETE_400_2(HttpStatus.NOT_FOUND, "PIN_DELETE_400_2", "존재하지 않는 핀 입니다."),
     PIN_DELETE_400_3(HttpStatus.FORBIDDEN, "PIN_DELETE_400_3", "핀 작성자가 아니므로 삭제 권한이 없습니다."),
-    PIN_DELETE_400_4(HttpStatus.BAD_REQUEST, "PIN_DELETE_400_4", "핀 삭제 API를 실행 할 수 없습니다."),
 
     // 핀 상세 홈
     PIN_HOME_404(HttpStatus.NOT_FOUND, "PIN_HOME_404", "존재하지 않는 핀 입니다."),
