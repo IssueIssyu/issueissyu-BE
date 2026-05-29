@@ -33,7 +33,6 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
                     ".png",
                     ".gif",
                     ".webp",
-                    ".webq",
                     ".heic",
                     ".heif",
                     ".avif");
@@ -115,7 +114,7 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
         boolean allowedByExt = ALLOWED_EXT.contains(ext);
         boolean allowedByContentType = ALLOWED_CONTENT_TYPES.contains(normalizedContentType);
 
-        if (!allowedByExt && !allowedByContentType) {
+        if (!allowedByExt || !allowedByContentType) {
             throw PinException.of(PinErrorCode.PIN_IMAGE_400_2);
         }
     }

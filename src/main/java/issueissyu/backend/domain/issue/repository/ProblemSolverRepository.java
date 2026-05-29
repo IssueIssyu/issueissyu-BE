@@ -12,7 +12,8 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
 
     boolean existsByIssuePin_Pin_PinIdAndUser_Uid(Long pinId, String uid);
 
-    Optional<ProblemSolver> findByIssuePin_Pin_PinIdAndUser_Uid(Long pinId, String uid);
+    @Query("select ps from ProblemSolver ps join ps.issuePin ip where ip.pin.pinId = :pinId and ps.user.uid = :uid")
+    Optional<ProblemSolver> findByPinIdAndUid(@Param("pinId") Long pinId, @Param("uid") String uid);
 
     @Query(
             """
@@ -45,7 +46,7 @@ public interface ProblemSolverRepository extends JpaRepository<ProblemSolver, Lo
     @Query("SELECT ps.problemSolverId FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
     List<Long> findAllProblemSolverIdsByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM ProblemSolver ps WHERE ps.issuePin.issuePinId = :issuePinId")
     void deleteAllByIssuePin_IssuePinId(@Param("issuePinId") Long issuePinId);
 }

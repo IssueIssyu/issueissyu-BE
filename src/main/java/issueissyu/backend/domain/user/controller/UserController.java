@@ -72,6 +72,6 @@ public class UserController {
             @AuthenticationPrincipal String uid,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String cursor) {
-        return ApiResponse.onSuccess(UserSuccessCode.PATCHNOTE_200, userPinQueryService.getMyPins(uid, size, cursor));
+        return ApiResponse.onSuccess(UserSuccessCode.USER_PIN_200, userPinQueryService.getMyPins(uid, size, cursor));
     }
 }
