@@ -33,7 +33,6 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
                     ".png",
                     ".gif",
                     ".webp",
-                    ".webq",
                     ".heic",
                     ".heif",
                     ".avif");
