@@ -17,7 +17,7 @@ public interface CommunityQueryService {
 
     CommunityCursorPageResDTO getCommunityFeed(CommunityTab tab, String uid, Long locationId, String cursor, int size);
 
-    CommunityDetailResult getCommunityDetail(Long communityId, String uid);
+    CommunityDetailResult getCommunityDetail(Long communityId, String tab, String uid);
 
     record CommunityDetailResult(CommunitySuccessCode successCode, CommunityDetailResDTO data) {}
 }
