@@ -113,9 +113,11 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
                 contentType == null ? "" : contentType.toLowerCase(Locale.ROOT);
 
         boolean allowedByExt = ALLOWED_EXT.contains(ext);
-        boolean allowedByContentType = ALLOWED_CONTENT_TYPES.contains(normalizedContentType);
+        boolean allowedByContentType =
+                normalizedContentType.isEmpty()
+                        || ALLOWED_CONTENT_TYPES.contains(normalizedContentType);
 
-        if (!allowedByExt && !allowedByContentType) {
+        if (!allowedByExt || !allowedByContentType) {
             throw PinException.of(PinErrorCode.PIN_IMAGE_400_2);
         }
     }
