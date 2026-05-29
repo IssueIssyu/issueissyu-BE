@@ -33,7 +33,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     @Transactional
     public void savePushToken(String uid, String fcmPushToken) {
         if (!StringUtils.hasText(fcmPushToken)) {
-            throw AlarmException.of(AlarmErrorCode.ALARM_TOKEN_404);
+            throw AlarmException.of(AlarmErrorCode.ALARM_TOKEN_400);
         }
         User user = findUser(uid);
         user.updatePushToken(fcmPushToken);
