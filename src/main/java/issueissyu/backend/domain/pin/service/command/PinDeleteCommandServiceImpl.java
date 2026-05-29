@@ -78,16 +78,14 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
             throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
         }
 
-        Long communityId =
-                communityRepository.findByPin_PinId(pinId).map(c -> c.getCommunityId()).orElse(null);
+        var communityOpt = communityRepository.findByPin_PinId(pinId);
+        Long communityId = communityOpt.map(c -> c.getCommunityId()).orElse(null);
         pinAlarmCleaner.deleteByPinId(pinId, communityId);
 
-        communityRepository
-                .findByPin_PinId(pinId)
-                .ifPresent(
-                        c ->
-                                cardnewsImageS3Repository.deleteByCommunity_CommunityId(
-                                        c.getCommunityId()));
+        communityOpt.ifPresent(
+                c ->
+                        cardnewsImageS3Repository.deleteByCommunity_CommunityId(
+                                c.getCommunityId()));
         communityRepository.deleteByPin_PinId(pinId);
 
         issuePinRepository
