@@ -47,6 +47,7 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
                     "image/heic-sequence",
                     "image/heif-sequence",
                     "image/avif");
+    private static final String OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
 
     private final S3Utils s3Utils;
 
@@ -109,10 +110,14 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
                 lower.contains(".") ? lower.substring(lower.lastIndexOf('.')) : "";
         String contentType = file.getContentType();
         String normalizedContentType =
-                contentType == null ? "" : contentType.toLowerCase(Locale.ROOT);
+                contentType == null
+                        ? ""
+                        : contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
 
         boolean allowedByExt = ALLOWED_EXT.contains(ext);
-        boolean allowedByContentType = ALLOWED_CONTENT_TYPES.contains(normalizedContentType);
+        boolean allowedByContentType =
+                ALLOWED_CONTENT_TYPES.contains(normalizedContentType)
+                        || OCTET_STREAM_CONTENT_TYPE.equals(normalizedContentType);
 
         if (!allowedByExt || !allowedByContentType) {
             throw PinException.of(PinErrorCode.PIN_IMAGE_400_2);
