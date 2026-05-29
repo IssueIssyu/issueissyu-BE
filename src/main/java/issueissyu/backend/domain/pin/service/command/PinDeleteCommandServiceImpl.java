@@ -18,7 +18,6 @@ import issueissyu.backend.domain.pin.repository.CommunicationPinRepository;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
-import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
@@ -44,7 +43,6 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final DeclarationRepository declarationRepository;
     private final PinLikeRepository pinLikeRepository;
     private final PinEmojiRepository pinEmojiRepository;
-    private final PinImageRepository pinImageRepository;
     private final IssuePinRepository issuePinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
     private final ComplaintPetitionRepository complaintPetitionRepository;
@@ -115,8 +113,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         pinEmojiRepository.deleteByPin_PinId(pinId);
         communicationPinRepository.deleteByPin_PinId(pinId);
         pinLocationRepository.deleteByPin_PinId(pinId);
-        pinImageRepository.deleteByPin_PinId(pinId);
-        pinRepository.deleteById(pinId);
+        pinRepository.delete(pin);
     }
 
     private void deleteIssueAssociations(Long issuePinId) {
