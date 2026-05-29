@@ -27,7 +27,27 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
     private static final long MAX_TOTAL_BYTES = 50L * 1024 * 1024;
     private static final String S3_DIR = "pins";
     private static final Set<String> ALLOWED_EXT =
-            Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
+            Set.of(
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".gif",
+                    ".webp",
+                    ".webq",
+                    ".heic",
+                    ".heif",
+                    ".avif");
+    private static final Set<String> ALLOWED_CONTENT_TYPES =
+            Set.of(
+                    "image/jpeg",
+                    "image/png",
+                    "image/gif",
+                    "image/webp",
+                    "image/heic",
+                    "image/heif",
+                    "image/heic-sequence",
+                    "image/heif-sequence",
+                    "image/avif");
 
     private final S3Utils s3Utils;
 
@@ -88,7 +108,14 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
         String lower = original.toLowerCase(Locale.ROOT);
         String ext =
                 lower.contains(".") ? lower.substring(lower.lastIndexOf('.')) : "";
-        if (!ALLOWED_EXT.contains(ext)) {
+        String contentType = file.getContentType();
+        String normalizedContentType =
+                contentType == null ? "" : contentType.toLowerCase(Locale.ROOT);
+
+        boolean allowedByExt = ALLOWED_EXT.contains(ext);
+        boolean allowedByContentType = ALLOWED_CONTENT_TYPES.contains(normalizedContentType);
+
+        if (!allowedByExt && !allowedByContentType) {
             throw PinException.of(PinErrorCode.PIN_IMAGE_400_2);
         }
     }
