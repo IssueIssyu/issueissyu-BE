@@ -63,19 +63,31 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
                 pinRepository
                         .fetchDetailWithAuthor(pinId)
                         .orElseThrow(() -> PinException.of(PinErrorCode.PIN_DELETE_400_2));
-        boolean isAdmin =
-                userRepository
-                        .findById(uid)
-                        .map(user -> user.getRole() == UserRole.ADMIN)
-                        .orElse(false);
+        boolean isAuthor = pin.getUser().getUid().equals(uid);
+        Boolean isAdmin = null;
 
-        if (!isAdmin && !pin.getUser().getUid().equals(uid)) {
-            throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
+        if (!isAuthor) {
+            isAdmin =
+                    userRepository
+                            .findById(uid)
+                            .map(user -> user.getRole() == UserRole.ADMIN)
+                            .orElse(false);
+            if (!isAdmin) {
+                throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
+            }
         }
-        if (!isAdmin
-                && pin.getPinType() == PinType.ISSUE
-                && communityRepository.existsByPin_PinId(pinId)) {
-            throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
+
+        if (pin.getPinType() == PinType.ISSUE && communityRepository.existsByPin_PinId(pinId)) {
+            if (isAdmin == null) {
+                isAdmin =
+                        userRepository
+                                .findById(uid)
+                                .map(user -> user.getRole() == UserRole.ADMIN)
+                                .orElse(false);
+            }
+            if (!isAdmin) {
+                throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
+            }
         }
 
         var communityOpt = communityRepository.findByPin_PinId(pinId);
