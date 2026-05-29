@@ -4,6 +4,7 @@ import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class UserSignOutCleaner {
     private final JdbcTemplate jdbcTemplate;
     private final PinAlarmCleaner pinAlarmCleaner;
 
+    @Transactional
     public void deleteRowsReferencingUser(String uid) {
         jdbcTemplate.update(
                 "DELETE FROM problem_solver_image WHERE problem_solver_id IN ("
