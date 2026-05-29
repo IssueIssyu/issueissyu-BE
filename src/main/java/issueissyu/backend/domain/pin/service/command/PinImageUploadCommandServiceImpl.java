@@ -109,10 +109,14 @@ public class PinImageUploadCommandServiceImpl implements PinImageUploadCommandSe
         String ext =
                 lower.contains(".") ? lower.substring(lower.lastIndexOf('.')) : "";
         String contentType = file.getContentType();
-        String normalizedContentType =
-                contentType == null
-                        ? ""
-                        : contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
+        String normalizedContentType = "";
+        if (contentType != null) {
+            int semicolonIndex = contentType.indexOf(';');
+            normalizedContentType =
+                    (semicolonIndex >= 0 ? contentType.substring(0, semicolonIndex) : contentType)
+                            .trim()
+                            .toLowerCase(Locale.ROOT);
+        }
 
         boolean allowedByExt = ALLOWED_EXT.contains(ext);
         boolean allowedByContentType =
