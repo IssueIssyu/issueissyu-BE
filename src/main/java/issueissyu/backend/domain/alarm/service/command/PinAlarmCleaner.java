@@ -87,9 +87,13 @@ public class PinAlarmCleaner {
     }
 
     private void deleteUserAlarms(List<Long> userAlarmIds) {
-        String placeholders = String.join(",", userAlarmIds.stream().map(id -> "?").toList());
-        Object[] params = userAlarmIds.toArray();
-        jdbcTemplate.update(
-                "DELETE FROM user_alarm WHERE user_alarm_id IN (" + placeholders + ")", params);
+        int batchSize = 999;
+        for (int i = 0; i < userAlarmIds.size(); i += batchSize) {
+            List<Long> batch = userAlarmIds.subList(i, Math.min(i + batchSize, userAlarmIds.size()));
+            String placeholders = String.join(",", batch.stream().map(id -> "?").toList());
+            jdbcTemplate.update(
+                    "DELETE FROM user_alarm WHERE user_alarm_id IN (" + placeholders + ")",
+                    batch.toArray());
+        }
     }
 }
