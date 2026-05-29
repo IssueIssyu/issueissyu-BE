@@ -7,6 +7,8 @@ public interface UserMyPinRow {
 
     String getPinType();
 
+    String getPinTitle();
+
     String getPinDetailAddress();
 
     String getIssuePinState();

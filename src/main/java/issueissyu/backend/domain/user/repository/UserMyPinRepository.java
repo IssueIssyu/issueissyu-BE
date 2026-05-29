@@ -14,6 +14,7 @@ public interface UserMyPinRepository extends JpaRepository<Pin, Long> {
                     """
                     SELECT p.pin_id AS pinId,
                            p.pin_type AS pinType,
+                           p.pin_title AS pinTitle,
                            pl.detail_address AS pinDetailAddress,
                            ip.issue_pin_state AS issuePinState,
                            p.created_at AS createdAt
