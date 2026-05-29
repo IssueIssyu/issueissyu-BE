@@ -48,6 +48,12 @@ public class UserSignOutCleaner {
                 "DELETE FROM issue_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
 
         jdbcTemplate.update(
+                "DELETE FROM cardnews_image_s3 WHERE community_id IN ("
+                        + "SELECT community_id FROM community WHERE pin_id IN "
+                        + PIN_IDS_OWNED_BY_USER
+                        + ")",
+                uid);
+        jdbcTemplate.update(
                 "DELETE FROM community WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
         jdbcTemplate.update(
                 "DELETE FROM pin_emoji WHERE pin_id IN "
@@ -83,6 +89,7 @@ public class UserSignOutCleaner {
                 "DELETE FROM pin_like WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER + " OR uid = ?",
                 uid,
                 uid);
+        jdbcTemplate.update("DELETE FROM notice WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
         jdbcTemplate.update("DELETE FROM pin WHERE uid = ?", uid);
 
         jdbcTemplate.update(
