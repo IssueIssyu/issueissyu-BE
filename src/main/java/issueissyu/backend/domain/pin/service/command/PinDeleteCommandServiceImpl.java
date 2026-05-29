@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
+import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import issueissyu.backend.domain.issue.repository.ComplaintPetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
@@ -54,6 +55,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final StoreImageRepository storeImageRepository;
     private final PinLocationRepository pinLocationRepository;
     private final UserRepository userRepository;
+    private final PinAlarmCleaner pinAlarmCleaner;
 
     @Override
     public void deletePin(String uid, Long pinId) {
@@ -75,6 +77,10 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
                 && communityRepository.existsByPin_PinId(pinId)) {
             throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
         }
+
+        Long communityId =
+                communityRepository.findByPin_PinId(pinId).map(c -> c.getCommunityId()).orElse(null);
+        pinAlarmCleaner.deleteByPinId(pinId, communityId);
 
         communityRepository
                 .findByPin_PinId(pinId)
