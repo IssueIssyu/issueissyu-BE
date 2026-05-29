@@ -52,7 +52,7 @@ public interface UserAlarmListRepository extends JpaRepository<UserAlarm, Long> 
                     LEFT JOIN store_alarm sa ON sa.user_alarm_id = ua.user_alarm_id
                     WHERE ua.uid = :uid
                       AND (
-                          NOT CAST(:applyCursor AS boolean)
+                          :applyCursor = false
                           OR ua.user_alarm_id < :cursorAlarmId
                       )
                     ORDER BY ua.user_alarm_id DESC

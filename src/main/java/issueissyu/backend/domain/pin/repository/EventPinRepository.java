@@ -8,12 +8,17 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface EventPinRepository extends JpaRepository<EventPin, Long> {
 
     Optional<EventPin> findByPin_PinId(Long pinId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM EventPin ep WHERE ep.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 
     @EntityGraph(attributePaths = "storeImage")
     @Query("select ep from EventPin ep where ep.pin.pinId = :pinId")

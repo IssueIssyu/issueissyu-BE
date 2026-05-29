@@ -5,12 +5,17 @@ import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface IssuePinRepository extends JpaRepository<IssuePin, Long> {
 
     Optional<IssuePin> findByPin_PinId(Long pinId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM IssuePin ip WHERE ip.pin.pinId = :pinId")
+    void deleteByPin_PinId(@Param("pinId") Long pinId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select ip from IssuePin ip join fetch ip.pin p where p.pinId = :pinId")

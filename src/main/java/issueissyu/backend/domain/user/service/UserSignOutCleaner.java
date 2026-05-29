@@ -1,8 +1,10 @@
 package issueissyu.backend.domain.user.service;
 
+import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +22,9 @@ public class UserSignOutCleaner {
             "(SELECT event_pin_id FROM event_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER + ")";
 
     private final JdbcTemplate jdbcTemplate;
+    private final PinAlarmCleaner pinAlarmCleaner;
 
+    @Transactional
     public void deleteRowsReferencingUser(String uid) {
         jdbcTemplate.update(
                 "DELETE FROM problem_solver_image WHERE problem_solver_id IN ("
@@ -47,6 +51,14 @@ public class UserSignOutCleaner {
         jdbcTemplate.update(
                 "DELETE FROM issue_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
 
+        pinAlarmCleaner.deleteByUserOwnedPins(uid);
+
+        jdbcTemplate.update(
+                "DELETE FROM cardnews_image_s3 WHERE community_id IN ("
+                        + "SELECT community_id FROM community WHERE pin_id IN "
+                        + PIN_IDS_OWNED_BY_USER
+                        + ")",
+                uid);
         jdbcTemplate.update(
                 "DELETE FROM community WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
         jdbcTemplate.update(
@@ -83,6 +95,7 @@ public class UserSignOutCleaner {
                 "DELETE FROM pin_like WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER + " OR uid = ?",
                 uid,
                 uid);
+        jdbcTemplate.update("DELETE FROM notice WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
         jdbcTemplate.update("DELETE FROM pin WHERE uid = ?", uid);
 
         jdbcTemplate.update(

@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
+import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import issueissyu.backend.domain.issue.entity.IssuePin;
 import issueissyu.backend.domain.issue.repository.ComplaintPetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
@@ -18,7 +19,6 @@ import issueissyu.backend.domain.pin.repository.CommunicationPinRepository;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
-import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
@@ -44,7 +44,6 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final DeclarationRepository declarationRepository;
     private final PinLikeRepository pinLikeRepository;
     private final PinEmojiRepository pinEmojiRepository;
-    private final PinImageRepository pinImageRepository;
     private final IssuePinRepository issuePinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
     private final ComplaintPetitionRepository complaintPetitionRepository;
@@ -55,6 +54,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final StoreImageRepository storeImageRepository;
     private final PinLocationRepository pinLocationRepository;
     private final UserRepository userRepository;
+    private final PinAlarmCleaner pinAlarmCleaner;
 
     @Override
     public void deletePin(String uid, Long pinId) {
@@ -62,58 +62,59 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
                 pinRepository
                         .fetchDetailWithAuthor(pinId)
                         .orElseThrow(() -> PinException.of(PinErrorCode.PIN_DELETE_400_2));
-        boolean isAdmin =
-                userRepository
-                        .findById(uid)
-                        .map(user -> user.getRole() == UserRole.ADMIN)
-                        .orElse(false);
+        boolean isAuthor = pin.getUser().getUid().equals(uid);
+        Boolean isAdmin = null;
 
-        if (!isAdmin && !pin.getUser().getUid().equals(uid)) {
-            throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
-        }
-        if (!isAdmin
-                && pin.getPinType() == PinType.ISSUE
-                && communityRepository.existsByPin_PinId(pinId)) {
-            throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
+        if (!isAuthor) {
+            isAdmin =
+                    userRepository
+                            .findById(uid)
+                            .map(user -> user.getRole() == UserRole.ADMIN)
+                            .orElse(false);
+            if (!isAdmin) {
+                throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
+            }
         }
 
-        communityRepository
+        if (pin.getPinType() == PinType.ISSUE && communityRepository.existsByPin_PinId(pinId)) {
+            if (isAdmin == null) {
+                isAdmin =
+                        userRepository
+                                .findById(uid)
+                                .map(user -> user.getRole() == UserRole.ADMIN)
+                                .orElse(false);
+            }
+            if (!isAdmin) {
+                throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
+            }
+        }
+
+        var communityOpt = communityRepository.findByPin_PinId(pinId);
+        Long communityId = communityOpt.map(c -> c.getCommunityId()).orElse(null);
+        pinAlarmCleaner.deleteByPinId(pinId, communityId);
+
+        communityOpt.ifPresent(
+                c ->
+                        cardnewsImageS3Repository.deleteByCommunity_CommunityId(
+                                c.getCommunityId()));
+        communityRepository.deleteByPin_PinId(pinId);
+
+        issuePinRepository
                 .findByPin_PinId(pinId)
-                .ifPresent(
-                        c -> {
-                            cardnewsImageS3Repository.deleteByCommunity_CommunityId(c.getCommunityId());
-                            communityRepository.delete(c);
-                        });
+                .ifPresent(this::deleteIssueAssociations);
+        issuePinRepository.deleteByPin_PinId(pinId);
+
+        storeImageRepository.deleteByEventPin_Pin_PinId(pinId);
+        eventPinRepository.deleteByPin_PinId(pinId);
 
         noticeRepository.deleteByPin_PinId(pinId);
         commentRepository.deleteByPin_PinId(pinId);
         declarationRepository.deleteByPin_PinId(pinId);
         pinLikeRepository.deleteByPin_PinId(pinId);
         pinEmojiRepository.deleteByPin_PinId(pinId);
-
-        issuePinRepository
-                .findByPin_PinId(pinId)
-                .ifPresent(
-                        issuePin -> {
-                            deleteIssueAssociations(issuePin);
-                            issuePinRepository.delete(issuePin);
-                        });
-
         communicationPinRepository.deleteByPin_PinId(pinId);
-
-        eventPinRepository
-                .findByPin_PinId(pinId)
-                .ifPresent(
-                        ep -> {
-                            storeImageRepository
-                                    .findByEventPin_Pin_PinId(pinId)
-                                    .ifPresent(storeImageRepository::delete);
-                            eventPinRepository.delete(ep);
-                        });
-
         pinLocationRepository.deleteByPin_PinId(pinId);
-        pinImageRepository.deleteByPin_PinId(pinId);
-        pinRepository.deleteById(pinId);
+        pinRepository.delete(pin);
     }
 
     private void deleteIssueAssociations(IssuePin issuePin) {

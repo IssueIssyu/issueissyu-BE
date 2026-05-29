@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,8 +39,8 @@ public class PinSolveQueryServiceImpl implements PinSolveQueryService {
 
             boolean isPetitioned =
                     issuePetitionRepository.existsByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
-            var userProblemSolver =
-                    problemSolverRepository.findByIssuePin_Pin_PinIdAndUser_Uid(pinId, uid);
+            Optional<ProblemSolver> userProblemSolver =
+                    problemSolverRepository.findByPinIdAndUid(pinId, uid);
 
             Long userProblemSolverId =
                     userProblemSolver.map(ProblemSolver::getProblemSolverId).orElse(null);
