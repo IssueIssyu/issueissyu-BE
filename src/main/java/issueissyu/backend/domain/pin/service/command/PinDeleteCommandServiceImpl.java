@@ -17,6 +17,7 @@ import issueissyu.backend.domain.pin.repository.CommunicationPinRepository;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
+import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
@@ -42,6 +43,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final DeclarationRepository declarationRepository;
     private final PinLikeRepository pinLikeRepository;
     private final PinEmojiRepository pinEmojiRepository;
+    private final PinImageRepository pinImageRepository;
     private final IssuePinRepository issuePinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
@@ -54,64 +56,62 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
 
     @Override
     public void deletePin(String uid, Long pinId) {
-        try {
-            Pin pin = pinRepository.findById(pinId).orElseThrow(() -> PinException.of(PinErrorCode.PIN_DELETE_400_2));
-            boolean isAdmin =
-                    userRepository
-                            .findById(uid)
-                            .map(user -> user.getRole() == UserRole.ADMIN)
-                            .orElse(false);
+        Pin pin =
+                pinRepository
+                        .fetchDetailWithAuthor(pinId)
+                        .orElseThrow(() -> PinException.of(PinErrorCode.PIN_DELETE_400_2));
+        boolean isAdmin =
+                userRepository
+                        .findById(uid)
+                        .map(user -> user.getRole() == UserRole.ADMIN)
+                        .orElse(false);
 
-            if (!isAdmin && !pin.getUser().getUid().equals(uid)) {
-                throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
-            }
-            if (!isAdmin
-                    && pin.getPinType() == PinType.ISSUE
-                    && communityRepository.existsByPin_PinId(pinId)) {
-                throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
-            }
-
-            communityRepository
-                    .findByPin_PinId(pinId)
-                    .ifPresent(
-                            c -> {
-                                cardnewsImageS3Repository.deleteByCommunity_CommunityId(c.getCommunityId());
-                                communityRepository.delete(c);
-                            });
-
-            noticeRepository.deleteByPin_PinId(pinId);
-            commentRepository.deleteByPin_PinId(pinId);
-            declarationRepository.deleteByPin_PinId(pinId);
-            pinLikeRepository.deleteByPin_PinId(pinId);
-            pinEmojiRepository.deleteByPin_PinId(pinId);
-
-            issuePinRepository
-                    .findByPin_PinId(pinId)
-                    .ifPresent(
-                            issuePin -> {
-                                deleteIssueAssociations(issuePin);
-                                issuePinRepository.delete(issuePin);
-                            });
-
-            communicationPinRepository.deleteByPin_PinId(pinId);
-
-            eventPinRepository
-                    .findByPin_PinId(pinId)
-                    .ifPresent(
-                            ep -> {
-                                storeImageRepository
-                                        .findByEventPin_Pin_PinId(pinId)
-                                        .ifPresent(storeImageRepository::delete);
-                                eventPinRepository.delete(ep);
-                            });
-
-            pinLocationRepository.deleteByPin_PinId(pinId);
-            pinRepository.delete(pin);
-        } catch (PinException e) {
-            throw e;
-        } catch (Exception e) {
-            throw PinException.of(PinErrorCode.PIN_DELETE_400_4);
+        if (!isAdmin && !pin.getUser().getUid().equals(uid)) {
+            throw PinException.of(PinErrorCode.PIN_DELETE_400_3);
         }
+        if (!isAdmin
+                && pin.getPinType() == PinType.ISSUE
+                && communityRepository.existsByPin_PinId(pinId)) {
+            throw PinException.of(PinErrorCode.PIN_DELETE_400_1);
+        }
+
+        communityRepository
+                .findByPin_PinId(pinId)
+                .ifPresent(
+                        c -> {
+                            cardnewsImageS3Repository.deleteByCommunity_CommunityId(c.getCommunityId());
+                            communityRepository.delete(c);
+                        });
+
+        noticeRepository.deleteByPin_PinId(pinId);
+        commentRepository.deleteByPin_PinId(pinId);
+        declarationRepository.deleteByPin_PinId(pinId);
+        pinLikeRepository.deleteByPin_PinId(pinId);
+        pinEmojiRepository.deleteByPin_PinId(pinId);
+
+        issuePinRepository
+                .findByPin_PinId(pinId)
+                .ifPresent(
+                        issuePin -> {
+                            deleteIssueAssociations(issuePin);
+                            issuePinRepository.delete(issuePin);
+                        });
+
+        communicationPinRepository.deleteByPin_PinId(pinId);
+
+        eventPinRepository
+                .findByPin_PinId(pinId)
+                .ifPresent(
+                        ep -> {
+                            storeImageRepository
+                                    .findByEventPin_Pin_PinId(pinId)
+                                    .ifPresent(storeImageRepository::delete);
+                            eventPinRepository.delete(ep);
+                        });
+
+        pinLocationRepository.deleteByPin_PinId(pinId);
+        pinImageRepository.deleteByPin_PinId(pinId);
+        pinRepository.deleteById(pinId);
     }
 
     private void deleteIssueAssociations(IssuePin issuePin) {
