@@ -3,6 +3,7 @@ package issueissyu.backend.domain.pin.service.command;
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.issue.entity.IssuePin;
+import issueissyu.backend.domain.issue.repository.ComplaintPetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
@@ -46,6 +47,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final PinImageRepository pinImageRepository;
     private final IssuePinRepository issuePinRepository;
     private final IssuePetitionRepository issuePetitionRepository;
+    private final ComplaintPetitionRepository complaintPetitionRepository;
     private final ProblemSolverRepository problemSolverRepository;
     private final ProblemSolverImageRepository problemSolverImageRepository;
     private final CommunicationPinRepository communicationPinRepository;
@@ -117,6 +119,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private void deleteIssueAssociations(IssuePin issuePin) {
         Long issuePinId = issuePin.getIssuePinId();
         issuePetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
+        complaintPetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
 
         List<Long> solverIds = problemSolverRepository.findAllProblemSolverIdsByIssuePin_IssuePinId(issuePinId);
         if (!solverIds.isEmpty()) {

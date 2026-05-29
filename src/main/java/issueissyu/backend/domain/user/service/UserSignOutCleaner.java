@@ -41,6 +41,10 @@ public class UserSignOutCleaner {
                 uid,
                 uid);
         jdbcTemplate.update(
+                "DELETE FROM complaint_petition WHERE issue_pin_id IN "
+                        + ISSUE_PIN_IDS_FOR_OWNED_PINS,
+                uid);
+        jdbcTemplate.update(
                 "DELETE FROM issue_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
 
         jdbcTemplate.update(
