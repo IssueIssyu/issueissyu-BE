@@ -159,7 +159,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     @Transactional(readOnly = false)
-    public CommunityQueryService.CommunityDetailResult getCommunityDetail(Long communityId, String tab, String uid) {
+    public CommunityQueryService.CommunityDetailResult getCommunityDetail(
+            Long communityId,
+            CommunityType kind,
+            String uid
+    ) {
         userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
@@ -167,7 +171,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
 
         CommunityType type = community.getCommunityType();
-        CommunityType responseKind = resolveDetailResponseKind(type, tab, community);
+        CommunityType responseKind = resolveDetailResponseKind(type, kind, community);
         Pin pin = community.getPin();
 
         int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
@@ -562,7 +566,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         if ((type == CommunityType.POLICY || type == CommunityType.CONTEST)
                 && hasCardnewsImages(community)
                 && !isCardnews) {
-            moveCardnews = "/api/communities/" + community.getCommunityId() + "?tab=CARDNEWS";
+            moveCardnews = "/api/communities/" + community.getCommunityId() + "?kind=CARDNEWS";
         }
 
         return new CommunityDetailResDTO(
@@ -595,25 +599,14 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     private CommunityType resolveDetailResponseKind(
             CommunityType type,
-            String tab,
+            CommunityType kind,
             Community community
     ) {
-        if (tab == null || tab.isBlank()) {
+        if (kind != CommunityType.CARDNEWS) {
             return type;
         }
 
-        CommunityTab parsedTab;
-        try {
-            parsedTab = CommunityTab.valueOf(tab.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw CommunityException.of(CommunityErrorCode.COMMUNITY_400_1);
-        }
-
-        if (parsedTab != CommunityTab.CARDNEWS) {
-            return type;
-        }
-
-        if (type == CommunityType.CARDNEWS || hasCardnewsImages(community)) {
+        if (hasCardnewsImages(community)) {
             return CommunityType.CARDNEWS;
         }
 

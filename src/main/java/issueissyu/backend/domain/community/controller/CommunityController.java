@@ -6,6 +6,7 @@ import issueissyu.backend.domain.community.dto.res.CommunityCursorPageResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityDetailResDTO;
 import issueissyu.backend.domain.community.dto.res.CommunityHomeResDTO;
 import issueissyu.backend.domain.community.enums.CommunityTab;
+import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.exception.code.CommunitySuccessCode;
 import issueissyu.backend.domain.community.service.command.CommunityCommandService;
 import issueissyu.backend.domain.community.service.query.CommunityQueryService;
@@ -70,18 +71,19 @@ public class CommunityController {
             summary = "커뮤니티 게시물 상세 조회",
             description =
                     "연결된 핀 카드 정보와 본문(content)을 반환합니다. 조회 시 조회수가 증가합니다. "
-                            + "tab 생략 시 DB community_type 기준으로 조회합니다. "
-                            + "tab=CARDNEWS이면 같은 communityId를 카드뉴스 형식(content=null, cardnews imageUrls)으로 조회합니다. "
+                            +                     "kind 생략 시 DB community_type 기준으로 조회합니다. "
+                            + "kind=CARDNEWS이면 같은 communityId를 카드뉴스 형식(content=null, cardnews imageUrls)으로 조회합니다. "
                             + "정책·공모 상세에는 카드뉴스가 있을 때 moveCardnews 경로가 함께 내려갑니다. "
                             + "이슈(ISSUE) 타입일 때만 issuePinState·petitionCount·isPetitioned·isProblemSolver가 채워지며, "
                             + "그 외 타입에서는 해당 필드가 null입니다.")
     @GetMapping("/{communityId}")
     public ApiResponse<CommunityDetailResDTO> getDetail(
             @PathVariable Long communityId,
-            @RequestParam(required = false) String tab,
+            @RequestParam(required = false) String kind,
             @AuthenticationPrincipal String uid) {
+        CommunityType parsedKind = CommunityType.parseOptional(kind).orElse(null);
         CommunityQueryService.CommunityDetailResult result =
-                communityQueryService.getCommunityDetail(communityId, tab, uid);
+                communityQueryService.getCommunityDetail(communityId, parsedKind, uid);
         return ApiResponse.onSuccess(result.successCode(), result.data());
     }
 
