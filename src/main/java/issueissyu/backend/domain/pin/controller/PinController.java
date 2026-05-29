@@ -34,7 +34,7 @@ public class PinController {
     private final PinDetailQueryService pinDetailQueryService;
     private final PinSolveQueryService pinSolveQueryService;
 
-    @Operation(summary = "핀 삭제")
+    @Operation(summary = "핀 삭제", description = "작성자 본인만 삭제 가능. ADMIN 역할은 모든 핀 삭제 가능.")
     @DeleteMapping("/{pinId}/delete")
     public ApiResponse<Void> deletePin(@AuthenticationPrincipal String uid, @PathVariable Long pinId) {
         pinDeleteCommandService.deletePin(uid, pinId);
