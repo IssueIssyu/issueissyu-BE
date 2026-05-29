@@ -159,7 +159,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     @Override
     @Transactional(readOnly = false)
-    public CommunityQueryService.CommunityDetailResult getCommunityDetail(Long communityId, String uid) {
+    public CommunityQueryService.CommunityDetailResult getCommunityDetail(
+            Long communityId,
+            CommunityType kind,
+            String uid
+    ) {
         userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
 
@@ -167,6 +171,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 .orElseThrow(() -> CommunityException.of(CommunityErrorCode.COMMUNITY_404_1));
 
         CommunityType type = community.getCommunityType();
+        CommunityType responseKind = resolveDetailResponseKind(type, kind, community);
         Pin pin = community.getPin();
 
         int viewCount = pinRepository.incrementViewCountAndGetCount(pin.getPinId());
@@ -200,6 +205,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
         CommunityDetailResDTO detail = toDetailRes(
                 community,
+                responseKind,
                 viewCount,
                 isLike,
                 isReported,
@@ -211,7 +217,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         );
 
         return new CommunityQueryService.CommunityDetailResult(
-                CommunitySuccessCode.forType(type),
+                CommunitySuccessCode.forType(responseKind),
                 detail
         );
     }
@@ -541,6 +547,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     private CommunityDetailResDTO toDetailRes(
             Community community,
+            CommunityType responseKind,
             int viewCount,
             boolean isLike,
             Boolean isReported,
@@ -553,17 +560,24 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         Pin pin = community.getPin();
         CommunityType type = community.getCommunityType();
         Optional<EventPin> eventPin = resolveEventPin(type, pin.getPinId());
-        boolean isCardnews = type == CommunityType.CARDNEWS;
+        boolean isCardnews = responseKind == CommunityType.CARDNEWS;
+
+        String moveCardnews = null;
+        if ((type == CommunityType.POLICY || type == CommunityType.CONTEST)
+                && hasCardnewsImages(community)
+                && !isCardnews) {
+            moveCardnews = "/api/communities/" + community.getCommunityId() + "?kind=CARDNEWS";
+        }
 
         return new CommunityDetailResDTO(
-                type,
+                responseKind,
                 community.getCommunityId(),
                 pin.getPinId(),
                 pin.getPinTitle(),
                 isCardnews ? null : pin.getPinContent(),
-                resolveDetailImageUrls(community),
-                resolveWriterNickname(type, pin),
-                resolveWriterProfileUrl(type, pin),
+                resolveDetailImageUrls(community, responseKind),
+                resolveWriterNickname(responseKind, pin),
+                resolveWriterProfileUrl(responseKind, pin),
                 resolveAddress(pin.getPinId()),
                 viewCount,
                 pin.getLikeCount(),
@@ -578,8 +592,29 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                 isProblemSolver,
                 issuePinState,
                 petitionCount,
-                isMine
+                isMine,
+                moveCardnews
         );
+    }
+
+    private CommunityType resolveDetailResponseKind(
+            CommunityType type,
+            CommunityType kind,
+            Community community
+    ) {
+        if (kind != CommunityType.CARDNEWS) {
+            return type;
+        }
+
+        if (hasCardnewsImages(community)) {
+            return CommunityType.CARDNEWS;
+        }
+
+        throw CommunityException.of(CommunityErrorCode.COMMUNITY_404_1);
+    }
+
+    private boolean hasCardnewsImages(Community community) {
+        return !community.getCardnewsImages().isEmpty();
     }
 
     private Optional<EventPin> resolveEventPin(CommunityType type, Long pinId) {
@@ -590,8 +625,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         return Optional.empty();
     }
 
-    private List<String> resolveDetailImageUrls(Community community) {
-        if (community.getCommunityType() == CommunityType.CARDNEWS) {
+    private List<String> resolveDetailImageUrls(Community community, CommunityType responseKind) {
+        if (responseKind == CommunityType.CARDNEWS) {
             return community.getCardnewsImages()
                     .stream()
                     .map(CardnewsImageS3::getCardnewsImageS3Url)

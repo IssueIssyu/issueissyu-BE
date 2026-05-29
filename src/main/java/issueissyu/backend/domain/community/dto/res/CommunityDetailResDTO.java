@@ -48,6 +48,8 @@ public record CommunityDetailResDTO(
         String issuePinState,
         Integer petitionCount,
 
-        boolean isMine
+        boolean isMine,
+
+        String moveCardnews
 ) {
 }
