@@ -1,5 +1,6 @@
 package issueissyu.backend.domain.user.service;
 
+import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class UserSignOutCleaner {
             "(SELECT event_pin_id FROM event_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER + ")";
 
     private final JdbcTemplate jdbcTemplate;
+    private final PinAlarmCleaner pinAlarmCleaner;
 
     public void deleteRowsReferencingUser(String uid) {
         jdbcTemplate.update(
@@ -46,6 +48,8 @@ public class UserSignOutCleaner {
                 uid);
         jdbcTemplate.update(
                 "DELETE FROM issue_pin WHERE pin_id IN " + PIN_IDS_OWNED_BY_USER, uid);
+
+        pinAlarmCleaner.deleteByUserOwnedPins(uid);
 
         jdbcTemplate.update(
                 "DELETE FROM cardnews_image_s3 WHERE community_id IN ("
