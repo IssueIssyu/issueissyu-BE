@@ -95,7 +95,7 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
                     .imageUrl(catalogDefinition.getCustomCollectionS3Url())
                     .isLocked(false)
                     .isBookmarked(userUnlockRow.isBookmark())
-                    .unlockCondition("")
+                    .unlockCondition(catalogDefinition.getLockCondition())
                     .build();
         }
         return UserCollectionItemResDTO.builder()
