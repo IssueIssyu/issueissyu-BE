@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectionQueryService {
+
+    private static final Set<String> EXCLUDED_CATALOG_NAMES = Set.of("관리자");
 
     private final UserRepository userRepository;
     private final CustomCollectionRepository customCollectionRepository;
@@ -62,6 +65,7 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
 
         List<UserCollectionItemResDTO> collections =
                 catalogDefinitions.stream()
+                        .filter(definition -> !EXCLUDED_CATALOG_NAMES.contains(definition.getCustomCollectionName()))
                         .map(
                                 definition ->
                                         toCollectionItem(
@@ -95,7 +99,7 @@ public class UserCustomCollectionQueryServiceImpl implements UserCustomCollectio
                     .imageUrl(catalogDefinition.getCustomCollectionS3Url())
                     .isLocked(false)
                     .isBookmarked(userUnlockRow.isBookmark())
-                    .unlockCondition("")
+                    .unlockCondition(catalogDefinition.getLockCondition())
                     .build();
         }
         return UserCollectionItemResDTO.builder()
