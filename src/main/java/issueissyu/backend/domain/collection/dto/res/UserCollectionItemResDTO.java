@@ -15,7 +15,5 @@ public class UserCollectionItemResDTO {
     private String imageUrl;
     private Boolean isLocked;
     private Boolean isBookmarked;
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String unlockCondition;
 }
