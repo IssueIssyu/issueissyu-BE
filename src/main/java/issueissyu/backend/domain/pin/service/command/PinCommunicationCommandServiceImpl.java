@@ -227,10 +227,12 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
 
             LocalDateTime responseUpdatedAt = pin.getUpdatedAt();
-            // pin_image 변경만 있는 경우에는 pin row가 갱신되지 않으므로 updated_at을 명시적으로 갱신한다.
-            if (pinImageChanged && !pinDetailsChanged) {
+            if (pinDetailsChanged || pinImageChanged) {
                 responseUpdatedAt = LocalDateTime.now();
-                pinRepository.bumpUpdatedAt(pinId, responseUpdatedAt);
+                // pin_image 변경만 있는 경우에는 pin row가 갱신되지 않으므로 updated_at을 명시적으로 갱신한다.
+                if (!pinDetailsChanged) {
+                    pinRepository.bumpUpdatedAt(pinId, responseUpdatedAt);
+                }
             }
 
             PinLocation pinLocation =
