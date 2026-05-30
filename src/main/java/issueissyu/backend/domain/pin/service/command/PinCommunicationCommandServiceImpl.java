@@ -226,9 +226,11 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                             || !Objects.equals(pin.getPinContent(), req.pinContent());
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
 
+            LocalDateTime responseUpdatedAt = pin.getUpdatedAt();
             // pin_image 변경만 있는 경우에는 pin row가 갱신되지 않으므로 updated_at을 명시적으로 갱신한다.
             if (pinImageChanged && !pinDetailsChanged) {
-                pinRepository.bumpUpdatedAt(pinId, LocalDateTime.now());
+                responseUpdatedAt = LocalDateTime.now();
+                pinRepository.bumpUpdatedAt(pinId, responseUpdatedAt);
             }
 
             PinLocation pinLocation =
@@ -239,7 +241,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
             return toEditRes(
                     pin,
                     pinLocation.getLocation().getRegion(),
-                    pinLocation.getDetailAddress());
+                    pinLocation.getDetailAddress(),
+                    responseUpdatedAt);
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
@@ -376,7 +379,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.getUpdatedAt());
     }
 
-    private CommunicationPinEditResDTO toEditRes(Pin pin, String region, String pinDetailAddress) {
+    private CommunicationPinEditResDTO toEditRes(
+            Pin pin, String region, String pinDetailAddress, LocalDateTime updatedAt) {
         List<PinImageWithIdResDTO> imgs =
                 pin.getPinImages().stream()
                         .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
@@ -396,7 +400,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 imgs,
                 pin.getToneType().name(),
                 pin.getCreatedAt(),
-                pin.getUpdatedAt());
+                updatedAt);
     }
 
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
