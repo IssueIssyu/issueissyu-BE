@@ -3,6 +3,7 @@ package issueissyu.backend.domain.billing.service.command;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.model.ProductPurchase;
+import com.google.api.services.androidpublisher.model.ProductPurchasesAcknowledgeRequest;
 import issueissyu.backend.domain.billing.converter.BillingConverter;
 import issueissyu.backend.domain.billing.dto.req.VerifyPurchaseReq;
 import issueissyu.backend.domain.billing.exception.BillingException;
@@ -95,7 +96,7 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
                 throw BillingException.of(BillingErrorCode.PURCHASE_TOKEN_INVALID);
             }
 
-            // consume/acknowledge는 앱 정책 확정 후 추가
+            acknowledgeIfNeeded(androidPublisher, productId, purchaseToken, purchase);
         } catch (GoogleJsonResponseException e) {
             int statusCode = e.getStatusCode();
             if (statusCode == 400 || statusCode == 404 || statusCode == 410) {
@@ -107,5 +108,28 @@ public class BillingPurchaseCommandServiceImpl implements BillingPurchaseCommand
             log.error("[Billing] Google Play API 통신 실패 - {}", e.getMessage());
             throw BillingException.of(BillingErrorCode.GOOGLE_PLAY_API_ERROR);
         }
+    }
+
+    private void acknowledgeIfNeeded(
+            AndroidPublisher androidPublisher,
+            String productId,
+            String purchaseToken,
+            ProductPurchase purchase
+    ) throws IOException {
+        // 0 = Yet to be acknowledged, 1 = Acknowledged
+        Integer acknowledgementState = purchase.getAcknowledgementState();
+        if (acknowledgementState != null && acknowledgementState == 1) {
+            return;
+        }
+
+        androidPublisher.purchases()
+                .products()
+                .acknowledge(
+                        packageName,
+                        productId,
+                        purchaseToken,
+                        new ProductPurchasesAcknowledgeRequest()
+                )
+                .execute();
     }
 }
