@@ -44,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -213,15 +214,26 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         }
 
         try {
+            boolean pinImageChanged = false;
             if (req.pinImageUrls() != null) {
                 assertPinImageUrlsBelongToPin(pinId, req.pinImageUrls());
                 validateCommunicationEditPinImages(req.pinImageUrls());
-                syncPinImages(pin, req.pinImageUrls());
+                pinImageChanged = syncPinImages(pin, req.pinImageUrls());
             }
 
+            boolean pinDetailsChanged =
+                    !Objects.equals(pin.getPinTitle(), req.pinTitle())
+                            || !Objects.equals(pin.getPinContent(), req.pinContent());
             pin.updatePinDetails(req.pinTitle(), req.pinContent());
 
-            pinRepository.save(pin);
+            LocalDateTime responseUpdatedAt = pin.getUpdatedAt();
+            if (pinDetailsChanged || pinImageChanged) {
+                responseUpdatedAt = LocalDateTime.now();
+                // pin_image 변경만 있는 경우에는 pin row가 갱신되지 않으므로 updated_at을 명시적으로 갱신한다.
+                if (!pinDetailsChanged) {
+                    pinRepository.bumpUpdatedAt(pinId, responseUpdatedAt);
+                }
+            }
 
             PinLocation pinLocation =
                     pinLocationRepository
@@ -231,7 +243,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
             return toEditRes(
                     pin,
                     pinLocation.getLocation().getRegion(),
-                    pinLocation.getDetailAddress());
+                    pinLocation.getDetailAddress(),
+                    responseUpdatedAt);
         } catch (PinException e) {
             throw e;
         } catch (Exception e) {
@@ -276,10 +289,14 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         validateMainFlags(merged, PinErrorCode.PIN_EDIT_COMMUNICATION_400_1);
     }
 
-    private void syncPinImages(Pin pin, List<PinImageItemReqDTO> items) {
+    private boolean syncPinImages(Pin pin, List<PinImageItemReqDTO> items) {
+        boolean changed = false;
         Set<String> keepUrls = items.stream().map(PinImageItemReqDTO::pinImageUrl).collect(Collectors.toSet());
 
-        pin.getPinImages().removeIf(pi -> !keepUrls.contains(pi.getPinS3Url()));
+        boolean removedAny = pin.getPinImages().removeIf(pi -> !keepUrls.contains(pi.getPinS3Url()));
+        if (removedAny) {
+            changed = true;
+        }
 
         for (PinImageItemReqDTO item : items) {
             PinImage row =
@@ -292,8 +309,13 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                                                     .orElse(null));
 
             if (row != null) {
-                attachIfAbsent(pin, row);
-                row.setMainImage(item.isMain());
+                if (attachIfAbsent(pin, row)) {
+                    changed = true;
+                }
+                if (row.isMainImage() != item.isMain()) {
+                    row.setMainImage(item.isMain());
+                    changed = true;
+                }
             } else {
                 String key = PinS3UrlSupport.extractKey(item.pinImageUrl(), amazonConfig);
                 PinImage created =
@@ -303,8 +325,10 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                                 .mainImage(item.isMain())
                                 .build();
                 pin.addPinImage(created);
+                changed = true;
             }
         }
+        return changed;
     }
 
     // pin_image 테이블에서 동일 URL이 있으면, 현재 수정 중인 핀에 속한 행이면 해당 pin_image(row)를 그대로 사용합니다.
@@ -314,13 +338,15 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 .findFirst();
     }
 
-    private static void attachIfAbsent(Pin pin, PinImage candidate) {
+    private static boolean attachIfAbsent(Pin pin, PinImage candidate) {
         boolean alreadyAttached =
                 pin.getPinImages().stream()
                         .anyMatch(pi -> pinImageRefsEqual(pi, candidate));
-        if (!alreadyAttached) {
-            pin.addPinImage(candidate);
+        if (alreadyAttached) {
+            return false;
         }
+        pin.addPinImage(candidate);
+        return true;
     }
 
     private static boolean pinImageRefsEqual(PinImage a, PinImage b) {
@@ -355,7 +381,8 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 pin.getUpdatedAt());
     }
 
-    private CommunicationPinEditResDTO toEditRes(Pin pin, String region, String pinDetailAddress) {
+    private CommunicationPinEditResDTO toEditRes(
+            Pin pin, String region, String pinDetailAddress, LocalDateTime updatedAt) {
         List<PinImageWithIdResDTO> imgs =
                 pin.getPinImages().stream()
                         .sorted(java.util.Comparator.comparing(PinImage::getPinImageId))
@@ -375,7 +402,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                 imgs,
                 pin.getToneType().name(),
                 pin.getCreatedAt(),
-                pin.getUpdatedAt());
+                updatedAt);
     }
 
     private static void validateCommunicationEditPinImages(List<PinImageItemReqDTO> items) {
