@@ -2,6 +2,7 @@ package issueissyu.backend.domain.pin.repository;
 
 import issueissyu.backend.domain.pin.entity.Pin;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -39,4 +40,12 @@ public interface PinRepository extends JpaRepository<Pin, Long> {
 
     @Query("select p.likeCount from Pin p where p.pinId = :pinId")
     Optional<Integer> findLikeCountByPinId(@Param("pinId") Long pinId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = false)
+    @Query("""
+            update Pin p
+            set p.updatedAt = :ts
+            where p.pinId = :pinId
+            """)
+    int bumpUpdatedAt(@Param("pinId") Long pinId, @Param("ts") LocalDateTime ts);
 }
