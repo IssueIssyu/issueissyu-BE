@@ -63,6 +63,7 @@ issueissyu-BE/
 ```
 
 ## **🛠️ Architecture**
+<img width="1425" height="584" alt="Untitled-Page-2 (15) (2)" src="https://github.com/user-attachments/assets/f998a8e3-db38-4535-8b19-d9b591f7e040" />
 
 
 ## **📝 Commit Convention**
