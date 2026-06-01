@@ -4,7 +4,7 @@ issueissyu(이슈있슈) Backend는 지역 기반 핀·커뮤니티·지도 서�
 동네 인증, 핀 등록/조회, 이슈 해결, 커뮤니티 피드, FCM 푸시 알림, 인앱 결제 검증 등을 담당합니다.
 
 ## 👥 Team
-|                                 BE(팀장)                                  |                                 BE                                  |
+|                                 BE (PartLeader)                                  |                                 BE                                  |
 |:-----------------------------------------------------------------------:|:-------------------------------------------------------------------:|
 | <img width="186" height="217" alt="스크린샷 2026-06-01 114950" src="https://github.com/user-attachments/assets/178c459d-5c32-493d-923c-969592913ce7" /> | <img width="180" height="217" alt="스크린샷 2026-06-01 115059" src="https://github.com/user-attachments/assets/6541f332-a27d-4279-8052-ecf819a4ff2a" /> |
 |       김태림<br/><a href="https://github.com/taerimiiii">@taerim</a>       |       전유안<br/><a href="https://github.com/yaaan7">@yaaan</a>        |
@@ -70,10 +70,10 @@ issueissyu-BE/
 | type | 의미 | 예시 |
 | --- | --- | --- |
 | ⭐ **feat** | 새로운 기능 | 로그인 API 구현 |
-| 🐞 bug | 버그 수정 | NPE 해결 |
+| 🐞 **bug** | 버그 수정 | NPE 해결 |
 | 📖 **docs** | 문서 수정 | README 업데이트 |
 | ⚙️ **setting** | 프로젝트/환경 설정 | yml, CI, Gradle 설정 변경 |
 | **♻️ refactor** | 기능 변화 없는 코드 리팩터링 | Service 분리 |
 | 🎨 **style** | 포맷/세미콜론/네이밍 등 | 포맷팅, 공백 |
 | 🧪 **test** | 테스트 코드 | Controller 단위 테스트 |
-| 🚀 deploy | 배포, dev→main | 배포 |
+| 🚀 **deploy** | 배포, dev→main | 배포 |
