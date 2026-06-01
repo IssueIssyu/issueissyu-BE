@@ -6,7 +6,7 @@ issueissyu(이슈있슈) Backend는 지역 기반 핀·커뮤니티·지도 서�
 ## 👥 Team
 |                                 BE(팀장)                                  |                                 BE                                  |
 |:-----------------------------------------------------------------------:|:-------------------------------------------------------------------:|
-| <img src="https://github.com/taerimiiii.png" width="150" height="150"/> | <img src="https://github.com/yaaan7.png" width="150" height="150"/> |
+| <img width="186" height="217" alt="스크린샷 2026-06-01 114950" src="https://github.com/user-attachments/assets/178c459d-5c32-493d-923c-969592913ce7" /> | <img width="180" height="217" alt="스크린샷 2026-06-01 115059" src="https://github.com/user-attachments/assets/6541f332-a27d-4279-8052-ecf819a4ff2a" /> |
 |       김태림<br/><a href="https://github.com/taerimiiii">@taerim</a>       |       전유안<br/><a href="https://github.com/yaaan7">@yaaan</a>        |
 
 ## 💻 Tech Stack
