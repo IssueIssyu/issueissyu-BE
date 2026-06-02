@@ -27,6 +27,10 @@ public class FcmService {
     private static final long SEND_TIMEOUT_SECONDS = 30;
 
     // 단건 전송 (API 응답용). 내부적으로 sendAsync 후 결과 대기
+    public String sendNotification(FcmNotificationPayload payload) {
+        return sendNotification(payload.token(), payload.title(), payload.body(), payload.data());
+    }
+
     public String sendNotification(String targetToken, String title, String body, Map<String, String> data) {
         try {
             return sendNotificationAsync(targetToken, title, body, data)
@@ -35,6 +39,10 @@ public class FcmService {
             log.error("FCM send failed token={}: {}", targetToken, e.getMessage(), e);
             throw new RuntimeException("FCM send failed: " + e.getMessage(), e);
         }
+    }
+
+    public CompletableFuture<String> sendNotificationAsync(FcmNotificationPayload payload) {
+        return sendNotificationAsync(payload.token(), payload.title(), payload.body(), payload.data());
     }
 
     public CompletableFuture<String> sendNotificationAsync(
