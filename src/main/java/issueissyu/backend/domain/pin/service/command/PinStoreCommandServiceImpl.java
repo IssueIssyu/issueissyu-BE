@@ -7,6 +7,7 @@ import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDT
 import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.entity.Location;
 import issueissyu.backend.domain.location.entity.PinLocation;
+import issueissyu.backend.domain.location.exception.LocationException;
 import issueissyu.backend.domain.location.repository.LocationRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.location.service.LocationService;
@@ -35,7 +36,11 @@ import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.config.AmazonConfig;
 import issueissyu.backend.global.exception.GeneralException;
 import issueissyu.backend.utils.S3.S3Utils;
+import issueissyu.backend.utils.exception.UtilException;
 import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -58,6 +63,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @Transactional
 public class PinStoreCommandServiceImpl implements PinStoreCommandService {
+
+    private static final int PIN_LOCATION_DETAIL_ADDRESS_MAX_LENGTH = 150;
 
     private static final GeometryFactory GEOMETRY_FACTORY =
             new GeometryFactory(new PrecisionModel(), 4326);
@@ -94,13 +101,16 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
             Location location =
                     locationRepository
                             .findById(resolved.locationId())
-                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_2));
+                            .orElseThrow(() -> PinException.of(PinErrorCode.PIN_IMPORT_STORE_404_1));
 
             UserLocationResDTO roadAddr = locationService.getRoadAddress(pgp);
             String detailAddress =
                     roadAddr.address() == null ? "" : roadAddr.address().trim();
             if (detailAddress.isBlank()) {
-                throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_2);
+                throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_3);
+            }
+            if (detailAddress.length() > PIN_LOCATION_DETAIL_ADDRESS_MAX_LENGTH) {
+                throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_4);
             }
 
             validateMainFlags(req.pinImageUrls(), PinErrorCode.PIN_IMPORT_STORE_400_1);
@@ -118,7 +128,7 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
             for (PinImageItemReqDTO item : req.pinImageUrls()) {
                 String key =
                         PinS3UrlSupport.extractKey(
-                                item.pinImageUrl(), amazonConfig, PinErrorCode.PIN_IMPORT_STORE_400_2);
+                                item.pinImageUrl(), amazonConfig, PinErrorCode.PIN_IMPORT_STORE_400_5);
                 pin.addPinImage(
                         PinImage.builder()
                                 .pinS3Key(key)
@@ -163,10 +173,10 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
                     Community.builder().pin(pin).communityType(CommunityType.STORE).build());
 
             return toImportRes(pin, location.getRegion(), detailAddress, req.storeProfileImageUrl());
-        } catch (PinException e) {
+        } catch (PinException | LocationException e) {
             throw e;
         } catch (Exception e) {
-            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_2);
+            throw toImportStoreFailure(e);
         }
     }
 
@@ -231,8 +241,32 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
 
     private static void assertAdmin(User user) {
         if (user.getRole() != UserRole.ADMIN) {
-            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_2);
+            throw PinException.of(PinErrorCode.PIN_IMPORT_STORE_403);
         }
+    }
+
+    private PinException toImportStoreFailure(Exception e) {
+        if (e instanceof DataIntegrityViolationException violation) {
+            String message =
+                    Optional.ofNullable(violation.getMostSpecificCause())
+                            .map(Throwable::getMessage)
+                            .orElseGet(violation::getMessage);
+            String lower = message == null ? "" : message.toLowerCase(Locale.ROOT);
+            log.warn("Store pin import DB constraint violation: {}", message, violation);
+            if (lower.contains("detail_address")) {
+                return PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_4);
+            }
+            if (lower.contains("festival_api_id")) {
+                return PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_7);
+            }
+            return PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_6);
+        }
+        if (e instanceof UtilException utilException) {
+            log.warn("Store pin import S3/util failure: {}", utilException.getMessage(), utilException);
+            return PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_6);
+        }
+        log.error("Store pin import failed", e);
+        return PinException.of(PinErrorCode.PIN_IMPORT_STORE_400_2);
     }
 
     private StorePinImportResDTO toImportRes(

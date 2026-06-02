@@ -35,7 +35,14 @@ public enum PinErrorCode implements BaseErrorCode {
 
     // 가게 핀 등록
     PIN_IMPORT_STORE_400_1(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_1", "필수 요청 값 누락."),
-    PIN_IMPORT_STORE_400_2(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_2", "소통 핀 등록 API를 실행 할 수 없습니다."),
+    PIN_IMPORT_STORE_400_2(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_2", "가게 핀 등록 중 알 수 없는 오류가 발생했습니다."),
+    PIN_IMPORT_STORE_400_3(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_3", "도로명 주소를 찾을 수 없습니다."),
+    PIN_IMPORT_STORE_400_4(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_4", "상세 주소가 150자를 초과했습니다."),
+    PIN_IMPORT_STORE_400_5(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_5", "핀 이미지 URL이 허용된 S3 URL 형식이 아닙니다."),
+    PIN_IMPORT_STORE_400_6(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_6", "가게 핀 DB 저장 제약을 위반했습니다."),
+    PIN_IMPORT_STORE_400_7(HttpStatus.BAD_REQUEST, "PIN_IMPORT_STORE_400_7", "가게 핀 DB 스키마가 최신이 아닙니다. event_pin 테이블 마이그레이션을 확인하세요."),
+    PIN_IMPORT_STORE_403(HttpStatus.FORBIDDEN, "PIN_IMPORT_STORE_403", "가게 핀 등록은 ADMIN 권한이 필요합니다."),
+    PIN_IMPORT_STORE_404_1(HttpStatus.NOT_FOUND, "PIN_IMPORT_STORE_404_1", "좌표에 해당하는 지역구(location)를 찾을 수 없습니다."),
 
     // 소통 핀 수정
     PIN_EDIT_COMMUNICATION_400_1(HttpStatus.BAD_REQUEST, "PIN_EDIT_COMMUNICATION_400_1", "필수 요청 값 누락."),

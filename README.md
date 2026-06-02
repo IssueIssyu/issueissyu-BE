@@ -10,7 +10,7 @@ issueissyu(이슈있슈) Backend는 지역 기반 핀·커뮤니티·지도 서�
 |       김태림<br/><a href="https://github.com/taerimiiii">@taerim</a>       |       전유안<br/><a href="https://github.com/yaaan7">@yaaan</a>        |
 
 ## 💻 Tech Stack
-- **Framework/Language**: Spring Boot 4.x, Java 21
+- **Framework/Language**: Spring Boot 3.x, Java 21
 - **Build/Database**: Gradle, PostgreSQL(PostGIS), Spring Data JPA, Redis
 - **Auth & Security**: JWT, Spring Security, OAuth2(Naver), Solapi(SMS 인증)
 - **External Services**: AWS S3, Firebase FCM, Naver Maps API, Google Play Billing
