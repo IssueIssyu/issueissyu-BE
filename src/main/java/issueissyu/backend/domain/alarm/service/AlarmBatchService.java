@@ -61,7 +61,7 @@ public class AlarmBatchService {
                             user.getPushToken(), EVENT_ALARM_TITLE, body)
                     .pushType(AlarmPushType.PIN_EVENT)
                     .put("eventAlarmId", String.valueOf(eventAlarm.getEventAlarmId()))
-                    .put("communityId", communityId != null ? String.valueOf(communityId) : "")
+                    .put("communityId", toFcmDataValue(communityId))
                     .build());
         }
         return payloads;
@@ -100,10 +100,14 @@ public class AlarmBatchService {
                             user.getPushToken(), STORE_ALARM_TITLE, body)
                     .pushType(AlarmPushType.PIN_STORE_AD)
                     .put("storeAlarmId", String.valueOf(storeAlarm.getStoreAlarmId()))
-                    .put("communityId", communityId != null ? String.valueOf(communityId) : "")
+                    .put("communityId", toFcmDataValue(communityId))
                     .build());
         }
         return payloads;
+    }
+
+    private static String toFcmDataValue(Long value) {
+        return value != null ? String.valueOf(value) : null;
     }
 
     @Transactional

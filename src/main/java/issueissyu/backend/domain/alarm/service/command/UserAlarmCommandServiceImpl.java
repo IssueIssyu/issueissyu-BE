@@ -113,7 +113,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
         return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
                 .pushType(AlarmPushType.PIN_EVENT)
                 .put("eventAlarmId", String.valueOf(prepared.eventAlarmId()))
-                .put("communityId", String.valueOf(prepared.communityId()))
+                .put("communityId", toFcmDataValue(prepared.communityId()))
                 .build();
     }
 
@@ -121,7 +121,11 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
         return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
                 .pushType(AlarmPushType.PIN_STORE_AD)
                 .put("storeAlarmId", String.valueOf(prepared.storeAlarmId()))
-                .put("communityId", String.valueOf(prepared.communityId()))
+                .put("communityId", toFcmDataValue(prepared.communityId()))
                 .build();
+    }
+
+    private static String toFcmDataValue(Long value) {
+        return value != null ? String.valueOf(value) : null;
     }
 }
