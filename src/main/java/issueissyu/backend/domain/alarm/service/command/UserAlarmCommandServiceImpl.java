@@ -1,8 +1,10 @@
 package issueissyu.backend.domain.alarm.service.command;
 
+import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.enums.AlarmPushType;
 import issueissyu.backend.domain.alarm.exception.AlarmException;
 import issueissyu.backend.domain.alarm.exception.code.AlarmErrorCode;
 import issueissyu.backend.domain.alarm.service.FcmService;
@@ -10,7 +12,6 @@ import issueissyu.backend.domain.user.entity.User;
 import issueissyu.backend.domain.user.repository.UserRepository;
 import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,15 +48,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
         String messageId = null;
         if (StringUtils.hasText(prepared.pushToken())) {
             try {
-                messageId = fcmService.sendNotification(
-                        prepared.pushToken(),
-                        prepared.title(),
-                        prepared.body(),
-                        Map.of(
-                                "likeAlarmId",
-                                String.valueOf(prepared.likeAlarmId()),
-                                "pinId",
-                                String.valueOf(prepared.pinId())));
+                messageId = fcmService.sendNotification(buildLikePayload(prepared));
             } catch (Exception e) {
                 log.error("Failed to send like alarm for pinId={}: {}", pinId, e.getMessage(), e);
                 throw AlarmException.of(AlarmErrorCode.LIKE_ALARM_400);
@@ -73,15 +66,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
         String messageId = null;
         if (StringUtils.hasText(prepared.pushToken())) {
             try {
-                messageId = fcmService.sendNotification(
-                        prepared.pushToken(),
-                        prepared.title(),
-                        prepared.body(),
-                        Map.of(
-                                "eventAlarmId",
-                                String.valueOf(prepared.eventAlarmId()),
-                                "communityId",
-                                String.valueOf(prepared.communityId())));
+                messageId = fcmService.sendNotification(buildEventPayload(prepared));
             } catch (Exception e) {
                 log.error("Failed to send event alarm for uid={}: {}", uid, e.getMessage(), e);
                 throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_400);
@@ -100,15 +85,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
         String messageId = null;
         if (StringUtils.hasText(prepared.pushToken())) {
             try {
-                messageId = fcmService.sendNotification(
-                        prepared.pushToken(),
-                        prepared.title(),
-                        prepared.body(),
-                        Map.of(
-                                "storeAlarmId",
-                                String.valueOf(prepared.storeAlarmId()),
-                                "communityId",
-                                String.valueOf(prepared.communityId())));
+                messageId = fcmService.sendNotification(buildStorePayload(prepared));
             } catch (Exception e) {
                 log.error("Failed to send store alarm for uid={}: {}", uid, e.getMessage(), e);
                 throw AlarmException.of(AlarmErrorCode.STORE_ALARM_400);
@@ -122,5 +99,33 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     private User findUser(String uid) {
         return userRepository.findById(uid)
                 .orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+    }
+
+    private static FcmNotificationPayload buildLikePayload(LikeAlarmPrepared prepared) {
+        return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
+                .pushType(AlarmPushType.PIN_LIKED)
+                .put("likeAlarmId", String.valueOf(prepared.likeAlarmId()))
+                .put("pinId", String.valueOf(prepared.pinId()))
+                .build();
+    }
+
+    private static FcmNotificationPayload buildEventPayload(EventAlarmPrepared prepared) {
+        return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
+                .pushType(AlarmPushType.PIN_EVENT)
+                .put("eventAlarmId", String.valueOf(prepared.eventAlarmId()))
+                .put("communityId", toFcmDataValue(prepared.communityId()))
+                .build();
+    }
+
+    private static FcmNotificationPayload buildStorePayload(StoreAlarmPrepared prepared) {
+        return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
+                .pushType(AlarmPushType.PIN_STORE_AD)
+                .put("storeAlarmId", String.valueOf(prepared.storeAlarmId()))
+                .put("communityId", toFcmDataValue(prepared.communityId()))
+                .build();
+    }
+
+    private static String toFcmDataValue(Long value) {
+        return value != null ? String.valueOf(value) : null;
     }
 }

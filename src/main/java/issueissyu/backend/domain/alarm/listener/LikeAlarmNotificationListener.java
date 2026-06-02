@@ -1,9 +1,10 @@
 package issueissyu.backend.domain.alarm.listener;
 
+import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
+import issueissyu.backend.domain.alarm.enums.AlarmPushType;
 import issueissyu.backend.domain.alarm.event.LikeAlarmCreatedEvent;
 import issueissyu.backend.domain.alarm.service.FcmService;
 import issueissyu.backend.global.config.AsyncConfig;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -27,15 +28,7 @@ public class LikeAlarmNotificationListener {
         }
 
         fcmService
-                .sendNotificationAsync(
-                        event.pushToken(),
-                        event.title(),
-                        event.body(),
-                        Map.of(
-                                "likeAlarmId",
-                                String.valueOf(event.likeAlarmId()),
-                                "pinId",
-                                String.valueOf(event.pinId())))
+                .sendNotificationAsync(buildLikePayload(event))
                 .whenComplete((messageId, ex) -> {
                     if (ex != null) {
                         log.warn(
@@ -46,5 +39,13 @@ public class LikeAlarmNotificationListener {
                         log.debug("Like FCM sent uid={} messageId={}", event.recipientUid(), messageId);
                     }
                 });
+    }
+
+    private static FcmNotificationPayload buildLikePayload(LikeAlarmCreatedEvent event) {
+        return FcmNotificationPayload.builder(event.pushToken(), event.title(), event.body())
+                .pushType(AlarmPushType.PIN_LIKED)
+                .put("likeAlarmId", String.valueOf(event.likeAlarmId()))
+                .put("pinId", String.valueOf(event.pinId()))
+                .build();
     }
 }
