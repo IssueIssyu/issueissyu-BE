@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.alarm.service;
 
 import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
+import issueissyu.backend.domain.alarm.enums.AlarmPushType;
 import issueissyu.backend.domain.alarm.entity.EventAlarm;
 import issueissyu.backend.domain.alarm.entity.StoreAlarm;
 import issueissyu.backend.domain.alarm.entity.UserAlarm;
@@ -12,7 +13,6 @@ import issueissyu.backend.domain.alarm.service.command.StoreAlarmPrepared;
 import issueissyu.backend.domain.user.entity.User;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,15 +57,12 @@ public class AlarmBatchService {
         for (int i = 0; i < recipients.size(); i++) {
             User user = recipients.get(i);
             EventAlarm eventAlarm = eventAlarms.get(i);
-            payloads.add(new FcmNotificationPayload(
-                    user.getPushToken(),
-                    EVENT_ALARM_TITLE,
-                    body,
-                    Map.of(
-                            "eventAlarmId",
-                            String.valueOf(eventAlarm.getEventAlarmId()),
-                            "communityId",
-                            communityId != null ? String.valueOf(communityId) : "")));
+            payloads.add(FcmNotificationPayload.builder(
+                            user.getPushToken(), EVENT_ALARM_TITLE, body)
+                    .pushType(AlarmPushType.PIN_EVENT)
+                    .put("eventAlarmId", String.valueOf(eventAlarm.getEventAlarmId()))
+                    .put("communityId", toFcmDataValue(communityId))
+                    .build());
         }
         return payloads;
     }
@@ -99,17 +96,18 @@ public class AlarmBatchService {
         for (int i = 0; i < recipients.size(); i++) {
             User user = recipients.get(i);
             StoreAlarm storeAlarm = storeAlarms.get(i);
-            payloads.add(new FcmNotificationPayload(
-                    user.getPushToken(),
-                    STORE_ALARM_TITLE,
-                    body,
-                    Map.of(
-                            "storeAlarmId",
-                            String.valueOf(storeAlarm.getStoreAlarmId()),
-                            "communityId",
-                            communityId != null ? String.valueOf(communityId) : "")));
+            payloads.add(FcmNotificationPayload.builder(
+                            user.getPushToken(), STORE_ALARM_TITLE, body)
+                    .pushType(AlarmPushType.PIN_STORE_AD)
+                    .put("storeAlarmId", String.valueOf(storeAlarm.getStoreAlarmId()))
+                    .put("communityId", toFcmDataValue(communityId))
+                    .build());
         }
         return payloads;
+    }
+
+    private static String toFcmDataValue(Long value) {
+        return value != null ? String.valueOf(value) : null;
     }
 
     @Transactional
