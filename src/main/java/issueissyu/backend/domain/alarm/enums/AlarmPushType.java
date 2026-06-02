@@ -15,6 +15,9 @@ public enum AlarmPushType {
     }
 
     public static AlarmPushType fromUserAlarmType(UserAlarmType alarmType) {
+        if (alarmType == null) {
+            return null;
+        }
         return switch (alarmType) {
             case LIKE -> PIN_LIKED;
             case EVENT -> PIN_EVENT;
