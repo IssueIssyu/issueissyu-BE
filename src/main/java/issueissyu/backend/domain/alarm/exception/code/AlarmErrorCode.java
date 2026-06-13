@@ -28,6 +28,8 @@ public enum AlarmErrorCode implements BaseErrorCode {
 
     ALARM_STATE_400(HttpStatus.BAD_REQUEST, "ALARM_STATE_400", "존재하지 않는 알람 설정입니다."),
 
+    ALARM_CONFIRM_400(HttpStatus.BAD_REQUEST, "ALARM_CONFIRM_400", "존재하지 않는 알람입니다."),
+
     ALARM_404(HttpStatus.NOT_FOUND, "ALARM_404", "존재하지 않는 알람입니다.");
 
     private final HttpStatus httpStatus;
