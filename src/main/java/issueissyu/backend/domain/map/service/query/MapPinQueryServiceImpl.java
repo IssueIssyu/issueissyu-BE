@@ -106,7 +106,7 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
             return 0.028;
         }
         // zoomLevel > 10 이어도 클러스터링 API에서 호출될 수 있으므로 더 촘촘한 gridSize를 반환.
-        return 0.002;
+        return 0.010;
     }
 
     private record ClusterKey(double clusterLat, double clusterLng) {
