@@ -128,6 +128,10 @@ public class MapController {
     }
 
     private static void validateBoundingBox(double swLat, double swLng, double neLat, double neLng) {
+        if (swLat < -90 || swLat > 90 || neLat < -90 || neLat > 90
+                || swLng < -180 || swLng > 180 || neLng < -180 || neLng > 180) {
+            throw MapException.of(MapErrorCode.MAP_400_1);
+        }
         if (swLat > neLat || swLng > neLng) {
             throw MapException.of(MapErrorCode.MAP_400_1);
         }
