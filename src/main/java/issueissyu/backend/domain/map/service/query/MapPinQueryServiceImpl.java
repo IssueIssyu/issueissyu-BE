@@ -100,10 +100,10 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
 
     private double resolveGridSize(int zoomLevel) {
         if (zoomLevel <= 4) {
-            return 0.018;
+            return 0.182;   // 약 20km
         }
         if (zoomLevel <= 10) {
-            return 0.028;
+            return 0.028;   // 약 3km
         }
         // zoomLevel > 10 이어도 클러스터링 API에서 호출될 수 있으므로 더 촘촘한 gridSize를 반환.
         return 0.010;
