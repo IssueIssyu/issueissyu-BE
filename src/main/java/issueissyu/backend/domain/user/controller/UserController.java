@@ -5,11 +5,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.location.dto.res.UserLocationCertResDto;
 import issueissyu.backend.domain.location.exception.code.LocationSuccessCode;
 import issueissyu.backend.domain.user.dto.req.NicknameChangeReqDTO;
+import issueissyu.backend.domain.user.dto.res.UserAlarmStateResDTO;
 import issueissyu.backend.domain.user.dto.res.UserAlarmToggleResDTO;
 import issueissyu.backend.domain.user.dto.res.UserMyPinsResDTO;
 import issueissyu.backend.domain.user.enums.UserAlarmType;
+import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
 import issueissyu.backend.domain.user.exception.code.UserSuccessCode;
 import issueissyu.backend.domain.user.service.command.UserCommandService;
+import issueissyu.backend.domain.user.service.query.UserAlarmQueryService;
 import issueissyu.backend.domain.user.service.query.UserPinQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserPinQueryService userPinQueryService;
+    private final UserAlarmQueryService userAlarmQueryService;
     private final UserCommandService userCommandService;
 
     @Operation(
@@ -54,6 +58,15 @@ public class UserController {
             @AuthenticationPrincipal String uid, @PathVariable("alarmType") String alarmType) {
         var outcome = userCommandService.toggleUserAlarm(uid, UserAlarmType.fromToken(alarmType));
         return ApiResponse.onSuccess(outcome.successCode(), outcome.result());
+    }
+
+    @Operation(
+            summary = "알람 상태 조회",
+            description = "로그인한 사용자의 알람 on/off 상태(like/event/hot/store)를 조회합니다.")
+    @GetMapping("/me/alarms/state")
+    public ApiResponse<UserAlarmStateResDTO> getUserAlarmState(@AuthenticationPrincipal String uid) {
+        UserAlarmStateResDTO result = userAlarmQueryService.getAlarmState(uid);
+        return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_STATE_200_1, result);
     }
 
     @Operation(summary = "닉네임 변경", description = "현재 로그인한 사용자의 닉네임을 변경합니다. 요청 본문에 nickname을 전달합니다.")

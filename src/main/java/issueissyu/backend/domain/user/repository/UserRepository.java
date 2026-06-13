@@ -37,4 +37,17 @@ public interface UserRepository extends JpaRepository<User, String> {
               and u.pushToken is not null
             """)
     List<User> findStoreAlarmEligibleByLocationId(@Param("locationId") Long locationId);
+
+    @Query(
+            value =
+                    """
+                    SELECT like_alarm_active AS likeAlarmActive,
+                           event_alarm_active AS eventAlarmActive,
+                           hot_alarm_active AS hotAlarmActive,
+                           store_alarm_active AS storeAlarmActive
+                    FROM "user"
+                    WHERE uid = :uid
+                    """,
+            nativeQuery = true)
+    Optional<UserAlarmStateRow> findAlarmStateByUid(@Param("uid") String uid);
 }

@@ -26,6 +26,8 @@ public enum AlarmErrorCode implements BaseErrorCode {
     ALARM_LIST_400_1(HttpStatus.BAD_REQUEST, "ALARM_LIST_400_1", "조회 불가능한 사이즈 입니다."),
     ALARM_LIST_400_2(HttpStatus.BAD_REQUEST, "ALARM_LIST_400_2", "조회 불가능한 cursor 입니다."),
 
+    ALARM_STATE_400(HttpStatus.BAD_REQUEST, "ALARM_STATE_400", "존재하지 않는 알람 설정입니다."),
+
     ALARM_404(HttpStatus.NOT_FOUND, "ALARM_404", "존재하지 않는 알람입니다.");
 
     private final HttpStatus httpStatus;
