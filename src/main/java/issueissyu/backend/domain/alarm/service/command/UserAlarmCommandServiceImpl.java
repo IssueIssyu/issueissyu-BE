@@ -2,6 +2,8 @@ package issueissyu.backend.domain.alarm.service.command;
 
 import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
 import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
+import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
+import issueissyu.backend.domain.alarm.dto.res.AlarmListResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
@@ -17,6 +19,7 @@ import issueissyu.backend.global.api.code.GeneralErrorCode;
 import issueissyu.backend.global.exception.GeneralException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,12 +106,33 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     @Override
     @Transactional
     public AlarmConfirmResDTO confirmAlarm(String uid, Long alarmId) {
-        UserAlarm userAlarm = userAlarmRepository
-                .findByUserAlarmIdAndUser_Uid(alarmId, uid)
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.ALARM_CONFIRM_400));
-
+        UserAlarm userAlarm = findOwnedAlarm(uid, alarmId);
         userAlarm.markConfirmed();
         return new AlarmConfirmResDTO(userAlarm.getUserAlarmId(), userAlarm.isConfirmed());
+    }
+
+    @Override
+    @Transactional
+    public void confirmUnconfirmedAlarmsInList(String uid, AlarmListResDTO alarmList) {
+        List<Long> unconfirmedAlarmIds = alarmList.alarms().stream()
+                .filter(alarm -> !alarm.isConfirmed())
+                .map(AlarmListItemResDTO::alarmId)
+                .toList();
+        if (unconfirmedAlarmIds.isEmpty()) {
+            return;
+        }
+
+        userAlarmRepository.findByUserAlarmIdInAndUser_Uid(unconfirmedAlarmIds, uid).forEach(userAlarm -> {
+            if (!userAlarm.isConfirmed()) {
+                userAlarm.markConfirmed();
+            }
+        });
+    }
+
+    private UserAlarm findOwnedAlarm(String uid, Long alarmId) {
+        return userAlarmRepository
+                .findByUserAlarmIdAndUser_Uid(alarmId, uid)
+                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.ALARM_CONFIRM_400));
     }
 
     private User findUser(String uid) {
