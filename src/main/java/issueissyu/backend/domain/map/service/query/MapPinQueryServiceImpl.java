@@ -51,7 +51,12 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
 
             Map<ClusterKey, List<MapPinResDTO.PinItemDTO>> grouped = new LinkedHashMap<>();
             for (MapPinClusterView view : views) {
-                ClusterKey key = new ClusterKey(view.getClusterLat(), view.getClusterLng());
+                Double clusterLat = view.getClusterLat();
+                Double clusterLng = view.getClusterLng();
+                if (clusterLat == null || clusterLng == null) {
+                    continue;
+                }
+                ClusterKey key = new ClusterKey(clusterLat, clusterLng);
                 grouped.computeIfAbsent(key, ignored -> new java.util.ArrayList<>())
                         .add(toDto(view));
             }
