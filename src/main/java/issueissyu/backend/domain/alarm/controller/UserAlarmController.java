@@ -3,6 +3,7 @@ package issueissyu.backend.domain.alarm.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.alarm.dto.req.PushTokenReqDTO;
+import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +40,16 @@ public class UserAlarmController {
             @AuthenticationPrincipal String uid, @PathVariable Long alarmId) {
         AlarmListItemResDTO result = userAlarmQueryService.getAlarm(uid, alarmId);
         return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_200, result);
+    }
+
+    @Operation(
+            summary = "알람 확인 처리",
+            description = "alarmId에 해당하는 알람의 is_confirmed 값을 true로 전환합니다.")
+    @PatchMapping("/{alarmId}/confirm")
+    public ApiResponse<AlarmConfirmResDTO> confirmAlarm(
+            @AuthenticationPrincipal String uid, @PathVariable Long alarmId) {
+        AlarmConfirmResDTO result = userAlarmCommandService.confirmAlarm(uid, alarmId);
+        return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_CONFIRM_200, result);
     }
 
     @Operation(
