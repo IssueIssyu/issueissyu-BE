@@ -111,7 +111,7 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
         if (zoomLevel <= 10) {
             return 0.004;
         }
-        // zoomLevel > 10은 현재 컨트롤러에서 일반 핀 조회 분기이지만, 방어적으로 값 제공.
+        // zoomLevel > 10 이어도 클러스터링 API에서 호출될 수 있으므로 더 촘촘한 gridSize를 반환.
         return 0.002;
     }
 
