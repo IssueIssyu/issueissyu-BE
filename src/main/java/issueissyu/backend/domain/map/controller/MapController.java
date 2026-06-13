@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.map.dto.res.MapNoticeListResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
-import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
 import issueissyu.backend.domain.map.dto.res.PatchNoteResDTO;
 import issueissyu.backend.domain.map.enums.MapPinCategory;
 import issueissyu.backend.domain.map.exception.MapException;
@@ -36,28 +35,41 @@ public class MapController {
     private final MapPinCardQueryService mapPinCardQueryService;
     private final MapNoticeQueryService mapNoticeQueryService;
     private final PatchNoteQueryService patchNoteQueryService;
+    private static final int CLUSTERING_MIN_ZOOM_LEVEL = 8;
 
     @Operation(summary = "현재 화면 핀 조회",
-                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. ")
+                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. zoomLevel >= 8이면 클러스터링 결과를 반환합니다.")
     @GetMapping("/pins")
-    public ApiResponse<MapPinResDTO> getPinsInScreen(
+    public ApiResponse<?> getPinsInScreen(
             @RequestParam double swLat,
             @RequestParam double swLng,
             @RequestParam double neLat,
             @RequestParam double neLng,
-            @RequestParam(required = false) String category
+            @RequestParam(required = false) String category,
+            @RequestParam int zoomLevel
     ) {
         if (swLat > neLat || swLng > neLng) {
             throw MapException.of(MapErrorCode.MAP_400_1);
         }
 
         Optional<MapPinCategory> categoryOpt = MapPinCategory.parse(category);
-        MapSuccessCode successCode = categoryOpt
-                .map(MapPinCategory::getSuccessCode)
-                .orElse(MapSuccessCode.MAP_200_1);
         String pinTypeFilter = categoryOpt.map(MapPinCategory::getPinType).orElse(null);
 
         // PostGIS는 (경도, 위도) 순서 → swLng, swLat, neLng, neLat 로 전달
+        if (zoomLevel >= CLUSTERING_MIN_ZOOM_LEVEL) {
+            MapSuccessCode successCode = categoryOpt
+                    .map(MapPinCategory::getClusteringSuccessCode)
+                    .orElse(MapSuccessCode.CLUSTERING_200_1);
+            return ApiResponse.onSuccess(
+                    successCode,
+                    mapPinQueryService.getPinClustersInBoundingBox(
+                            swLng, swLat, neLng, neLat, pinTypeFilter, zoomLevel)
+            );
+        }
+
+        MapSuccessCode successCode = categoryOpt
+                .map(MapPinCategory::getSuccessCode)
+                .orElse(MapSuccessCode.MAP_200_1);
         return ApiResponse.onSuccess(
                 successCode,
                 mapPinQueryService.getPinsInBoundingBox(swLng, swLat, neLng, neLat, pinTypeFilter)
