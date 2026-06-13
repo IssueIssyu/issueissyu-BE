@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.map.dto.res.MapNoticeListResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
+import issueissyu.backend.domain.map.dto.res.MapPinClusterResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
 import issueissyu.backend.domain.map.dto.res.PatchNoteResDTO;
 import issueissyu.backend.domain.map.enums.MapPinCategory;
@@ -38,7 +39,7 @@ public class MapController {
     private final PatchNoteQueryService patchNoteQueryService;
 
     @Operation(summary = "현재 화면 핀 조회",
-                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. ")
+                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다.")
     @GetMapping("/pins")
     public ApiResponse<MapPinResDTO> getPinsInScreen(
             @RequestParam double swLat,
@@ -47,9 +48,7 @@ public class MapController {
             @RequestParam double neLng,
             @RequestParam(required = false) String category
     ) {
-        if (swLat > neLat || swLng > neLng) {
-            throw MapException.of(MapErrorCode.MAP_400_1);
-        }
+        validateBoundingBox(swLat, swLng, neLat, neLng);
 
         Optional<MapPinCategory> categoryOpt = MapPinCategory.parse(category);
         MapSuccessCode successCode = categoryOpt
@@ -61,6 +60,32 @@ public class MapController {
         return ApiResponse.onSuccess(
                 successCode,
                 mapPinQueryService.getPinsInBoundingBox(swLng, swLat, neLng, neLat, pinTypeFilter)
+        );
+    }
+
+    @Operation(summary = "현재 화면 클러스터링 핀 조회",
+                description = "BBox(Bounding Box)와 zoomLevel을 이용해 현재 화면 내의 핀을 클러스터링해 조회합니다.")
+    @GetMapping("/clustering/pins")
+    public ApiResponse<MapPinClusterResDTO> getClusteredPinsInScreen(
+            @RequestParam double swLat,
+            @RequestParam double swLng,
+            @RequestParam double neLat,
+            @RequestParam double neLng,
+            @RequestParam(required = false) String category,
+            @RequestParam int zoomLevel
+    ) {
+        validateBoundingBox(swLat, swLng, neLat, neLng);
+
+        Optional<MapPinCategory> categoryOpt = MapPinCategory.parse(category);
+        MapSuccessCode successCode = categoryOpt
+                .map(MapPinCategory::getClusteringSuccessCode)
+                .orElse(MapSuccessCode.CLUSTERING_200_1);
+        String pinTypeFilter = categoryOpt.map(MapPinCategory::getPinType).orElse(null);
+
+        return ApiResponse.onSuccess(
+                successCode,
+                mapPinQueryService.getPinClustersInBoundingBox(
+                        swLng, swLat, neLng, neLat, pinTypeFilter, zoomLevel)
         );
     }
 
@@ -100,5 +125,15 @@ public class MapController {
     private ApiResponse<MapPinCardResDTO> pinCardResponse(String uid, Long pinId) {
         MapPinCardResDTO dto = mapPinCardQueryService.findPinCard(pinId, uid);
         return ApiResponse.onSuccess(MapSuccessCode.forPinCard(PinType.valueOf(dto.getPinType())), dto);
+    }
+
+    private static void validateBoundingBox(double swLat, double swLng, double neLat, double neLng) {
+        if (swLat < -90 || swLat > 90 || neLat < -90 || neLat > 90
+                || swLng < -180 || swLng > 180 || neLng < -180 || neLng > 180) {
+            throw MapException.of(MapErrorCode.MAP_400_1);
+        }
+        if (swLat > neLat || swLng > neLng) {
+            throw MapException.of(MapErrorCode.MAP_400_1);
+        }
     }
 }
