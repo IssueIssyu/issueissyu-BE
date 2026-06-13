@@ -12,7 +12,7 @@ import issueissyu.backend.domain.user.enums.UserAlarmType;
 import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
 import issueissyu.backend.domain.user.exception.code.UserSuccessCode;
 import issueissyu.backend.domain.user.service.command.UserCommandService;
-import issueissyu.backend.domain.user.service.query.UserAlarmQueryService;
+import issueissyu.backend.domain.user.service.query.UserAlarmStateQueryService;
 import issueissyu.backend.domain.user.service.query.UserPinQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserPinQueryService userPinQueryService;
-    private final UserAlarmQueryService userAlarmQueryService;
+    private final UserAlarmStateQueryService userAlarmStateQueryService;
     private final UserCommandService userCommandService;
 
     @Operation(
@@ -65,7 +65,7 @@ public class UserController {
             description = "로그인한 사용자의 알람 on/off 상태(like/event/hot/store)를 조회합니다.")
     @GetMapping("/me/alarms/state")
     public ApiResponse<UserAlarmStateResDTO> getUserAlarmState(@AuthenticationPrincipal String uid) {
-        UserAlarmStateResDTO result = userAlarmQueryService.getAlarmState(uid);
+        UserAlarmStateResDTO result = userAlarmStateQueryService.getAlarmState(uid);
         return ApiResponse.onSuccess(AlarmSuccessCode.ALARM_STATE_200_1, result);
     }
 
