@@ -35,10 +35,10 @@ public class MapController {
     private final MapPinCardQueryService mapPinCardQueryService;
     private final MapNoticeQueryService mapNoticeQueryService;
     private final PatchNoteQueryService patchNoteQueryService;
-    private static final int CLUSTERING_MIN_ZOOM_LEVEL = 8;
+    private static final int CLUSTERING_MAX_ZOOM_LEVEL = 10;
 
     @Operation(summary = "현재 화면 핀 조회",
-                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. zoomLevel >= 8이면 클러스터링 결과를 반환합니다.")
+                description = "BBox(Bounding Box)를 이용해 현재 화면 내의 핀을 조회합니다. zoomLevel <= 10이면 클러스터링 결과를 반환합니다.")
     @GetMapping("/pins")
     public ApiResponse<?> getPinsInScreen(
             @RequestParam double swLat,
@@ -56,7 +56,7 @@ public class MapController {
         String pinTypeFilter = categoryOpt.map(MapPinCategory::getPinType).orElse(null);
 
         // PostGIS는 (경도, 위도) 순서 → swLng, swLat, neLng, neLat 로 전달
-        if (zoomLevel >= CLUSTERING_MIN_ZOOM_LEVEL) {
+        if (zoomLevel <= CLUSTERING_MAX_ZOOM_LEVEL) {
             MapSuccessCode successCode = categoryOpt
                     .map(MapPinCategory::getClusteringSuccessCode)
                     .orElse(MapSuccessCode.CLUSTERING_200_1);
