@@ -99,19 +99,20 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
     }
 
     private double resolveGridSize(int zoomLevel) {
-        if (zoomLevel >= 16) {
-            return 0.001;
+        if (zoomLevel <= 4) {
+            return 0.016;
         }
-        if (zoomLevel >= 14) {
-            return 0.002;
+        if (zoomLevel <= 6) {
+            return 0.012;
         }
-        if (zoomLevel >= 12) {
-            return 0.004;
-        }
-        if (zoomLevel >= 10) {
+        if (zoomLevel <= 8) {
             return 0.008;
         }
-        return 0.016;
+        if (zoomLevel <= 10) {
+            return 0.004;
+        }
+        // zoomLevel > 10은 현재 컨트롤러에서 일반 핀 조회 분기이지만, 방어적으로 값 제공.
+        return 0.002;
     }
 
     private record ClusterKey(double clusterLat, double clusterLng) {
