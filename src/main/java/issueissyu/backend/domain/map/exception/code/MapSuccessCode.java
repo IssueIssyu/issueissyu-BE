@@ -15,6 +15,11 @@ public enum MapSuccessCode implements BaseSuccessCode {
     MAP_200_3(HttpStatus.OK, "MAP_200_3", "현재 화면의 소통 핀 조회에 성공했습니다."),
     MAP_200_4(HttpStatus.OK, "MAP_200_4", "현재 화면의 가게 핀 조회에 성공했습니다."),
     MAP_200_5(HttpStatus.OK, "MAP_200_5", "현재 화면의 축제 핀 조회에 성공했습니다."),
+    CLUSTERING_200_1(HttpStatus.OK, "CLUSTERING_200_1", "현재 화면의 클러스터링 전체 카테고리 핀 조회에 성공했습니다."),
+    CLUSTERING_200_2(HttpStatus.OK, "CLUSTERING_200_2", "현재 화면의 클러스터링 이슈 카테고리 핀 조회에 성공했습니다."),
+    CLUSTERING_200_3(HttpStatus.OK, "CLUSTERING_200_3", "현재 화면의 클러스터링 소통 카테고리 핀 조회에 성공했습니다."),
+    CLUSTERING_200_4(HttpStatus.OK, "CLUSTERING_200_4", "현재 화면의 클러스터링 가게 카테고리 핀 조회에 성공했습니다."),
+    CLUSTERING_200_5(HttpStatus.OK, "CLUSTERING_200_5", "현재 화면의 클러스터링 축제 카테고리 핀 조회에 성공했습니다."),
 
     MAP_CARD_200_1(HttpStatus.OK, "MAP_CARD_200_1", "이슈 핀 카드 조회에 성공했습니다."),
     MAP_CARD_200_2(HttpStatus.OK, "MAP_CARD_200_2", "소통 핀 카드 조회에 성공했습니다."),

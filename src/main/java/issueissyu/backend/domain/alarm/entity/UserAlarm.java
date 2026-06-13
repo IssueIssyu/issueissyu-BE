@@ -40,4 +40,8 @@ public class UserAlarm extends BaseEntity {
     @Builder.Default
     @Column(name = "is_confirmed", nullable = false)
     private boolean confirmed = false;
+
+    public void markConfirmed() {
+        this.confirmed = true;
+    }
 }

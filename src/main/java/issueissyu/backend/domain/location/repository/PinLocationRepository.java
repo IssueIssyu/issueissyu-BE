@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.location.repository;
 
 import issueissyu.backend.domain.location.entity.PinLocation;
+import issueissyu.backend.domain.map.dto.res.MapPinClusterView;
 import issueissyu.backend.domain.map.dto.res.MapPinView;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -67,6 +68,47 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
             @Param("neLng") double neLng,
             @Param("neLat") double neLat,
             @Param("pinTypeFilter") String pinTypeFilter
+    );
+
+    @Query(value = """
+            SELECT
+                p.pin_id AS pinId,
+                p.pin_type AS pinType,
+                ST_Y(pl.pin_point) AS lat,
+                ST_X(pl.pin_point) AS lng,
+                pl.detail_address AS detailAddress,
+                l.location AS region,
+                ST_Y(ST_SnapToGrid(pl.pin_point, :gridSize)) AS clusterLat,
+                ST_X(ST_SnapToGrid(pl.pin_point, :gridSize)) AS clusterLng
+            FROM pin_location pl
+            INNER JOIN pin      p ON pl.pin_id      = p.pin_id
+            INNER JOIN location l ON pl.location_id = l.location_id
+            LEFT JOIN communication_pin cp ON cp.pin_id = p.pin_id
+            LEFT JOIN event_pin ep ON ep.pin_id = p.pin_id
+            WHERE p.created_at >= NOW() - INTERVAL '1 year'
+              AND ST_Within(
+                    pl.pin_point,
+                    ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
+                  )
+              AND (
+                    p.pin_type = 'ISSUE'
+                    OR (p.pin_type = 'COMMUNICATION'
+                        AND cp.communication_pin_id IS NOT NULL
+                        AND COALESCE(cp.updated_at, cp.created_at) >= NOW() - INTERVAL '1 month')
+                    OR (p.pin_type IN ('STORE', 'FESTIVAL')
+                        AND ep.event_pin_id IS NOT NULL
+                        AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
+                  )
+              AND (:pinTypeFilter IS NULL OR p.pin_type = :pinTypeFilter)
+            ORDER BY clusterLat, clusterLng, p.pin_id
+            """, nativeQuery = true)
+    List<MapPinClusterView> findPinClustersInBoundingBox(
+            @Param("swLng") double swLng,
+            @Param("swLat") double swLat,
+            @Param("neLng") double neLng,
+            @Param("neLat") double neLat,
+            @Param("pinTypeFilter") String pinTypeFilter,
+            @Param("gridSize") double gridSize
     );
 
     Optional<PinLocation> findFirstByPin_PinId(Long pinId);
