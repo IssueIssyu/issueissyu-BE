@@ -25,7 +25,7 @@ public class AlarmSchedulerService {
         regionalAlarmCommandService.dispatchScheduledStoreAlarms();
     }
 
-    @Scheduled(cron = "0 0 18 * * *")
+    @Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
     public void sendHotAlarms() {
         hotAlarmCommandService.dispatchScheduledHotAlarms();
     }
