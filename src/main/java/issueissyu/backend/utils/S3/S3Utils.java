@@ -31,9 +31,7 @@ public class S3Utils {
     }
 
     private String getUrl(String key) {
-        return "https://" + config.getBucket()
-                + ".s3." + config.getRegion()
-                + ".amazonaws.com/" + key;
+        return config.getCdnUrl() + "/" + key;
     }
 
     // MultipartFile 그대로 업로드 (범용)
