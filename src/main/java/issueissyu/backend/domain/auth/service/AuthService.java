@@ -102,9 +102,11 @@ public class AuthService {
                 .build();
     }
 
-    // Redis에 저장된 해당 유저의 모든 refresh token 삭제
+    // Redis에 저장된 해당 유저의 모든 refresh token 삭제 + user.push_token 초기화
+    @Transactional
     public void logout(String uid) {
         refreshTokenRedisStore.deleteAll(uid);
+        userRepository.findById(uid).ifPresent(user -> user.updatePushToken(null));
     }
 
     // 회원탈퇴: Redis 토큰 → 사용자 연관 행(PC·알림 등) → OAuth → UserTerm → User 순으로 삭제
