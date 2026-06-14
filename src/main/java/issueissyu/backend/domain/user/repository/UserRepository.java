@@ -38,6 +38,23 @@ public interface UserRepository extends JpaRepository<User, String> {
             """)
     List<User> findStoreAlarmEligibleByLocationId(@Param("locationId") Long locationId);
 
+    @Query("""
+            select u from AppUser u
+            where u.userLocation.location.locationId = :locationId
+              and u.hotAlarmActive = true
+              and u.pushToken is not null
+            """)
+    List<User> findHotAlarmEligibleByLocationId(@Param("locationId") Long locationId);
+
+    @Query("""
+            select distinct u.userLocation.location.locationId from AppUser u
+            where u.hotAlarmActive = true
+              and u.pushToken is not null
+              and u.userLocation is not null
+              and u.userLocation.location is not null
+            """)
+    List<Long> findDistinctHotAlarmEligibleLocationIds();
+
     @Query(
             value =
                     """

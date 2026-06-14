@@ -4,6 +4,7 @@ import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
 import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListResDTO;
+import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
@@ -35,6 +36,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     private final UserAlarmRepository userAlarmRepository;
     private final LikeAlarmCommandService likeAlarmCommandService;
     private final RegionalAlarmCommandService regionalAlarmCommandService;
+    private final HotAlarmCommandService hotAlarmCommandService;
     private final FcmService fcmService;
 
     @Override
@@ -104,6 +106,24 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public AlarmMessageResDTO sendHotAlarm(String uid) {
+        HotAlarmPrepared prepared = hotAlarmCommandService.sendHotAlarmToUser(uid);
+
+        String messageId = null;
+        if (StringUtils.hasText(prepared.pushToken())) {
+            try {
+                messageId = fcmService.sendNotification(buildHotPayload(prepared));
+            } catch (Exception e) {
+                log.error("Failed to send hot alarm for uid={}: {}", uid, e.getMessage(), e);
+                throw AlarmException.of(AlarmErrorCode.HOT_ALARM_400);
+            }
+        }
+
+        return new AlarmMessageResDTO(messageId);
+    }
+
+    @Override
     @Transactional
     public AlarmConfirmResDTO confirmAlarm(String uid, Long alarmId) {
         UserAlarm userAlarm = findOwnedAlarm(uid, alarmId);
@@ -161,6 +181,14 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
                 .pushType(AlarmPushType.PIN_STORE_AD)
                 .put("storeAlarmId", String.valueOf(prepared.storeAlarmId()))
                 .put("communityId", toFcmDataValue(prepared.communityId()))
+                .build();
+    }
+
+    private static FcmNotificationPayload buildHotPayload(HotAlarmPrepared prepared) {
+        return FcmNotificationPayload.builder(prepared.pushToken(), prepared.title(), prepared.body())
+                .pushType(AlarmPushType.PIN_POPULAR)
+                .put("hotAlarmId", String.valueOf(prepared.hotAlarmId()))
+                .put("communityId", String.valueOf(prepared.communityId()))
                 .build();
     }
 

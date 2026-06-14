@@ -13,6 +13,7 @@ public enum AlarmSuccessCode implements BaseSuccessCode {
     LIKE_ALARM_200(HttpStatus.OK, "LIKE_ALARM_200", "푸시 알림이 성공적으로 전송되었습니다."),
     EVENT_ALARM_200(HttpStatus.OK, "EVENT_ALARM_200", "푸시 알림이 성공적으로 전송되었습니다."),
     STORE_ALARM_200(HttpStatus.OK, "STORE_ALARM_200", "푸시 알림이 성공적으로 전송되었습니다."),
+    HOT_ALARM_200(HttpStatus.OK, "HOT_ALARM_200", "푸시 알림이 성공적으로 전송되었습니다."),
     ALARM_LIST_200(HttpStatus.OK, "ALARM_LIST_200", "알람 목록 조회에 성공했습니다."),
     ALARM_200(HttpStatus.OK, "ALARM_200", "알람 단건 조회에 성공했습니다."),
     ALARM_CONFIRM_200(HttpStatus.OK, "ALARM_CONFIRM_200", "알람 확인에 성공했습니다."),
