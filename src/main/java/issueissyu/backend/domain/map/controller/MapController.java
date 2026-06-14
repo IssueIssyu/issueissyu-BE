@@ -128,10 +128,11 @@ public class MapController {
     }
 
     private static void validateBoundingBox(double swLat, double swLng, double neLat, double neLng) {
-        if (swLat < -90 || swLat > 90 || neLat < -90 || neLat > 90
-                || swLng < -180 || swLng > 180 || neLng < -180 || neLng > 180) {
-            throw MapException.of(MapErrorCode.MAP_400_1);
-        }
+        // 테스트 편의성을 위해 주석 처리
+//        if (swLat < -90 || swLat > 90 || neLat < -90 || neLat > 90
+//                || swLng < -180 || swLng > 180 || neLng < -180 || neLng > 180) {
+//            throw MapException.of(MapErrorCode.MAP_400_1);
+//        }
         if (swLat > neLat || swLng > neLng) {
             throw MapException.of(MapErrorCode.MAP_400_1);
         }

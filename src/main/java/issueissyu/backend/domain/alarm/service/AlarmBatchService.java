@@ -3,12 +3,15 @@ package issueissyu.backend.domain.alarm.service;
 import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
 import issueissyu.backend.domain.alarm.enums.AlarmPushType;
 import issueissyu.backend.domain.alarm.entity.EventAlarm;
+import issueissyu.backend.domain.alarm.entity.HotAlarm;
 import issueissyu.backend.domain.alarm.entity.StoreAlarm;
 import issueissyu.backend.domain.alarm.entity.UserAlarm;
 import issueissyu.backend.domain.alarm.repository.EventAlarmRepository;
+import issueissyu.backend.domain.alarm.repository.HotAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.StoreAlarmRepository;
 import issueissyu.backend.domain.alarm.repository.UserAlarmRepository;
 import issueissyu.backend.domain.alarm.service.command.EventAlarmPrepared;
+import issueissyu.backend.domain.alarm.service.command.HotAlarmPrepared;
 import issueissyu.backend.domain.alarm.service.command.StoreAlarmPrepared;
 import issueissyu.backend.domain.user.entity.User;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ public class AlarmBatchService {
     private final UserAlarmRepository userAlarmRepository;
     private final EventAlarmRepository eventAlarmRepository;
     private final StoreAlarmRepository storeAlarmRepository;
+    private final HotAlarmRepository hotAlarmRepository;
 
     @Transactional
     public List<FcmNotificationPayload> persistEventAlarms(
@@ -152,5 +156,71 @@ public class AlarmBatchService {
                 recipient.getPushToken(),
                 STORE_ALARM_TITLE,
                 body);
+    }
+
+    @Transactional
+    public List<FcmNotificationPayload> persistHotAlarms(
+            List<User> recipients, String title, String body, Long pinId, Long communityId) {
+        if (recipients.isEmpty()) {
+            return List.of();
+        }
+
+        List<UserAlarm> userAlarms = new ArrayList<>(recipients.size());
+        for (User recipient : recipients) {
+            userAlarms.add(UserAlarm.builder().user(recipient).build());
+        }
+        userAlarms = userAlarmRepository.saveAll(userAlarms);
+
+        List<HotAlarm> hotAlarms = new ArrayList<>(recipients.size());
+        for (int i = 0; i < recipients.size(); i++) {
+            hotAlarms.add(HotAlarm.builder()
+                    .userAlarm(userAlarms.get(i))
+                    .hotAlarmTitle(title)
+                    .hotAlarmBody(body)
+                    .hotPinId(pinId)
+                    .hotCommunityId(communityId)
+                    .build());
+        }
+        hotAlarms = hotAlarmRepository.saveAll(hotAlarms);
+
+        List<FcmNotificationPayload> payloads = new ArrayList<>(recipients.size());
+        for (int i = 0; i < recipients.size(); i++) {
+            User user = recipients.get(i);
+            HotAlarm hotAlarm = hotAlarms.get(i);
+            payloads.add(buildHotPayload(user.getPushToken(), title, body, hotAlarm, communityId));
+        }
+        return payloads;
+    }
+
+    @Transactional
+    public HotAlarmPrepared persistHotAlarm(
+            User recipient, String title, String body, Long pinId, Long communityId) {
+        UserAlarm userAlarm = userAlarmRepository.save(UserAlarm.builder().user(recipient).build());
+
+        HotAlarm hotAlarm = hotAlarmRepository.save(
+                HotAlarm.builder()
+                        .userAlarm(userAlarm)
+                        .hotAlarmTitle(title)
+                        .hotAlarmBody(body)
+                        .hotPinId(pinId)
+                        .hotCommunityId(communityId)
+                        .build());
+
+        return new HotAlarmPrepared(
+                hotAlarm.getHotAlarmId(),
+                pinId,
+                communityId,
+                recipient.getPushToken(),
+                title,
+                body);
+    }
+
+    private static FcmNotificationPayload buildHotPayload(
+            String pushToken, String title, String body, HotAlarm hotAlarm, Long communityId) {
+        return FcmNotificationPayload.builder(pushToken, title, body)
+                .pushType(AlarmPushType.PIN_POPULAR)
+                .put("hotAlarmId", String.valueOf(hotAlarm.getHotAlarmId()))
+                .put("communityId", String.valueOf(communityId))
+                .build();
     }
 }
