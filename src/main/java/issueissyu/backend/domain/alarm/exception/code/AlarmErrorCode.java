@@ -15,7 +15,9 @@ public enum AlarmErrorCode implements BaseErrorCode {
     LIKE_ALARM_403(HttpStatus.FORBIDDEN, "LIKE_ALARM_403", "해당 사용자는 푸시 알림 수신을 제한해두었습니다."),
     LIKE_ALARM_400(HttpStatus.BAD_REQUEST, "LIKE_ALARM_400", "푸시 알림 전송에 실패했습니다."),
 
-    EVENT_ALARM_404(HttpStatus.NOT_FOUND, "EVENT_ALARM_404", "존재하지 않는 이벤트 알람입니다."),
+    EVENT_ALARM_404_1(HttpStatus.NOT_FOUND, "EVENT_ALARM_404_1", "동네 인증 정보가 없습니다."),
+    EVENT_ALARM_404_2(HttpStatus.NOT_FOUND, "EVENT_ALARM_404_2", "알람 대상 축제가 없습니다."),
+    EVENT_ALARM_404_3(HttpStatus.NOT_FOUND, "EVENT_ALARM_404_3", "축제 핀에 연결된 커뮤니티가 없습니다."),
     EVENT_ALARM_403(HttpStatus.FORBIDDEN, "EVENT_ALARM_403", "해당 사용자는 푸시 알림 수신을 제한해두었습니다."),
     EVENT_ALARM_400(HttpStatus.BAD_REQUEST, "EVENT_ALARM_400", "푸시 알림 전송에 실패했습니다."),
 
