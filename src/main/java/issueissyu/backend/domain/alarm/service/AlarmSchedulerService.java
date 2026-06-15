@@ -17,21 +17,21 @@ public class AlarmSchedulerService {
 
     // 기존 설정 시각
     //@Scheduled(cron = "0 0 13 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 20 21 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 30 21 * * *", zone = "Asia/Seoul")
     public void sendEventAlarms() {
         regionalAlarmCommandService.dispatchScheduledEventAlarms();
     }
 
     // 기존 설정 시각
     //@Scheduled(cron = "0 0 10 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 20 21 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 30 21 * * *", zone = "Asia/Seoul")
     public void sendStoreAlarms() {
         regionalAlarmCommandService.dispatchScheduledStoreAlarms();
     }
 
     // 기존 설정 시각
     //@Scheduled(cron = "0 0 18 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 20 21 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 30 21 * * *", zone = "Asia/Seoul")
     public void sendHotAlarms() {
         hotAlarmCommandService.dispatchScheduledHotAlarms();
     }
