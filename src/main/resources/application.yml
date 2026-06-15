@@ -36,6 +36,7 @@ cloud:
     region: ${AWS_REGION}
     s3:
       bucket: ${AWS_BUCKET}
+      cdn-url: ${AWS_CDN_URL:}
       path:
         location: user/
 server:
