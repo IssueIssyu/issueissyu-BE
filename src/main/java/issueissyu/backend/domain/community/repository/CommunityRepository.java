@@ -141,11 +141,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             join fetch c.pin p
             join fetch p.user
             where c.communityType in :types
-              and exists (
-                    select 1
-                    from CardnewsImageS3 ci
-                    where ci.community = c
-              )
+              and c.cardnewsImages is not empty
               and (
                     cast(:cursorCreatedAt as LocalDateTime) is null
                     or c.createdAt < :cursorCreatedAt
