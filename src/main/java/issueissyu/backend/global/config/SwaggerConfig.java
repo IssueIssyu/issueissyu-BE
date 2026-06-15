@@ -36,8 +36,8 @@ public class SwaggerConfig {
                 .description("IssueIssyu Local Server");
 
         Server httpServer = new Server()
-                .url("https://spring.issueissyu-ai.cloud")
-                .description("IssueIssyu Develop Server");
+                .url("http://issueissyu-backend-prod-env.eba-x2fpm3aq.ap-northeast-2.elasticbeanstalk.com")
+                .description("IssueIssyu Prod Server");
 
 
         return new OpenAPI()
