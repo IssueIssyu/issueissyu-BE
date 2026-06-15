@@ -82,6 +82,11 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
             CommunityType.CARDNEWS
     );
 
+    private static final List<CommunityType> CARDNEWS_FEED_SOURCE_TYPES = List.of(
+            CommunityType.POLICY,
+            CommunityType.CONTEST
+    );
+
     // HOT 인기 점수 계산용
     private static final int HOT_DAYS = 7;
     // 홈에서 사용
@@ -149,6 +154,26 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
         List<Community> pageItems = hasNext ? communities.subList(0, size) : communities;
 
         List<CommunityFeedItemResDTO> content = toFeedItems(pageItems);
+        if (tab == CommunityTab.CARDNEWS) {
+            content = content.stream()
+                    .map(item -> new CommunityFeedItemResDTO(
+                            CommunityType.CARDNEWS,
+                            item.communityId(),
+                            item.pinId(),
+                            item.title(),
+                            item.content(),
+                            item.thumbnailUrl(),
+                            item.writerNickname(),
+                            item.writerProfileUrl(),
+                            item.detailAddress(),
+                            item.viewCount(),
+                            item.likeCount(),
+                            item.discount(),
+                            item.eventStartTime(),
+                            item.eventEndTime()
+                    ))
+                    .toList();
+        }
 
         String nextCursor = hasNext
                 ? CursorKey.from(pageItems.get(pageItems.size() - 1)).encode()
@@ -272,8 +297,8 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
                     limit
             );
 
-            case CARDNEWS -> communityRepository.findFeedByType(
-                    CommunityType.CARDNEWS,
+            case CARDNEWS -> communityRepository.findCardnewsFeedByTypesWithImages(
+                    CARDNEWS_FEED_SOURCE_TYPES,
                     cursorKey.createdAt(),
                     cursorKey.communityId(),
                     limit
