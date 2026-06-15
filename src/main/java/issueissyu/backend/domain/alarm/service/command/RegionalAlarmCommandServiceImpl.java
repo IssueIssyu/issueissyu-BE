@@ -97,7 +97,7 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
             throw AlarmException.of(AlarmErrorCode.EVENT_ALARM_403);
         }
 
-        Long locationId = resolveUserLocationId(recipient, AlarmErrorCode.EVENT_ALARM_404);
+        Long locationId = resolveUserLocationId(recipient, AlarmErrorCode.EVENT_ALARM_404_1);
         LocalDateTime[] window = alarmTimeWindow();
 
         EventPin eventPin = eventPinRepository
@@ -105,11 +105,11 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
                         PinType.FESTIVAL, locationId, window[0], window[1])
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.EVENT_ALARM_404));
+                .orElseThrow(() -> AlarmException.of(AlarmErrorCode.EVENT_ALARM_404_2));
 
         Long pinId = eventPin.getPin().getPinId();
         String body = String.format(EVENT_ALARM_BODY_TEMPLATE, eventPin.getPin().getPinTitle());
-        Long communityId = resolveCommunityIdOrThrow(pinId, AlarmErrorCode.EVENT_ALARM_404);
+        Long communityId = resolveCommunityIdOrThrow(pinId, AlarmErrorCode.EVENT_ALARM_404_3);
 
         return alarmBatchService.persistEventAlarm(recipient, body, pinId, communityId);
     }
