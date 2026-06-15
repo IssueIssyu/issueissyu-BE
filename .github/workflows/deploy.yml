@@ -1,4 +1,4 @@
-name: Issueissyu Dev CI/CD
+name: Issueissyu Prod CI/CD
 
 on:
   pull_request:
@@ -84,7 +84,7 @@ jobs:
       - name: Save current version
         run: |
           CURRENT=$(aws elasticbeanstalk describe-environments \
-            --environment-names issueissyu-backend-dev-env-2 \
+            --environment-names issueissyu-backend-prod-env \
             --query 'Environments[0].VersionLabel' \
             --output text)
           echo "PREVIOUS_VERSION=$CURRENT" >> $GITHUB_ENV
@@ -99,8 +99,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: 'issueissyu-backend-dev'
-          environment_name: 'issueissyu-backend-dev-env-2'
+          application_name: 'issueissyu-backend-prod'
+          environment_name: 'issueissyu-backend-prod-env'
           region: ap-northeast-2
           version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
           version_description: ${{ github.ref_name }}@${{ github.sha }}
@@ -114,7 +114,12 @@ jobs:
         id: smoke_test
         run: |
           MAX_RETRY=3
-          HEALTH_URL="http://issueissyu-backend-dev-env-2.eba-uim2fupp.ap-northeast-2.elasticbeanstalk.com/health"
+          CNAME=$(aws elasticbeanstalk describe-environments \
+            --environment-names issueissyu-backend-prod-env \
+            --query 'Environments[0].CNAME' \
+            --output text)
+          HEALTH_URL="http://${CNAME}/health"
+          echo "HEALTH_URL=$HEALTH_URL"
 
           for attempt in $(seq 1 $MAX_RETRY); do
             echo "=== 스모크 테스트 시도 $attempt / $MAX_RETRY ==="
@@ -136,6 +141,10 @@ jobs:
 
           echo "최대 재시도 횟수($MAX_RETRY) 초과 - 배포 실패"
           exit 1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-2
 
       # 스모크 테스트 최종 실패 시 이전 버전으로 롤백
       - name: Rollback on failure
@@ -143,7 +152,7 @@ jobs:
         run: |
           echo "배포 실패 - ${{ env.PREVIOUS_VERSION }} 으로 롤백"
           aws elasticbeanstalk update-environment \
-            --environment-name issueissyu-backend-dev-env-2 \
+            --environment-name issueissyu-backend-prod-env \
             --version-label ${{ env.PREVIOUS_VERSION }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
