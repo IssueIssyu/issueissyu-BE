@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class AmazonConfig {
 
     private final String bucket;
+    private final String cdnUrl;
     private final String accessKey;
     private final String secretKey;
     private final String region;
@@ -21,12 +22,14 @@ public class AmazonConfig {
 
     public AmazonConfig(
             @Value("${cloud.aws.s3.bucket}") String bucket,
+            @Value("${cloud.aws.s3.cdn-url}") String cdnUrl,
             @Value("${cloud.aws.credentials.access-key}") String accessKey,
             @Value("${cloud.aws.credentials.secret-key}") String secretKey,
             @Value("${cloud.aws.region}") String region,
             @Value("${cloud.aws.s3.path.location}") String locationPath
     ) {
         this.bucket = bucket;
+        this.cdnUrl = cdnUrl;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.region = region;
