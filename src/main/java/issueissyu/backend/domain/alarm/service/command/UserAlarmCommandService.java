@@ -2,8 +2,8 @@ package issueissyu.backend.domain.alarm.service.command;
 
 import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListResDTO;
-import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.dto.res.HotAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
 
@@ -17,7 +17,7 @@ public interface UserAlarmCommandService {
 
     StoreAlarmSendResDTO sendStoreAlarm(String uid);
 
-    AlarmMessageResDTO sendHotAlarm(String uid);
+    HotAlarmSendResDTO sendHotAlarm(String uid);
 
     AlarmConfirmResDTO confirmAlarm(String uid, Long alarmId);
 

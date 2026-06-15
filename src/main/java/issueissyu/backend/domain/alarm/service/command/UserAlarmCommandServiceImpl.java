@@ -4,8 +4,8 @@ import issueissyu.backend.domain.alarm.dto.FcmNotificationPayload;
 import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListResDTO;
-import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.dto.res.HotAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.enums.AlarmPushType;
@@ -107,7 +107,7 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public AlarmMessageResDTO sendHotAlarm(String uid) {
+    public HotAlarmSendResDTO sendHotAlarm(String uid) {
         HotAlarmPrepared prepared = hotAlarmCommandService.sendHotAlarmToUser(uid);
 
         String messageId = null;
@@ -120,7 +120,8 @@ public class UserAlarmCommandServiceImpl implements UserAlarmCommandService {
             }
         }
 
-        return new AlarmMessageResDTO(messageId);
+        return new HotAlarmSendResDTO(
+                prepared.hotAlarmId(), messageId, prepared.pinId(), prepared.communityId());
     }
 
     @Override
