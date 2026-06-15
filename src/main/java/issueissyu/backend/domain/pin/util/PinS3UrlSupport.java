@@ -22,12 +22,14 @@ public final class PinS3UrlSupport {
         if (url == null || url.isBlank()) {
             throw PinException.of(violation);
         }
-        String cdnPrefix =
-                config.getCdnUrl().endsWith("/") ? config.getCdnUrl() : config.getCdnUrl() + "/";
+        String cdnUrl = config.getCdnUrl();
+        String cdnPrefix = (cdnUrl != null && !cdnUrl.isBlank())
+                ? (cdnUrl.endsWith("/") ? cdnUrl : cdnUrl + "/")
+                : null;
         String prefix =
                 "https://" + config.getBucket() + ".s3." + config.getRegion() + ".amazonaws.com/";
         String encoded;
-        if (url.startsWith(cdnPrefix)) {
+        if (cdnPrefix != null && url.startsWith(cdnPrefix)) {
             encoded = url.substring(cdnPrefix.length());
         } else if (url.startsWith(prefix)) {
             encoded = url.substring(prefix.length());
