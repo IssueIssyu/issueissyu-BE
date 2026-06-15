@@ -130,6 +130,33 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     );
 
     /**
+     * CARDNEWS 탭 피드 조회.
+     *
+     * 정책/공모전 중 카드뉴스 이미지가 연결된 커뮤니티만 조회한다.
+     * 지역 조건은 사용하지 않는다.
+     */
+    @Query("""
+            select c
+            from Community c
+            join fetch c.pin p
+            join fetch p.user
+            where c.communityType in :types
+              and c.cardnewsImages is not empty
+              and (
+                    cast(:cursorCreatedAt as LocalDateTime) is null
+                    or c.createdAt < :cursorCreatedAt
+                    or (c.createdAt = :cursorCreatedAt and c.communityId < :cursorId)
+              )
+            order by c.createdAt desc, c.communityId desc
+            """)
+    List<Community> findCardnewsFeedByTypesWithImages(
+            @Param("types") Collection<CommunityType> types,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable
+    );
+
+    /**
      * ALL 피드 조회.
      *
      * 지역 기반 타입:
