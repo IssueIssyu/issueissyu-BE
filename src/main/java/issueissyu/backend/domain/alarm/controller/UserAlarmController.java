@@ -5,8 +5,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.alarm.dto.req.PushTokenReqDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmConfirmResDTO;
 import issueissyu.backend.domain.alarm.dto.res.AlarmListItemResDTO;
-import issueissyu.backend.domain.alarm.dto.res.AlarmMessageResDTO;
 import issueissyu.backend.domain.alarm.dto.res.EventAlarmSendResDTO;
+import issueissyu.backend.domain.alarm.dto.res.HotAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.LikeAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.dto.res.StoreAlarmSendResDTO;
 import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
@@ -119,11 +119,11 @@ public class UserAlarmController {
                     최근 7일 게시글 중 HOT 피드와 동일한 기준으로 선정하며, 제목·본문은 서버에서 고정값으로 생성합니다.
                     user.hot_alarm_active 가 false 이면 HOT_ALARM_403 을 반환합니다.
                     알람 클릭 시 GET /api/communities/{communityId} 로 이동합니다.
-                    매일 오후 6시 스케줄러로도 동일 기준의 알람이 일괄 발송됩니다.
+                    매일 오후 6시(Asia/Seoul) 스케줄러로도 동일 기준의 알람이 일괄 발송됩니다.
                     """)
     @PostMapping("/hot")
-    public ApiResponse<AlarmMessageResDTO> sendHotAlarm(@AuthenticationPrincipal String uid) {
-        AlarmMessageResDTO result = userAlarmCommandService.sendHotAlarm(uid);
+    public ApiResponse<HotAlarmSendResDTO> sendHotAlarm(@AuthenticationPrincipal String uid) {
+        HotAlarmSendResDTO result = userAlarmCommandService.sendHotAlarm(uid);
         return ApiResponse.onSuccess(AlarmSuccessCode.HOT_ALARM_200, result);
     }
 }
