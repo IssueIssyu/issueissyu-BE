@@ -46,7 +46,7 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
             INNER JOIN location l ON pl.location_id = l.location_id
             LEFT JOIN communication_pin cp ON cp.pin_id = p.pin_id
             LEFT JOIN event_pin ep ON ep.pin_id = p.pin_id
-            WHERE p.created_at >= NOW() - INTERVAL '1 year'
+            WHERE p.created_at >= (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 year'
               AND ST_Within(
                     pl.pin_point,
                     ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
@@ -55,10 +55,10 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                     p.pin_type = 'ISSUE'
                     OR (p.pin_type = 'COMMUNICATION'
                         AND cp.communication_pin_id IS NOT NULL
-                        AND COALESCE(cp.updated_at, cp.created_at) >= NOW() - INTERVAL '1 month')
+                        AND COALESCE(cp.updated_at, cp.created_at) >= (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')
                     OR (p.pin_type IN ('STORE', 'FESTIVAL')
                         AND ep.event_pin_id IS NOT NULL
-                        AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
+                        AND (NOW() AT TIME ZONE 'Asia/Seoul') BETWEEN ep.event_start_time AND ep.event_end_time)
                   )
               AND (:pinTypeFilter IS NULL OR p.pin_type = :pinTypeFilter)
             """, nativeQuery = true)
@@ -85,7 +85,7 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
             INNER JOIN location l ON pl.location_id = l.location_id
             LEFT JOIN communication_pin cp ON cp.pin_id = p.pin_id
             LEFT JOIN event_pin ep ON ep.pin_id = p.pin_id
-            WHERE p.created_at >= NOW() - INTERVAL '1 year'
+            WHERE p.created_at >= (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 year'
               AND ST_Within(
                     pl.pin_point,
                     ST_MakeEnvelope(:swLng, :swLat, :neLng, :neLat, 4326)
@@ -94,10 +94,10 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                     p.pin_type = 'ISSUE'
                     OR (p.pin_type = 'COMMUNICATION'
                         AND cp.communication_pin_id IS NOT NULL
-                        AND COALESCE(cp.updated_at, cp.created_at) >= NOW() - INTERVAL '1 month')
+                        AND COALESCE(cp.updated_at, cp.created_at) >= (NOW() AT TIME ZONE 'Asia/Seoul') - INTERVAL '1 month')
                     OR (p.pin_type IN ('STORE', 'FESTIVAL')
                         AND ep.event_pin_id IS NOT NULL
-                        AND NOW() BETWEEN ep.event_start_time AND ep.event_end_time)
+                        AND (NOW() AT TIME ZONE 'Asia/Seoul') BETWEEN ep.event_start_time AND ep.event_end_time)
                   )
               AND (:pinTypeFilter IS NULL OR p.pin_type = :pinTypeFilter)
             ORDER BY clusterLat, clusterLng, p.pin_id

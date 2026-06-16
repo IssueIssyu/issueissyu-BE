@@ -34,12 +34,14 @@ public class CommunityHotQueryServiceImpl implements CommunityHotQueryService {
 
     @Override
     public Optional<HotCommunityTarget> findTopHotInRegion(Long locationId) {
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, 1);
 
         List<Community> communities = communityRepository.findHotFeedByRegionOrGlobalTypes(
                 REGION_BASED_FEED_TYPES,
                 GLOBAL_FEED_TYPES,
+                now,
                 locationId,
                 since,
                 null,
