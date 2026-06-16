@@ -47,6 +47,15 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             join fetch c.pin p
             join fetch p.user
             where c.communityType = :type
+              and (
+                    :type <> issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                    or exists (
+                        select 1
+                        from EventPin ep
+                        where ep.pin = p
+                          and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                    )
+              )
               and exists (
                     select 1
                     from PinLocation pl
@@ -80,6 +89,18 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             join fetch c.pin p
             join fetch p.user
             where c.communityType in :types
+              and (
+                    c.communityType not in (
+                        issueissyu.backend.domain.community.enums.CommunityType.STORE,
+                        issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                    )
+                    or exists (
+                        select 1
+                        from EventPin ep
+                        where ep.pin = p
+                          and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                    )
+              )
               and exists (
                     select 1
                     from PinLocation pl
@@ -175,6 +196,18 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             where (
                     (
                         c.communityType in :regionTypes
+                        and (
+                            c.communityType not in (
+                                issueissyu.backend.domain.community.enums.CommunityType.STORE,
+                                issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                            )
+                            or exists (
+                                select 1
+                                from EventPin ep
+                                where ep.pin = p
+                                  and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                            )
+                        )
                         and exists (
                             select 1
                             from PinLocation pl
@@ -221,6 +254,18 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             where (
                     (
                         c.communityType in :regionTypes
+                        and (
+                            c.communityType not in (
+                                issueissyu.backend.domain.community.enums.CommunityType.STORE,
+                                issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                            )
+                            or exists (
+                                select 1
+                                from EventPin ep
+                                where ep.pin = p
+                                  and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                            )
+                        )
                         and exists (
                             select 1
                             from PinLocation pl
