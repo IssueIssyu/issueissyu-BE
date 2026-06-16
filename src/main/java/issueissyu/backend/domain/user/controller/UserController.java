@@ -8,12 +8,14 @@ import issueissyu.backend.domain.user.dto.req.NicknameChangeReqDTO;
 import issueissyu.backend.domain.user.dto.res.UserAlarmStateResDTO;
 import issueissyu.backend.domain.user.dto.res.UserAlarmToggleResDTO;
 import issueissyu.backend.domain.user.dto.res.UserMyPinsResDTO;
+import issueissyu.backend.domain.user.dto.res.UserMySolversResDTO;
 import issueissyu.backend.domain.user.enums.UserAlarmType;
 import issueissyu.backend.domain.alarm.exception.code.AlarmSuccessCode;
 import issueissyu.backend.domain.user.exception.code.UserSuccessCode;
 import issueissyu.backend.domain.user.service.command.UserCommandService;
 import issueissyu.backend.domain.user.service.query.UserAlarmStateQueryService;
 import issueissyu.backend.domain.user.service.query.UserPinQueryService;
+import issueissyu.backend.domain.user.service.query.UserSolverQueryService;
 import issueissyu.backend.global.api.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserPinQueryService userPinQueryService;
+    private final UserSolverQueryService userSolverQueryService;
     private final UserAlarmStateQueryService userAlarmStateQueryService;
     private final UserCommandService userCommandService;
 
@@ -86,5 +89,18 @@ public class UserController {
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String cursor) {
         return ApiResponse.onSuccess(UserSuccessCode.USER_PIN_200, userPinQueryService.getMyPins(uid, size, cursor));
+    }
+
+    @Operation(
+            summary = "내 시민해결사 참여 핀 조회",
+            description =
+                    "로그인한 사용자가 시민해결사(EN_ROUTE)로 참여 중인 핀을 problem_solver.created_at 내림차순으로 커서 페이징 조회합니다.")
+    @GetMapping("/me/solvers")
+    public ApiResponse<UserMySolversResDTO> getMySolvers(
+            @AuthenticationPrincipal String uid,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String cursor) {
+        return ApiResponse.onSuccess(
+                UserSuccessCode.USER_SOLVER_200, userSolverQueryService.getMySolvers(uid, size, cursor));
     }
 }

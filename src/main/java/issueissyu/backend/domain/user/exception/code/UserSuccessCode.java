@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum UserSuccessCode implements BaseSuccessCode {
 
     USER_PIN_200(HttpStatus.OK, "USER_PIN_200", "내 핀 조회에 성공했습니다."),
+    USER_SOLVER_200(HttpStatus.OK, "USER_SOLVER_200", "내 시민해결사 조회에 성공했습니다."),
     USER_NICKNAME_200(HttpStatus.OK, "USER_NICKNAME_200", "닉네임 변경에 성공했습니다."),
     USER_ALARM_200_1(HttpStatus.OK, "USER_ALARM_200_1", "핀 좋아요 알람 비/활성화에 성공했습니다."),
     USER_ALARM_200_2(HttpStatus.OK, "USER_ALARM_200_2", "이벤트 알람 비/활성화에 성공했습니다."),
