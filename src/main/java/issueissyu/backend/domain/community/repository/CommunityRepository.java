@@ -48,7 +48,10 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             join fetch p.user
             where c.communityType = :type
               and (
-                    :type <> issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                    :type not in (
+                        issueissyu.backend.domain.community.enums.CommunityType.STORE,
+                        issueissyu.backend.domain.community.enums.CommunityType.FESTIVAL
+                    )
                     or exists (
                         select 1
                         from EventPin ep
