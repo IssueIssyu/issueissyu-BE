@@ -37,7 +37,9 @@ public class UserSolverQueryServiceImpl implements UserSolverQueryService {
     public UserMySolversResDTO getMySolvers(String uid, Integer size, String cursor) {
         int pageSize = resolveSize(size);
 
-        userRepository.findById(uid).orElseThrow(() -> GeneralException.of(GeneralErrorCode.USER_NOT_FOUND));
+        if (!userRepository.existsById(uid)) {
+            throw GeneralException.of(GeneralErrorCode.USER_NOT_FOUND);
+        }
 
         boolean applyCursor = StringUtils.hasText(cursor);
         LocalDateTime cursorCreatedAt = CURSOR_DUMMY_TIME;
