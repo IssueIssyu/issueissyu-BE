@@ -85,7 +85,7 @@ public class UserAlarmController {
             description =
                     """
                     동네 인증 지역의 축제(FESTIVAL) 핀에 대한 푸시 알람을 요청자에게 전송합니다.
-                    event_start_time 이 현재 시각 ±12시간 이내인 핀만 대상이며, 제목·본문은 서버에서 고정값으로 생성합니다.
+                    event_start_time 이 현재 시각 24시간 이내인 핀만 대상이며, 제목·본문은 서버에서 고정값으로 생성합니다.
                     user.event_alarm_active 가 false 이면 EVENT_ALARM_403 을 반환합니다.
                     EVENT_ALARM_404_1(동네 인증 없음), EVENT_ALARM_404_2(대상 축제 없음), EVENT_ALARM_404_3(커뮤니티 없음).
                     알람 클릭 시 GET /api/communities/{communityId} 로 이동합니다.
@@ -101,7 +101,7 @@ public class UserAlarmController {
             description =
                     """
                     동네 인증 지역의 가게(STORE) 핀에 대한 푸시 알람을 요청자에게 전송합니다.
-                    event_start_time 이 현재 시각 ±12시간 이내인 핀만 대상이며, 제목·본문은 서버에서 고정값으로 생성합니다.
+                    event_start_time 이 현재 시각 24시간 이내인 핀만 대상이며, 제목·본문은 서버에서 고정값으로 생성합니다.
                     user.store_alarm_active 가 false 이면 STORE_ALARM_403 을 반환합니다.
                     알람 클릭 시 GET /api/communities/{communityId} 로 이동합니다.
                     """)
