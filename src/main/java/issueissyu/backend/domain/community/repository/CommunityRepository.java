@@ -56,7 +56,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                         select 1
                         from EventPin ep
                         where ep.pin = p
-                          and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                          and :now between ep.eventStartTime and ep.eventEndTime
                     )
               )
               and exists (
@@ -74,6 +74,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypeAndRegion(
             @Param("type") CommunityType type,
+            @Param("now") LocalDateTime now,
             @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
@@ -101,7 +102,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                         select 1
                         from EventPin ep
                         where ep.pin = p
-                          and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                          and :now between ep.eventStartTime and ep.eventEndTime
                     )
               )
               and exists (
@@ -119,6 +120,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
             """)
     List<Community> findFeedByTypesAndRegion(
             @Param("types") Collection<CommunityType> types,
+            @Param("now") LocalDateTime now,
             @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
@@ -208,7 +210,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                                 select 1
                                 from EventPin ep
                                 where ep.pin = p
-                                  and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                                  and :now between ep.eventStartTime and ep.eventEndTime
                             )
                         )
                         and exists (
@@ -230,6 +232,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     List<Community> findFeedByRegionOrGlobalTypes(
             @Param("regionTypes") Collection<CommunityType> regionTypes,
             @Param("globalTypes") Collection<CommunityType> globalTypes,
+            @Param("now") LocalDateTime now,
             @Param("locationId") Long locationId,
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
@@ -266,7 +269,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                                 select 1
                                 from EventPin ep
                                 where ep.pin = p
-                                  and CURRENT_TIMESTAMP between ep.eventStartTime and ep.eventEndTime
+                                  and :now between ep.eventStartTime and ep.eventEndTime
                             )
                         )
                         and exists (
@@ -289,6 +292,7 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     List<Community> findHotFeedByRegionOrGlobalTypes(
             @Param("regionTypes") Collection<CommunityType> regionTypes,
             @Param("globalTypes") Collection<CommunityType> globalTypes,
+            @Param("now") LocalDateTime now,
             @Param("locationId") Long locationId,
             @Param("since") LocalDateTime since,
             @Param("cursorPopularity") Double cursorPopularity,
