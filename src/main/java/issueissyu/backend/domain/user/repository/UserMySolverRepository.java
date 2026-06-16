@@ -12,12 +12,12 @@ public interface UserMySolverRepository extends JpaRepository<ProblemSolver, Lon
     @Query(
             value =
                     """
-                    SELECT p.pin_id AS pinId,
-                           p.pin_title AS pinTitle,
-                           pl.detail_address AS pinDetailAddress,
-                           ip.issue_pin_state AS issuePinState,
-                           ps.created_at AS createdAt,
-                           ps.problem_solver_id AS problemSolverId
+                    SELECT p.pin_id AS "pinId",
+                           p.pin_title AS "pinTitle",
+                           pl.detail_address AS "pinDetailAddress",
+                           ip.issue_pin_state AS "issuePinState",
+                           ps.created_at AS "createdAt",
+                           ps.problem_solver_id AS "problemSolverId"
                     FROM problem_solver ps
                     JOIN issue_pin ip ON ip.issue_pin_id = ps.issue_pin_id
                     JOIN pin p ON p.pin_id = ip.pin_id
