@@ -249,7 +249,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     private List<Community> fetchCommunities(CommunityTab tab, Long locationId, CursorKey cursorKey) {
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
 
         return switch (tab) {
             case ISSUE -> communityRepository.findFeedByTypeAndRegion(
@@ -350,7 +350,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private List<CommunityFeedItemResDTO> fetchStorePromotions(Long locationId, int storeSize) {
         int resolvedSize = Math.min(Math.max(1, storeSize), MAX_STORE_SIZE);
         Pageable limit = PageRequest.of(0, resolvedSize);
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
 
         List<Community> communities = communityRepository.findFeedByTypeAndRegion(
                 CommunityType.STORE,
@@ -365,7 +365,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     }
 
     private List<CommunityFeedItemResDTO> fetchHotPreviews(Long locationId) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, HOT_PREVIEW_SIZE);
 
@@ -384,7 +384,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
     private CommunityCursorPageResDTO fetchRecentNews(Long locationId, String recentCursor, int recentSize) {
         CursorKey cursorKey = CursorKey.parse(recentCursor, recentSize);
         Pageable limit = PageRequest.of(0, sizeWithLookahead(cursorKey.requestSize()));
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
 
         List<Community> communities = communityRepository.findFeedByTypesAndRegion(
                 REGION_BASED_FEED_TYPES,
@@ -727,7 +727,7 @@ public class CommunityQueryServiceImpl implements CommunityQueryService {
 
     private CommunityCursorPageResDTO getHotFeed(Long locationId, String cursor, int size) {
         HotCursorKey cursorKey = HotCursorKey.parse(cursor, size);
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, sizeWithLookahead(size));
 

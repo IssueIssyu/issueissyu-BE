@@ -34,7 +34,7 @@ public class CommunityHotQueryServiceImpl implements CommunityHotQueryService {
 
     @Override
     public Optional<HotCommunityTarget> findTopHotInRegion(Long locationId) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
         LocalDateTime since = LocalDateTime.now().minusDays(HOT_DAYS);
         Pageable limit = PageRequest.of(0, 1);
 
