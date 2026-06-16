@@ -183,10 +183,9 @@ public class RegionalAlarmCommandServiceImpl implements RegionalAlarmCommandServ
         fcmService.sendNotificationsBatchAsync(payloads);
         log.info("[RegionalAlarm] {} FCM batch dispatched count={}", alarmType, payloads.size());
     }
-
     private static LocalDateTime[] alarmTimeWindow() {
-        LocalDateTime now = LocalDateTime.now();
-        return new LocalDateTime[] {now.minusHours(12), now.plusHours(12)};
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Seoul"));
+        return new LocalDateTime[] {now.minusHours(24), now};
     }
 
     private User findUser(String uid) {
