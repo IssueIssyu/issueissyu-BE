@@ -2,6 +2,7 @@ package issueissyu.backend.domain.issue.repository;
 
 import issueissyu.backend.domain.issue.entity.ProblemSolverImage;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,6 +12,9 @@ import org.springframework.data.repository.query.Param;
 public interface ProblemSolverImageRepository extends JpaRepository<ProblemSolverImage, Long> {
 
     Optional<ProblemSolverImage> findByProblemSolver_ProblemSolverId(Long problemSolverId);
+
+    @Query("SELECT psi FROM ProblemSolverImage psi WHERE psi.problemSolver.problemSolverId IN :ids")
+    List<ProblemSolverImage> findAllByProblemSolverIdIn(@Param("ids") Collection<Long> ids);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM ProblemSolverImage psi WHERE psi.problemSolver.problemSolverId IN :ids")

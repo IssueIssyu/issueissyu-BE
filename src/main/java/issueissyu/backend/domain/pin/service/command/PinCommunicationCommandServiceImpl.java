@@ -293,9 +293,17 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         boolean changed = false;
         Set<String> keepUrls = items.stream().map(PinImageItemReqDTO::pinImageUrl).collect(Collectors.toSet());
 
+        // 제거 대상 key를 removeIf 전에 먼저 수집 (orphanRemoval로 DB 삭제되기 전)
+        List<String> removedKeys = pin.getPinImages().stream()
+                .filter(pi -> !keepUrls.contains(pi.getPinS3Url()))
+                .map(PinImage::getPinS3Key)
+                .filter(key -> key != null && !key.isBlank())
+                .toList();
+
         boolean removedAny = pin.getPinImages().removeIf(pi -> !keepUrls.contains(pi.getPinS3Url()));
         if (removedAny) {
             changed = true;
+            removedKeys.forEach(s3Utils::deleteIfNotReserved);
         }
 
         for (PinImageItemReqDTO item : items) {

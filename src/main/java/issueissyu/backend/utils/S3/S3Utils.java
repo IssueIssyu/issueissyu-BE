@@ -13,6 +13,8 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.InputStream;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import static issueissyu.backend.utils.exception.UtilException.Reason.*;
@@ -22,8 +24,33 @@ import static issueissyu.backend.utils.exception.UtilException.Reason.*;
 @RequiredArgsConstructor
 public class S3Utils {
 
+    private static final Set<String> RESERVED_PREFIXES = Set.of("festival", "contest");
+
     private final S3Client s3Client;
     private final AmazonConfig config;
+
+    // festival/contest 등 시스템 전용 prefix를 가진 키인지 확인합니다.
+    // 이 키들은 관리자가 직접 관리하는 고정 에셋이므로 자동 삭제 대상에서 제외합니다.
+    public boolean isReservedKey(String key) {
+        if (key == null || key.isBlank()) return false;
+        String first = key.contains("/") ? key.substring(0, key.indexOf('/')) : key;
+        return RESERVED_PREFIXES.contains(first.toLowerCase(Locale.ROOT));
+    }
+
+    // Reserved key(festival/contest 등)이면 삭제를 건너뛰고,
+    // 그 외에는 S3 객체를 삭제합니다. 삭제 실패는 warn 로그만 남기고 예외를 전파하지 않습니다.
+    public void deleteIfNotReserved(String key) {
+        if (key == null || key.isBlank()) return;
+        if (isReservedKey(key)) {
+            log.debug("S3 delete skipped (reserved key): {}", key);
+            return;
+        }
+        try {
+            deleteFile(key);
+        } catch (Exception e) {
+            log.warn("S3 delete failed for key={}: {}", key, e.getMessage());
+        }
+    }
 
     // 파일 키 생성 (원본 파일명 그대로 사용)
     private String generateFileKey(String fileName) {

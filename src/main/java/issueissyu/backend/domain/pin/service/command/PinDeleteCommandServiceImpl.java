@@ -1,9 +1,11 @@
 package issueissyu.backend.domain.pin.service.command;
 
+import issueissyu.backend.domain.community.entity.CardnewsImageS3;
 import issueissyu.backend.domain.community.repository.CardnewsImageS3Repository;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.alarm.service.command.PinAlarmCleaner;
 import issueissyu.backend.domain.issue.entity.IssuePin;
+import issueissyu.backend.domain.issue.entity.ProblemSolverImage;
 import issueissyu.backend.domain.issue.repository.ComplaintPetitionRepository;
 import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
@@ -11,6 +13,7 @@ import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
 import issueissyu.backend.domain.map.repository.NoticeRepository;
 import issueissyu.backend.domain.pin.entity.Pin;
+import issueissyu.backend.domain.pin.entity.PinImage;
 import issueissyu.backend.domain.pin.enums.PinType;
 import issueissyu.backend.domain.pin.exception.PinException;
 import issueissyu.backend.domain.pin.exception.code.PinErrorCode;
@@ -19,18 +22,23 @@ import issueissyu.backend.domain.pin.repository.CommunicationPinRepository;
 import issueissyu.backend.domain.pin.repository.DeclarationRepository;
 import issueissyu.backend.domain.pin.repository.EventPinRepository;
 import issueissyu.backend.domain.pin.repository.PinEmojiRepository;
+import issueissyu.backend.domain.pin.repository.PinImageRepository;
 import issueissyu.backend.domain.pin.repository.PinLikeRepository;
 import issueissyu.backend.domain.pin.repository.PinRepository;
 import issueissyu.backend.domain.pin.repository.StoreImageRepository;
 import issueissyu.backend.domain.location.repository.PinLocationRepository;
 import issueissyu.backend.domain.user.enums.UserRole;
 import issueissyu.backend.domain.user.repository.UserRepository;
+import issueissyu.backend.utils.S3.S3Utils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -52,9 +60,11 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final CommunicationPinRepository communicationPinRepository;
     private final EventPinRepository eventPinRepository;
     private final StoreImageRepository storeImageRepository;
+    private final PinImageRepository pinImageRepository;
     private final PinLocationRepository pinLocationRepository;
     private final UserRepository userRepository;
     private final PinAlarmCleaner pinAlarmCleaner;
+    private final S3Utils s3Utils;
 
     @Override
     public void deletePin(String uid, Long pinId) {
@@ -93,17 +103,25 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         Long communityId = communityOpt.map(c -> c.getCommunityId()).orElse(null);
         pinAlarmCleaner.deleteByPinId(pinId, communityId);
 
-        communityOpt.ifPresent(
-                c ->
-                        cardnewsImageS3Repository.deleteByCommunity_CommunityId(
-                                c.getCommunityId()));
+        // S3 정리 대상 key 수집 (DB 삭제 전에 미리 조회)
+        List<String> s3KeysToDelete = new ArrayList<>();
+
+        communityOpt.ifPresent(c -> {
+            cardnewsImageS3Repository.findAllByCommunityCommunityId(c.getCommunityId())
+                    .stream()
+                    .map(CardnewsImageS3::getCardnewsImageS3Key)
+                    .forEach(s3KeysToDelete::add);
+            cardnewsImageS3Repository.deleteByCommunity_CommunityId(c.getCommunityId());
+        });
         communityRepository.deleteByPin_PinId(pinId);
 
         issuePinRepository
                 .findByPin_PinId(pinId)
-                .ifPresent(this::deleteIssueAssociations);
+                .ifPresent(ip -> deleteIssueAssociations(ip, s3KeysToDelete));
         issuePinRepository.deleteByPin_PinId(pinId);
 
+        storeImageRepository.findByEventPin_Pin_PinId(pinId)
+                .ifPresent(si -> s3KeysToDelete.add(si.getImageS3Key()));
         storeImageRepository.deleteByEventPin_Pin_PinId(pinId);
         eventPinRepository.deleteByPin_PinId(pinId);
 
@@ -114,16 +132,30 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         pinEmojiRepository.deleteByPin_PinId(pinId);
         communicationPinRepository.deleteByPin_PinId(pinId);
         pinLocationRepository.deleteByPin_PinId(pinId);
+
+        // pin_image는 pinRepository.delete(pin) cascade로 삭제되므로 key를 먼저 수집
+        pinImageRepository.findByPin_PinIdOrderByPinImageIdAsc(pinId)
+                .stream()
+                .map(PinImage::getPinS3Key)
+                .forEach(s3KeysToDelete::add);
+
         pinRepository.delete(pin);
+
+        // DB 삭제 완료 후 S3 객체 일괄 삭제
+        s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
     }
 
-    private void deleteIssueAssociations(IssuePin issuePin) {
+    private void deleteIssueAssociations(IssuePin issuePin, List<String> s3KeysToDelete) {
         Long issuePinId = issuePin.getIssuePinId();
         issuePetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
         complaintPetitionRepository.deleteByIssuePin_IssuePinId(issuePinId);
 
         List<Long> solverIds = problemSolverRepository.findAllProblemSolverIdsByIssuePin_IssuePinId(issuePinId);
         if (!solverIds.isEmpty()) {
+            problemSolverImageRepository.findAllByProblemSolverIdIn(solverIds)
+                    .stream()
+                    .map(ProblemSolverImage::getProblemSolverImageS3Key)
+                    .forEach(s3KeysToDelete::add);
             problemSolverImageRepository.deleteAllByProblemSolver_ProblemSolverIdIn(solverIds);
         }
         problemSolverRepository.deleteAllByIssuePin_IssuePinId(issuePinId);
