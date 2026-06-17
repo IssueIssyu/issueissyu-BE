@@ -39,6 +39,7 @@ public class PinGeoRedisService {
 
     static final String GEO_KEY_ALL = "geo:pins";
     static final String GEO_KEY_PREFIX = "geo:pins:";
+    static final String GEO_READY_KEY = "geo:pins:ready";
     static final String PIN_INFO_KEY_PREFIX = "pin:info:";
     private static final Duration PIN_INFO_TTL = Duration.ofHours(48);
     private static final int GEO_SEARCH_LIMIT = 1000;
@@ -124,10 +125,29 @@ public class PinGeoRedisService {
     // Read 흐름
     // ─────────────────────────────────────────────────────────────────
 
-    // 전체 적재 완료 여부(isReady)와 실제 데이터 존재 여부(ZCARD > 0)를 함께 확인합니다.
-    // Redis가 외부에서 초기화되어 isReady=true 이지만 데이터가 없는 경우도 DB 폴백합니다.
+    // 캐시 사용 가능 여부를 판단합니다.
+
+    // 1. 로컬 isReady=true 이면 ZCARD 로 실제 데이터 존재 여부를 확인합니다.
+    //    → 스케줄러가 GEO Set 을 비운 재구성 중에도 DB 폴백이 정상 동작합니다.
+
+    // 2. 로컬 isReady=false 이면 Redis GEO_READY_KEY("geo:pins:ready") 를 조회합니다.
+    //    → 다른 인스턴스에서 이미 적재가 완료된 경우 로컬 isReady 를 true 로 갱신합니다.
+    //    → 신규 인스턴스가 자체 초기화가 끝나기 전에도 캐시를 활용할 수 있습니다.
     public boolean isGeoSetReady() {
-        return isReady && getGeoPinCount() > 0;
+        if (isReady) {
+            // 로컬 플래그가 true 라도 재구성 중 GEO Set 이 비어 있으면 DB 폴백합니다.
+            return getGeoPinCount() > 0;
+        }
+        // 로컬 플래그 미설정 → 다른 인스턴스가 이미 적재했는지 Redis 글로벌 키로 확인합니다.
+        try {
+            if (Boolean.TRUE.equals(redisTemplate.hasKey(GEO_READY_KEY)) && getGeoPinCount() > 0) {
+                isReady = true;
+                return true;
+            }
+        } catch (Exception e) {
+            log.warn("Redis GEO 상태 확인 실패: {}", e.getMessage());
+        }
+        return false;
     }
 
     // Redis GEO Set(geo:pins)에 저장된 핀 개수. 조회 실패 시 0.
@@ -274,23 +294,29 @@ public class PinGeoRedisService {
                     return null;
                 }
             });
-            isReady = true; // 파이프라인이 Redis에서 완전히 처리된 후에만 준비 완료 표시
+            // 파이프라인이 완전히 처리된 후에만 준비 완료로 표시합니다.
+            // GEO_READY_KEY 를 Redis 에 기록해 다른 인스턴스에서도 캐시를 활성화할 수 있도록 합니다.
+            redisTemplate.opsForValue().set(GEO_READY_KEY, "1");
+            isReady = true;
         } catch (Exception e) {
             log.error("Redis GEO bulk populate 파이프라인 실패: {}", e.getMessage(), e);
             // isReady = false 유지 → DB 폴백으로 동작
         }
     }
 
-    // 모든 geo:pins, geo:pins:{TYPE} 키를 삭제합니다.
+    // 모든 geo:pins, geo:pins:{TYPE}, geo:pins:ready 키를 삭제합니다.
     // pin:info 키는 48h TTL 으로 자연 만료되므로 별도 삭제하지 않습니다.
     // (재적재 시 addPin 이 TTL 을 갱신합니다.)
-    //
+
     // KEYS 명령어(O(N), 전체 DB 블로킹) 대신 MapPinCategory 열거값으로
     // 삭제 대상 키를 직접 구성하여 단일 DEL 명령으로 처리합니다.
+
+    // GEO_READY_KEY 도 함께 삭제해야 재구성 중인 상태를 다른 인스턴스가 인식합니다.
     private void clearGeoKeys() {
         try {
             List<String> keysToDelete = new ArrayList<>();
             keysToDelete.add(GEO_KEY_ALL);
+            keysToDelete.add(GEO_READY_KEY);
             for (MapPinCategory category : MapPinCategory.values()) {
                 keysToDelete.add(GEO_KEY_PREFIX + category.getPinType());
             }
