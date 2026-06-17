@@ -14,6 +14,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.domain.geo.BoundingBox;
 import org.springframework.data.redis.domain.geo.GeoReference;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -56,34 +58,63 @@ public class PinGeoRedisService {
     // ─────────────────────────────────────────────────────────────────
 
     // 핀을 GEO Set 과 pin:info 에 저장합니다.
-    // 예외 발생 시 경고 로그만 남기고 DB 응답에 영향을 주지 않습니다.
+    // 활성 DB 트랜잭션이 있으면 커밋 완료 후에 Redis 쓰기를 실행합니다.
+    // DB 롤백 시 afterCommit 은 호출되지 않으므로 Redis 불일치가 발생하지 않습니다.
     public void addPin(Long pinId, String pinType, double lat, double lng,
                        String detailAddress, String region, String discount) {
-        try {
-            String member = pinId.toString();
-            Point point = new Point(lng, lat); // Redis GEO: (경도, 위도)
+        Runnable action = () -> {
+            try {
+                String member = pinId.toString();
+                Point point = new Point(lng, lat); // Redis GEO: (경도, 위도)
 
-            redisTemplate.opsForGeo().add(GEO_KEY_ALL, point, member);
-            redisTemplate.opsForGeo().add(GEO_KEY_PREFIX + pinType, point, member);
+                redisTemplate.opsForGeo().add(GEO_KEY_ALL, point, member);
+                redisTemplate.opsForGeo().add(GEO_KEY_PREFIX + pinType, point, member);
 
-            MapPinResDTO.PinItemDTO dto =
-                    new MapPinResDTO.PinItemDTO(pinId, pinType, lat, lng, detailAddress, region, discount);
-            String json = objectMapper.writeValueAsString(dto);
-            redisTemplate.opsForValue().set(PIN_INFO_KEY_PREFIX + pinId, json, PIN_INFO_TTL);
-        } catch (Exception e) {
-            log.warn("Redis GEO 핀 추가 실패 pinId={}: {}", pinId, e.getMessage());
+                MapPinResDTO.PinItemDTO dto =
+                        new MapPinResDTO.PinItemDTO(pinId, pinType, lat, lng, detailAddress, region, discount);
+                String json = objectMapper.writeValueAsString(dto);
+                redisTemplate.opsForValue().set(PIN_INFO_KEY_PREFIX + pinId, json, PIN_INFO_TTL);
+            } catch (Exception e) {
+                log.warn("Redis GEO 핀 추가 실패 pinId={}: {}", pinId, e.getMessage());
+            }
+        };
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
         }
     }
 
     // GEO Set 과 pin:info 에서 핀을 삭제합니다.
+    // 활성 DB 트랜잭션이 있으면 커밋 완료 후에 Redis 삭제를 실행합니다.
+    // DB 롤백 시 afterCommit 은 호출되지 않으므로 핀이 DB·Redis 양쪽에 그대로 유지됩니다.
     public void removePin(Long pinId, String pinType) {
-        try {
-            String member = pinId.toString();
-            redisTemplate.opsForGeo().remove(GEO_KEY_ALL, member);
-            redisTemplate.opsForGeo().remove(GEO_KEY_PREFIX + pinType, member);
-            redisTemplate.delete(PIN_INFO_KEY_PREFIX + pinId);
-        } catch (Exception e) {
-            log.warn("Redis GEO 핀 삭제 실패 pinId={}: {}", pinId, e.getMessage());
+        Runnable action = () -> {
+            try {
+                String member = pinId.toString();
+                redisTemplate.opsForGeo().remove(GEO_KEY_ALL, member);
+                redisTemplate.opsForGeo().remove(GEO_KEY_PREFIX + pinType, member);
+                redisTemplate.delete(PIN_INFO_KEY_PREFIX + pinId);
+            } catch (Exception e) {
+                log.warn("Redis GEO 핀 삭제 실패 pinId={}: {}", pinId, e.getMessage());
+            }
+        };
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
         }
     }
 
