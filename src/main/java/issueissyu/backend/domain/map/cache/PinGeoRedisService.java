@@ -47,6 +47,10 @@ public class PinGeoRedisService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
+    // bulkPopulate 가 완전히 끝난 시점에만 true 가 됩니다.
+    // @Async / 스케줄러 스레드에서 쓰고, HTTP 요청 스레드에서 읽으므로 volatile 필수입니다.
+    private volatile boolean isReady = false;
+
     // ─────────────────────────────────────────────────────────────────
     // Write 흐름
     // ─────────────────────────────────────────────────────────────────
@@ -89,13 +93,13 @@ public class PinGeoRedisService {
     // Read 흐름
     // ─────────────────────────────────────────────────────────────────
 
-    // GEO Set 이 초기화되어 있는지 확인합니다.
-    // (Sorted Set 기반이므로 ZSet 크기로 확인)
+    // 전체 적재 완료 여부(isReady)와 실제 데이터 존재 여부(ZCARD > 0)를 함께 확인합니다.
+    // Redis가 외부에서 초기화되어 isReady=true 이지만 데이터가 없는 경우도 DB 폴백합니다.
     public boolean isGeoSetReady() {
-        return getGeoPinCount() > 0;
+        return isReady && getGeoPinCount() > 0;
     }
 
-    /** Redis GEO Set(geo:pins)에 저장된 핀 개수. 조회 실패 시 0. */
+    // Redis GEO Set(geo:pins)에 저장된 핀 개수. 조회 실패 시 0.
     public long getGeoPinCount() {
         try {
             Long size = redisTemplate.opsForZSet().size(GEO_KEY_ALL);
@@ -186,8 +190,10 @@ public class PinGeoRedisService {
     // executePipelined 로 모든 명령을 단일 파이프라인에 묶어 네트워크 왕복을 최소화합니다.
     // (개별 addPin: 핀당 3 round-trip → pipeline: 전체 N개를 1회 전송)
     public void bulkPopulate(List<MapPinView> views) {
+        isReady = false; // 재적재 시작: 불완전한 캐시를 읽지 않도록 차단
         clearGeoKeys();
         if (views.isEmpty()) {
+            isReady = true; // 빈 결과도 완성된 상태이며, getGeoPinCount() == 0 으로 DB 폴백됨
             return;
         }
         try {
@@ -229,8 +235,10 @@ public class PinGeoRedisService {
                     return null;
                 }
             });
+            isReady = true; // 파이프라인이 Redis에서 완전히 처리된 후에만 준비 완료 표시
         } catch (Exception e) {
             log.error("Redis GEO bulk populate 파이프라인 실패: {}", e.getMessage(), e);
+            // isReady = false 유지 → DB 폴백으로 동작
         }
     }
 
