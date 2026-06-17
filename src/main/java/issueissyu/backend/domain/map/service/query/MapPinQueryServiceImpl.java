@@ -88,7 +88,8 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
                 view.getLat(),
                 view.getLng(),
                 view.getDetailAddress(),
-                view.getRegion()
+                view.getRegion(),
+                view.getDiscount()
         );
     }
 
@@ -99,7 +100,8 @@ public class MapPinQueryServiceImpl implements MapPinQueryService {
                 view.getLat(),
                 view.getLng(),
                 view.getDetailAddress(),
-                view.getRegion()
+                view.getRegion(),
+                view.getDiscount()
         );
     }
 
