@@ -92,12 +92,17 @@ public class PinGeoRedisService {
     // GEO Set 이 초기화되어 있는지 확인합니다.
     // (Sorted Set 기반이므로 ZSet 크기로 확인)
     public boolean isGeoSetReady() {
+        return getGeoPinCount() > 0;
+    }
+
+    /** Redis GEO Set(geo:pins)에 저장된 핀 개수. 조회 실패 시 0. */
+    public long getGeoPinCount() {
         try {
             Long size = redisTemplate.opsForZSet().size(GEO_KEY_ALL);
-            return size != null && size > 0;
+            return size != null ? size : 0L;
         } catch (Exception e) {
             log.warn("Redis GEO 상태 확인 실패: {}", e.getMessage());
-            return false;
+            return 0L;
         }
     }
 

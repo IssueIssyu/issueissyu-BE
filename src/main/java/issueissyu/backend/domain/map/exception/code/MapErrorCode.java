@@ -20,7 +20,9 @@ public enum MapErrorCode implements BaseErrorCode {
     PATCHNOTE_400_1(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_1", "존재하지 않는 지역 입니다."),
     PATCHNOTE_400_2(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_2", "조회 불가능한 사이즈 입니다."),
     PATCHNOTE_400_3(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_3", "조회 불가능한 cursor 입니다."),
-    PATCHNOTE_400_4(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_4", "사용자의 동네가 등록되지 않아 패치노트 조회가 불가능합니다.");
+    PATCHNOTE_400_4(HttpStatus.BAD_REQUEST, "PATCHNOTE_400_4", "사용자의 동네가 등록되지 않아 패치노트 조회가 불가능합니다."),
+
+    MAP_CACHE_403(HttpStatus.FORBIDDEN, "MAP_CACHE_403", "지도 핀 캐시 상태 조회는 ADMIN 권한이 필요합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

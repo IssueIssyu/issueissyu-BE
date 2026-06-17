@@ -3,6 +3,7 @@ package issueissyu.backend.domain.map.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import issueissyu.backend.domain.map.dto.res.MapNoticeListResDTO;
+import issueissyu.backend.domain.map.dto.res.MapPinCacheStatusResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinCardResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinClusterResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
@@ -12,6 +13,7 @@ import issueissyu.backend.domain.map.exception.MapException;
 import issueissyu.backend.domain.map.exception.code.MapErrorCode;
 import issueissyu.backend.domain.map.exception.code.MapSuccessCode;
 import issueissyu.backend.domain.map.service.query.MapNoticeQueryService;
+import issueissyu.backend.domain.map.service.query.MapPinCacheQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinCardQueryService;
 import issueissyu.backend.domain.map.service.query.MapPinQueryService;
 import issueissyu.backend.domain.map.service.query.PatchNoteQueryService;
@@ -35,6 +37,7 @@ public class MapController {
 
     private final MapPinQueryService mapPinQueryService;
     private final MapPinCardQueryService mapPinCardQueryService;
+    private final MapPinCacheQueryService mapPinCacheQueryService;
     private final MapNoticeQueryService mapNoticeQueryService;
     private final PatchNoteQueryService patchNoteQueryService;
 
@@ -111,6 +114,16 @@ public class MapController {
         return ApiResponse.onSuccess(
                 MapSuccessCode.PATCHNOTE_200,
                 patchNoteQueryService.getPatchNotes(uid, locationId, size, cursor));
+    }
+
+    @Operation(
+            summary = "지도 핀 캐시 상태 조회 (ADMIN)",
+            description = "Redis GEO Set(geo:pins)에 저장된 핀 개수(ZCARD)를 반환합니다. ADMIN 권한 필요.")
+    @GetMapping("/cache/status")
+    public ApiResponse<MapPinCacheStatusResDTO> getPinCacheStatus(@AuthenticationPrincipal String uid) {
+        return ApiResponse.onSuccess(
+                MapSuccessCode.MAP_CACHE_200,
+                mapPinCacheQueryService.getCacheStatus(uid));
     }
 
     @Operation(
