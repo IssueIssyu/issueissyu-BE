@@ -183,15 +183,54 @@ public class PinGeoRedisService {
 
     // GEO Set 을 초기화한 뒤, DB에서 조회한 활성 핀 목록으로 전체 재적재합니다.
     // 서버 시작 및 매일 새벽 스케줄러에서 호출됩니다.
+    // executePipelined 로 모든 명령을 단일 파이프라인에 묶어 네트워크 왕복을 최소화합니다.
+    // (개별 addPin: 핀당 3 round-trip → pipeline: 전체 N개를 1회 전송)
     public void bulkPopulate(List<MapPinView> views) {
         clearGeoKeys();
-        for (MapPinView view : views) {
-            if (view.getPinId() == null || view.getLat() == null || view.getLng() == null) {
-                continue;
-            }
-            addPin(view.getPinId(), view.getPinType(),
-                    view.getLat(), view.getLng(),
-                    view.getDetailAddress(), view.getRegion(), view.getDiscount());
+        if (views.isEmpty()) {
+            return;
+        }
+        try {
+            redisTemplate.executePipelined(new org.springframework.data.redis.core.SessionCallback<Object>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public <K, V> Object execute(org.springframework.data.redis.core.RedisOperations<K, V> operations) {
+                    // executePipelined 는 RedisTemplate 자신을 operations 로 전달하므로
+                    // 인터페이스 타입으로 캐스트하여 파이프라인 내 명령을 큐잉합니다.
+                    org.springframework.data.redis.core.RedisOperations<String, String> ops =
+                            (org.springframework.data.redis.core.RedisOperations<String, String>) operations;
+
+                    for (MapPinView view : views) {
+                        if (view.getPinId() == null || view.getLat() == null || view.getLng() == null) {
+                            continue;
+                        }
+                        try {
+                            Long pinId = view.getPinId();
+                            String pinType = view.getPinType();
+                            double lat = view.getLat();
+                            double lng = view.getLng();
+                            String member = pinId.toString();
+                            Point point = new Point(lng, lat);
+
+                            ops.opsForGeo().add(GEO_KEY_ALL, point, member);
+                            ops.opsForGeo().add(GEO_KEY_PREFIX + pinType, point, member);
+
+                            MapPinResDTO.PinItemDTO dto = new MapPinResDTO.PinItemDTO(
+                                    pinId, pinType, lat, lng,
+                                    view.getDetailAddress(), view.getRegion(), view.getDiscount()
+                            );
+                            String json = objectMapper.writeValueAsString(dto);
+                            ops.opsForValue().set(PIN_INFO_KEY_PREFIX + pinId, json, PIN_INFO_TTL);
+                        } catch (Exception e) {
+                            log.warn("Redis GEO bulk populate 단일 핀 직렬화 실패 pinId={}: {}",
+                                    view.getPinId(), e.getMessage());
+                        }
+                    }
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            log.error("Redis GEO bulk populate 파이프라인 실패: {}", e.getMessage(), e);
         }
     }
 
