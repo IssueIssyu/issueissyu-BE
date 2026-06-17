@@ -9,4 +9,5 @@ public interface MapPinView {
     Double getLng();      // ST_X(pin_point) → 경도
     String getDetailAddress();
     String getRegion();   // location.location 컬럼 (법정동 주소 문자열)
+    String getDiscount();
 }

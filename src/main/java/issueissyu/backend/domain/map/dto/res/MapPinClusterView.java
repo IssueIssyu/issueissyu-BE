@@ -16,4 +16,6 @@ public interface MapPinClusterView {
     Double getClusterLat();
 
     Double getClusterLng();
+
+    String getDiscount();
 }
