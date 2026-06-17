@@ -40,7 +40,8 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                 ST_Y(pl.pin_point) AS lat,
                 ST_X(pl.pin_point) AS lng,
                 pl.detail_address  AS detailAddress,
-                l.location         AS region
+                l.location         AS region,
+                CASE WHEN p.pin_type = 'STORE' THEN ep.discount ELSE NULL END AS discount
             FROM pin_location pl
             INNER JOIN pin      p ON pl.pin_id      = p.pin_id
             INNER JOIN location l ON pl.location_id = l.location_id
@@ -79,7 +80,8 @@ public interface PinLocationRepository extends JpaRepository<PinLocation, Long> 
                 pl.detail_address AS detailAddress,
                 l.location AS region,
                 ST_Y(ST_SnapToGrid(pl.pin_point, :gridSize)) AS clusterLat,
-                ST_X(ST_SnapToGrid(pl.pin_point, :gridSize)) AS clusterLng
+                ST_X(ST_SnapToGrid(pl.pin_point, :gridSize)) AS clusterLng,
+                CASE WHEN p.pin_type = 'STORE' THEN ep.discount ELSE NULL END AS discount
             FROM pin_location pl
             INNER JOIN pin      p ON pl.pin_id      = p.pin_id
             INNER JOIN location l ON pl.location_id = l.location_id
