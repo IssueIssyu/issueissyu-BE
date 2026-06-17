@@ -9,6 +9,7 @@ import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
+import issueissyu.backend.domain.map.cache.PinGeoRedisService;
 import issueissyu.backend.domain.map.repository.NoticeRepository;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.enums.PinType;
@@ -55,6 +56,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final PinLocationRepository pinLocationRepository;
     private final UserRepository userRepository;
     private final PinAlarmCleaner pinAlarmCleaner;
+    private final PinGeoRedisService pinGeoRedisService;
 
     @Override
     public void deletePin(String uid, Long pinId) {
@@ -115,6 +117,9 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
         communicationPinRepository.deleteByPin_PinId(pinId);
         pinLocationRepository.deleteByPin_PinId(pinId);
         pinRepository.delete(pin);
+
+        // Redis GEO 캐시에서 제거 (실패해도 DB 삭제에 영향 없음)
+        pinGeoRedisService.removePin(pinId, pin.getPinType().name());
     }
 
     private void deleteIssueAssociations(IssuePin issuePin) {

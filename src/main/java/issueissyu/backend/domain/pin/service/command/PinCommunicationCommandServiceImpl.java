@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
+import issueissyu.backend.domain.map.cache.PinGeoRedisService;
 import issueissyu.backend.domain.location.dto.res.UserLocationResDTO;
 import issueissyu.backend.domain.location.entity.Location;
 import issueissyu.backend.domain.location.entity.PinLocation;
@@ -68,6 +69,7 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
     private final AmazonConfig amazonConfig;
     private final PinImageUploadCommandService pinImageUploadCommandService;
     private final S3Utils s3Utils;
+    private final PinGeoRedisService pinGeoRedisService;
 
     private static final GeometryFactory GEOMETRY_FACTORY =
             new GeometryFactory(new PrecisionModel(), 4326);
@@ -126,6 +128,12 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
                             .build());
 
             communicationPinRepository.save(CommunicationPin.builder().pin(pin).build());
+
+            // Redis GEO 캐시에 적재 (실패해도 DB 저장에 영향 없음)
+            pinGeoRedisService.addPin(
+                    pin.getPinId(), PinType.COMMUNICATION.name(),
+                    req.lat(), req.lng(),
+                    detailAddress, location.getRegion(), null);
 
             return toImportRes(pin, location.getRegion(), detailAddress);
         } catch (PinException e) {
