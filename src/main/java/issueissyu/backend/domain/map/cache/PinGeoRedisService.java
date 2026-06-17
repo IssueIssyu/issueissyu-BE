@@ -3,6 +3,7 @@ package issueissyu.backend.domain.map.cache;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import issueissyu.backend.domain.map.dto.res.MapPinResDTO;
 import issueissyu.backend.domain.map.dto.res.MapPinView;
+import issueissyu.backend.domain.map.enums.MapPinCategory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.geo.GeoResults;
@@ -22,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 // Redis GEO를 활용한 핀 위치 캐싱 서비스.
 
@@ -189,17 +189,25 @@ public class PinGeoRedisService {
                     .toList();
             List<String> jsonList = redisTemplate.opsForValue().multiGet(keys);
 
+            if (jsonList == null) {
+                // MGET 자체가 실패한 경우 DB 폴백
+                return Optional.empty();
+            }
+
             List<MapPinResDTO.PinItemDTO> pins = new ArrayList<>();
-            if (jsonList != null) {
-                for (String json : jsonList) {
-                    if (json == null) continue; // pin:info TTL 만료된 경우 skip
-                    MapPinResDTO.PinItemDTO dto =
-                            objectMapper.readValue(json, MapPinResDTO.PinItemDTO.class);
-                    // BYBOX 검색 결과에 미세한 오차가 있을 수 있으므로 BBox 정확 필터링
-                    if (dto.latitude() >= swLat && dto.latitude() <= neLat
-                            && dto.longitude() >= swLng && dto.longitude() <= neLng) {
-                        pins.add(dto);
-                    }
+            for (String json : jsonList) {
+                if (json == null) {
+                    // GEO Set에는 있지만 pin:info 가 Eviction/TTL 만료된 경우
+                    // 일부만 반환하면 핀이 지도에서 누락되므로 DB 폴백으로 전체 데이터 보장
+                    log.debug("Redis GEO 캐시 불일치 감지 (pin:info 누락) → DB 폴백");
+                    return Optional.empty();
+                }
+                MapPinResDTO.PinItemDTO dto =
+                        objectMapper.readValue(json, MapPinResDTO.PinItemDTO.class);
+                // BYBOX 검색 결과에 미세한 오차가 있을 수 있으므로 BBox 정확 필터링
+                if (dto.latitude() >= swLat && dto.latitude() <= neLat
+                        && dto.longitude() >= swLng && dto.longitude() <= neLng) {
+                    pins.add(dto);
                 }
             }
             return Optional.of(pins);
@@ -276,14 +284,17 @@ public class PinGeoRedisService {
     // 모든 geo:pins, geo:pins:{TYPE} 키를 삭제합니다.
     // pin:info 키는 48h TTL 으로 자연 만료되므로 별도 삭제하지 않습니다.
     // (재적재 시 addPin 이 TTL 을 갱신합니다.)
+    //
+    // KEYS 명령어(O(N), 전체 DB 블로킹) 대신 MapPinCategory 열거값으로
+    // 삭제 대상 키를 직접 구성하여 단일 DEL 명령으로 처리합니다.
     private void clearGeoKeys() {
         try {
-            redisTemplate.delete(GEO_KEY_ALL);
-            // geo:pins:* 키는 핀 타입 수 만큼이므로 keys() 사용이 안전
-            Set<String> typeKeys = redisTemplate.keys(GEO_KEY_PREFIX + "*");
-            if (typeKeys != null && !typeKeys.isEmpty()) {
-                redisTemplate.delete(typeKeys);
+            List<String> keysToDelete = new ArrayList<>();
+            keysToDelete.add(GEO_KEY_ALL);
+            for (MapPinCategory category : MapPinCategory.values()) {
+                keysToDelete.add(GEO_KEY_PREFIX + category.getPinType());
             }
+            redisTemplate.delete(keysToDelete);
         } catch (Exception e) {
             log.warn("Redis GEO 키 전체 삭제 실패: {}", e.getMessage());
         }
