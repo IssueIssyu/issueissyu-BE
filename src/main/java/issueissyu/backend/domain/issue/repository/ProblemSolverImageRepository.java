@@ -14,7 +14,7 @@ public interface ProblemSolverImageRepository extends JpaRepository<ProblemSolve
     Optional<ProblemSolverImage> findByProblemSolver_ProblemSolverId(Long problemSolverId);
 
     @Query("SELECT psi FROM ProblemSolverImage psi WHERE psi.problemSolver.problemSolverId IN :ids")
-    List<ProblemSolverImage> findAllByProblemSolverIdIn(@Param("ids") Collection<Long> ids);
+    List<ProblemSolverImage> findAllByProblemSolver_ProblemSolverIdIn(@Param("ids") Collection<Long> ids);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM ProblemSolverImage psi WHERE psi.problemSolver.problemSolverId IN :ids")

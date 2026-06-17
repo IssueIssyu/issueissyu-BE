@@ -152,7 +152,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
 
         List<Long> solverIds = problemSolverRepository.findAllProblemSolverIdsByIssuePin_IssuePinId(issuePinId);
         if (!solverIds.isEmpty()) {
-            problemSolverImageRepository.findAllByProblemSolverIdIn(solverIds)
+            problemSolverImageRepository.findAllByProblemSolver_ProblemSolverIdIn(solverIds)
                     .stream()
                     .map(ProblemSolverImage::getProblemSolverImageS3Key)
                     .forEach(s3KeysToDelete::add);
