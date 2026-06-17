@@ -33,8 +33,12 @@ public class S3Utils {
     // 이 키들은 관리자가 직접 관리하는 고정 에셋이므로 자동 삭제 대상에서 제외합니다.
     public boolean isReservedKey(String key) {
         if (key == null || key.isBlank()) return false;
-        String first = key.contains("/") ? key.substring(0, key.indexOf('/')) : key;
-        return RESERVED_PREFIXES.contains(first.toLowerCase(Locale.ROOT));
+        String cleanedKey = key.trim();
+        if (cleanedKey.startsWith("/")) {
+            cleanedKey = cleanedKey.substring(1).trim();
+        }
+        String first = cleanedKey.contains("/") ? cleanedKey.substring(0, cleanedKey.indexOf('/')) : cleanedKey;
+        return RESERVED_PREFIXES.contains(first.trim().toLowerCase(Locale.ROOT));
     }
 
     // Reserved key(festival/contest 등)이면 삭제를 건너뛰고,
