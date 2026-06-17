@@ -34,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -141,8 +143,18 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
 
         pinRepository.delete(pin);
 
-        // DB 삭제 완료 후 S3 객체 일괄 삭제
-        s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+        // DB 삭제 완료 후 트랜잭션 커밋이 성공하면 S3 객체 일괄 삭제
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+                        }
+                    });
+        } else {
+            s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+        }
     }
 
     private void deleteIssueAssociations(IssuePin issuePin, List<String> s3KeysToDelete) {

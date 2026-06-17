@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -34,7 +36,17 @@ public class CommunicationPinCleaner {
         jdbcTemplate.update("DELETE FROM pin_image         WHERE pin_id = ?", pinId);
         jdbcTemplate.update("DELETE FROM pin               WHERE pin_id = ?", pinId);
 
-        // DB 삭제 완료 후 S3 객체 삭제
-        pinImageKeys.forEach(s3Utils::deleteIfNotReserved);
+        // DB 삭제 완료 후 트랜잭션 커밋이 성공하면 S3 객체 삭제
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            pinImageKeys.forEach(s3Utils::deleteIfNotReserved);
+                        }
+                    });
+        } else {
+            pinImageKeys.forEach(s3Utils::deleteIfNotReserved);
+        }
     }
 }

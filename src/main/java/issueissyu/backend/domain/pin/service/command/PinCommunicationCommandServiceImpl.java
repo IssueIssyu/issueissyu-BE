@@ -42,6 +42,8 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.postgresql.geometric.PGpoint;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.time.LocalDateTime;
@@ -303,7 +305,17 @@ public class PinCommunicationCommandServiceImpl implements PinCommunicationComma
         boolean removedAny = pin.getPinImages().removeIf(pi -> !keepUrls.contains(pi.getPinS3Url()));
         if (removedAny) {
             changed = true;
-            removedKeys.forEach(s3Utils::deleteIfNotReserved);
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                removedKeys.forEach(s3Utils::deleteIfNotReserved);
+                            }
+                        });
+            } else {
+                removedKeys.forEach(s3Utils::deleteIfNotReserved);
+            }
         }
 
         for (PinImageItemReqDTO item : items) {

@@ -11,6 +11,8 @@ import issueissyu.backend.utils.S3.S3Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -64,7 +66,17 @@ public class CommunityCommandServiceImpl implements CommunityCommandService {
 
         communityRepository.delete(community);
 
-        // DB 삭제 완료 후 S3 객체 삭제
-        cardnewsKeys.forEach(s3Utils::deleteIfNotReserved);
+        // DB 삭제 완료 후 트랜잭션 커밋이 성공하면 S3 객체 삭제
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            cardnewsKeys.forEach(s3Utils::deleteIfNotReserved);
+                        }
+                    });
+        } else {
+            cardnewsKeys.forEach(s3Utils::deleteIfNotReserved);
+        }
     }
 }

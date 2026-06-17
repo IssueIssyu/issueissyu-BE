@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,8 +131,18 @@ public class UserSignOutCleaner {
         jdbcTemplate.update("DELETE FROM user_custom_collection WHERE uid = ?", uid);
         jdbcTemplate.update("DELETE FROM user_emoji WHERE uid = ?", uid);
 
-        // DB 삭제 완료 후 S3 객체 일괄 삭제
-        s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+        // DB 삭제 완료 후 트랜잭션 커밋이 성공하면 S3 객체 일괄 삭제
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+                        }
+                    });
+        } else {
+            s3KeysToDelete.forEach(s3Utils::deleteIfNotReserved);
+        }
     }
 
     private List<String> collectS3Keys(String uid) {
