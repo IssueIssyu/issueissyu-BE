@@ -25,8 +25,10 @@ jobs:
 
     steps:
       # 코드 체크아웃
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       # JDK 21 설치
       - name: Set up JDK 21
@@ -130,7 +132,7 @@ jobs:
           for attempt in $(seq 1 $MAX_RETRY); do
             echo "=== 스모크 테스트 시도 $attempt / $MAX_RETRY ==="
             for i in {1..30}; do
-              code="$(curl -sS -o /dev/null -w '%{http_code}' $HEALTH_URL || true)"
+              code="$(curl -sS --connect-timeout 5 --max-time 10 -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
               echo "health check $i: $code"
               if [ "$code" = "200" ]; then
                 echo "health OK (시도 $attempt)"
