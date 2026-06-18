@@ -94,7 +94,7 @@ public class UserController {
     @Operation(
             summary = "내 시민해결사 참여 핀 조회",
             description =
-                    "로그인한 사용자가 시민해결사(EN_ROUTE)로 참여 중인 핀을 problem_solver.created_at 내림차순으로 커서 페이징 조회합니다.")
+                    "로그인한 사용자가 시민해결사로 참여한 핀을 problem_solver.created_at 내림차순으로 커서 페이징 조회합니다.")
     @GetMapping("/me/solvers")
     public ApiResponse<UserMySolversResDTO> getMySolvers(
             @AuthenticationPrincipal String uid,

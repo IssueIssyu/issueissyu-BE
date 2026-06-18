@@ -29,7 +29,6 @@ public interface UserMySolverRepository extends JpaRepository<ProblemSolver, Lon
                         LIMIT 1
                     ) pl ON TRUE
                     WHERE ps.uid = :uid
-                      AND ps.problem_solve_state = 'EN_ROUTE'
                       AND (
                           NOT CAST(:applyCursor AS boolean)
                           OR ps.created_at < CAST(:cursorCreatedAt AS timestamp)
