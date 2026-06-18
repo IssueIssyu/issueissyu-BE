@@ -57,4 +57,16 @@ public class IssuePin extends BaseEntity {
     public void incrementPetitionCount() {
         this.petitionCount++;
     }
+
+    public void markInProgressIfBeforeProgress() {
+        if (this.issuePinState == IssuePinState.BEFORE_PROGRESS) {
+            this.issuePinState = IssuePinState.IN_PROGRESS;
+        }
+    }
+
+    public void markResolvedIfInProgress() {
+        if (this.issuePinState == IssuePinState.IN_PROGRESS) {
+            this.issuePinState = IssuePinState.RESOLVED;
+        }
+    }
 }
