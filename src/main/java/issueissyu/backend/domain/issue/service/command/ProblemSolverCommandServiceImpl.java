@@ -93,6 +93,8 @@ public class ProblemSolverCommandServiceImpl implements ProblemSolverCommandServ
             throw ProblemSolverException.of(IssueErrorCode.GO_NOW_400_1);
         }
 
+        issuePin.markInProgressIfBeforeProgress();
+
         return GoNowResDTO.builder()
                 .pinId(pinId)
                 .problemSolverId(saved.getProblemSolverId())
@@ -197,6 +199,8 @@ public class ProblemSolverCommandServiceImpl implements ProblemSolverCommandServ
 
         solver.markResolved();
         problemSolverRepository.save(solver);
+
+        solver.getIssuePin().markResolvedIfInProgress();
 
         return ProblemSolverCheckResDTO.builder()
                 .problemSolveState(ProblemSolveState.RESOLVED.name())
