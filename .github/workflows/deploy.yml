@@ -8,6 +8,11 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+
+concurrency:
+  group: issueissyu-prod-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -18,10 +23,16 @@ jobs:
       github.event.pull_request.base.ref == 'main')
       || github.event_name == 'workflow_dispatch'
 
+    env:
+      AWS_DEFAULT_REGION: ap-northeast-2
+      HEALTH_URL: ${{ vars.PROD_HEALTH_URL }}
+
     steps:
       # 코드 체크아웃
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       # JDK 21 설치
       - name: Set up JDK 21
@@ -80,6 +91,15 @@ jobs:
           unzip -l deploy/deploy.zip | head -n 50
           unzip -l deploy/deploy.zip | egrep -i "pom.xml|Buildfile|src/|repository/" && exit 1 || echo "OK"
 
+      # OIDC 기반 AWS Role Assume
+      - name: Configure AWS credentials
+        id: aws-creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+          output-credentials: true
+
       # 현재 배포 버전 저장 (롤백용)
       - name: Save current version
         run: |
@@ -87,18 +107,22 @@ jobs:
             --environment-names issueissyu-backend-prod-env \
             --query 'Environments[0].VersionLabel' \
             --output text)
+
+          echo "CURRENT_VERSION=$CURRENT"
+
+          if [ "$CURRENT" = "None" ] || [ "$CURRENT" = "null" ]; then
+            CURRENT=""
+          fi
+
           echo "PREVIOUS_VERSION=$CURRENT" >> $GITHUB_ENV
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-2
 
       - name: Deploy to Elastic Beanstalk
         id: deploy
         uses: einaregilsson/beanstalk-deploy@v22
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
+          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
+          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
           application_name: 'issueissyu-backend-prod'
           environment_name: 'issueissyu-backend-prod-env'
           region: ap-northeast-2
@@ -108,32 +132,38 @@ jobs:
           wait_for_deployment: true
           wait_for_environment_recovery: 180
 
-      # EB 상태와 무관하게 /health 응답으로만 배포 성공 판단
+      # EB 상태와 무관하게 운영 HTTPS URL의 /health 응답으로 배포 성공 판단
       # 최대 3회 재시도, 각 시도마다 30회 health check
       - name: Smoke test with retry
         id: smoke_test
         run: |
           MAX_RETRY=3
-          CNAME=$(aws elasticbeanstalk describe-environments \
-            --environment-names issueissyu-backend-prod-env \
-            --query 'Environments[0].CNAME' \
-            --output text)
-          HEALTH_URL="http://${CNAME}/health"
+
+          if [ -z "$HEALTH_URL" ]; then
+            echo "PROD_HEALTH_URL GitHub Actions Variable이 설정되지 않았습니다."
+            exit 1
+          fi
+
           echo "HEALTH_URL=$HEALTH_URL"
 
           for attempt in $(seq 1 $MAX_RETRY); do
             echo "=== 스모크 테스트 시도 $attempt / $MAX_RETRY ==="
+
             for i in {1..30}; do
-              code="$(curl -sS -o /dev/null -w '%{http_code}' $HEALTH_URL || true)"
+              code="$(curl -sS --connect-timeout 5 --max-time 10 -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
               echo "health check $i: $code"
+
               if [ "$code" = "200" ]; then
                 echo "health OK (시도 $attempt)"
                 exit 0
               fi
+
               sleep 10
             done
+
             echo "시도 $attempt 실패"
-            if [ $attempt -lt $MAX_RETRY ]; then
+
+            if [ "$attempt" -lt "$MAX_RETRY" ]; then
               echo "30초 후 재시도..."
               sleep 30
             fi
@@ -141,20 +171,36 @@ jobs:
 
           echo "최대 재시도 횟수($MAX_RETRY) 초과 - 배포 실패"
           exit 1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-2
 
       # 스모크 테스트 최종 실패 시 이전 버전으로 롤백
+      # 롤백 명령 후 EB 환경 업데이트 완료까지 대기하고, 운영 HTTPS URL로 다시 검증
       - name: Rollback on failure
-        if: failure() && env.PREVIOUS_VERSION != '' && (steps.deploy.outcome == 'failure' || steps.smoke_test.outcome == 'failure')
+        if: failure() && env.PREVIOUS_VERSION != '' && env.PREVIOUS_VERSION != 'None' && (steps.deploy.outcome == 'failure' || steps.smoke_test.outcome == 'failure')
         run: |
-          echo "배포 실패 - ${{ env.PREVIOUS_VERSION }} 으로 롤백"
+          echo "배포 실패 - $PREVIOUS_VERSION 으로 롤백"
+
           aws elasticbeanstalk update-environment \
             --environment-name issueissyu-backend-prod-env \
-            --version-label ${{ env.PREVIOUS_VERSION }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-2
+            --version-label "$PREVIOUS_VERSION"
+
+          echo "롤백 배포 완료 대기"
+          aws elasticbeanstalk wait environment-updated \
+            --environment-names issueissyu-backend-prod-env
+
+          echo "롤백 후 smoke test 시작"
+          echo "HEALTH_URL=$HEALTH_URL"
+
+          for i in {1..30}; do
+            code="$(curl -sS --connect-timeout 5 --max-time 10 -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
+            echo "rollback health check $i: $code"
+
+            if [ "$code" = "200" ]; then
+              echo "rollback health OK"
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          echo "롤백 후에도 health check 실패"
+          exit 1
