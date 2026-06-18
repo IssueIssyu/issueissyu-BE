@@ -1,6 +1,7 @@
 package issueissyu.backend.domain.pin.service.command;
 
 import issueissyu.backend.domain.community.entity.Community;
+import issueissyu.backend.domain.map.cache.PinGeoRedisService;
 import issueissyu.backend.domain.community.enums.CommunityType;
 import issueissyu.backend.domain.community.repository.CommunityRepository;
 import issueissyu.backend.domain.location.dto.res.CoordinateLocationResolveResDTO;
@@ -86,6 +87,7 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
     private final AmazonConfig amazonConfig;
     private final PinImageUploadCommandService pinImageUploadCommandService;
     private final S3Utils s3Utils;
+    private final PinGeoRedisService pinGeoRedisService;
 
     @Override
     public StorePinImportResDTO importStore(String uid, StorePinImportReqDTO req) {
@@ -171,6 +173,12 @@ public class PinStoreCommandServiceImpl implements PinStoreCommandService {
 
             communityRepository.save(
                     Community.builder().pin(pin).communityType(CommunityType.STORE).build());
+
+            // Redis GEO 캐시에 적재 (실패해도 DB 저장에 영향 없음)
+            pinGeoRedisService.addPin(
+                    pin.getPinId(), PinType.STORE.name(),
+                    req.lat(), req.lng(),
+                    detailAddress, location.getRegion(), req.discount());
 
             return toImportRes(pin, location.getRegion(), detailAddress, req.storeProfileImageUrl());
         } catch (PinException | LocationException e) {

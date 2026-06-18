@@ -11,6 +11,7 @@ import issueissyu.backend.domain.issue.repository.IssuePinRepository;
 import issueissyu.backend.domain.issue.repository.IssuePetitionRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverImageRepository;
 import issueissyu.backend.domain.issue.repository.ProblemSolverRepository;
+import issueissyu.backend.domain.map.cache.PinGeoRedisService;
 import issueissyu.backend.domain.map.repository.NoticeRepository;
 import issueissyu.backend.domain.pin.entity.Pin;
 import issueissyu.backend.domain.pin.entity.PinImage;
@@ -66,6 +67,7 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
     private final PinLocationRepository pinLocationRepository;
     private final UserRepository userRepository;
     private final PinAlarmCleaner pinAlarmCleaner;
+    private final PinGeoRedisService pinGeoRedisService;
     private final S3Utils s3Utils;
 
     @Override
@@ -142,6 +144,9 @@ public class PinDeleteCommandServiceImpl implements PinDeleteCommandService {
                 .forEach(s3KeysToDelete::add);
 
         pinRepository.delete(pin);
+
+        // Redis GEO 캐시에서 제거 (실패해도 DB 삭제에 영향 없음)
+        pinGeoRedisService.removePin(pinId, pin.getPinType().name());
 
         // DB 삭제 완료 후 트랜잭션 커밋이 성공하면 S3 객체 일괄 삭제
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
