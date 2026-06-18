@@ -8,6 +8,11 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+
+concurrency:
+  group: issueissyu-prod-deploy
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -97,8 +102,9 @@ jobs:
         id: deploy
         uses: einaregilsson/beanstalk-deploy@v22
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_access_key: ${{ steps.aws-creds.outputs.aws-access-key-id }}
+          aws_secret_key: ${{ steps.aws-creds.outputs.aws-secret-access-key }}
+          aws_session_token: ${{ steps.aws-creds.outputs.aws-session-token }}
           application_name: 'issueissyu-backend-prod'
           environment_name: 'issueissyu-backend-prod-env'
           region: ap-northeast-2
