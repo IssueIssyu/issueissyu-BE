@@ -30,7 +30,7 @@ public class PinGeoScheduler {
     private final PinGeoRedisService pinGeoRedisService;
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Scheduled(cron = "0 25 13 * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 5 * * *", zone = "Asia/Seoul")
     public void rebuildGeoCache() {
         // SET lock:geo:rebuild 1 NX PX 600000 — 원자적 명령으로 레이스 컨디션 없음
         Boolean acquired = redisTemplate.opsForValue()
